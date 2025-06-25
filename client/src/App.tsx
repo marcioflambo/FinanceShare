@@ -1,22 +1,31 @@
-import { Router, Route, Switch } from 'wouter';
-import { Dashboard } from '@/pages/Dashboard';
+import { Switch, Route } from "wouter";
+import { queryClient } from "./lib/queryClient";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import Dashboard from "@/pages/dashboard";
+import NotFound from "@/pages/not-found";
+
+function Router() {
+  return (
+    <Switch>
+      <Route path="/" component={Dashboard} />
+      <Route path="/expenses" component={Dashboard} />
+      <Route path="/splits" component={Dashboard} />
+      <Route path="/reports" component={Dashboard} />
+      <Route component={NotFound} />
+    </Switch>
+  );
+}
 
 function App() {
   return (
-    <Router>
-      <div className="min-h-screen bg-background">
-        <main>
-          <Switch>
-            <Route path="/" component={Dashboard} />
-            <Route>
-              <div className="flex items-center justify-center min-h-screen">
-                <h1 className="text-2xl font-bold">404 - Page Not Found</h1>
-              </div>
-            </Route>
-          </Switch>
-        </main>
-      </div>
-    </Router>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Router />
+      </TooltipProvider>
+    </QueryClientProvider>
   );
 }
 

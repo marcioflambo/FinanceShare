@@ -1,11 +1,11 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertExpenseSchema, insertBillSplitSchema, insertCategorySchema, insertBankAccountSchema, insertRoommateSchema, insertGoalSchema, insertGoalAccountSchema } from "@shared/schema";
+import { insertExpenseSchema, insertBillSplitSchema, insertBillSplitParticipantSchema, insertCategorySchema, insertBankAccountSchema, insertRoommateSchema, insertGoalSchema, insertGoalAccountSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  const DEMO_USER_ID = "demo-user-id"; // For demo purposes, use fixed user ID
+  const DEMO_USER_ID = 1; // For demo purposes, use fixed user ID
 
   // Categories
   app.get("/api/categories", async (req, res) => {
@@ -76,8 +76,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const expense = await storage.createExpense(expenseData);
       
       // Update bank account balance
-      const accounts = await storage.getBankAccounts(DEMO_USER_ID);
-      const account = accounts.find(acc => acc.id === expense.accountId);
+      const account = await storage.getBankAccountById(expense.accountId);
       if (account) {
         const newBalance = (parseFloat(account.balance) - parseFloat(expense.amount)).toFixed(2);
         await storage.updateBankAccountBalance(account.id, newBalance);
@@ -97,7 +96,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/bill-splits", async (req, res) => {
     try {
       const billSplits = await storage.getBillSplits(DEMO_USER_ID);
-      res.json(billSplits);
+      const billSplitsWithParticipants = await Promise.all(
+        billSplits.map(async (split) => {
+          const participants = await storage.getBillSplitParticipants(split.id);
+          return { ...split, participants };
+        })
+      );
+      res.json(billSplitsWithParticipants);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar divisões de conta" });
     }
@@ -105,14 +110,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/bill-splits", async (req, res) => {
     try {
-      const billSplitData = insertBillSplitSchema.parse({
-        ...req.body,
-        userId: DEMO_USER_ID,
-        date: new Date(req.body.date)
+      const { participants, ...billSplitData } = req.body;
+      
+      const billSplit = await storage.createBillSplit({
+        ...billSplitData,
+        createdBy: DEMO_USER_ID,
+        totalAmount: billSplitData.totalAmount.toString()
       });
 
-      const billSplit = await storage.createBillSplit(billSplitData);
-      res.json(billSplit);
+      // Create participants
+      const createdParticipants = await Promise.all(
+        participants.map(async (participant: any) => {
+          return await storage.createBillSplitParticipant({
+            billSplitId: billSplit.id,
+            userId: participant.roommateId || DEMO_USER_ID,
+            amount: participant.amount.toString(),
+            isPaid: participant.isPaid || false
+          });
+        })
+      );
+
+      res.json({ ...billSplit, participants: createdParticipants });
     } catch (error) {
       if (error instanceof z.ZodError) {
         res.status(400).json({ message: "Dados inválidos", errors: error.errors });
@@ -122,12 +140,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/bill-splits/:id", async (req, res) => {
+  app.patch("/api/bill-splits/:participantId/payment", async (req, res) => {
     try {
-      const billSplit = await storage.updateBillSplit(req.params.id, req.body);
-      res.json(billSplit);
+      const participantId = parseInt(req.params.participantId);
+      const { isPaid } = req.body;
+      
+      await storage.updateParticipantPaymentStatus(participantId, isPaid);
+      res.json({ success: true });
     } catch (error) {
-      res.status(500).json({ message: "Erro ao atualizar divisão de conta" });
+      res.status(500).json({ message: "Erro ao atualizar status de pagamento" });
     }
   });
 
@@ -172,10 +193,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .filter(expense => expense.date >= startOfMonth)
         .reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
       
-      // Calculate pending bill splits amount
-      const pendingAmount = billSplits
-        .filter(split => split.participants.some(p => !p.paid))
-        .reduce((sum, split) => sum + parseFloat(split.totalAmount), 0);
+      // Calculate pending bill splits
+      const pendingSplits = await Promise.all(
+        billSplits.map(async (split) => {
+          const participants = await storage.getBillSplitParticipants(split.id);
+          return participants.filter(p => !p.isPaid && p.userId !== DEMO_USER_ID);
+        })
+      );
+      const pendingAmount = pendingSplits.flat().reduce((sum, p) => sum + parseFloat(p.amount), 0);
       
       // Calculate savings (simplified as total balance - monthly expenses)
       const savings = Math.max(0, totalBalance - monthlyExpenses);
@@ -195,20 +220,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/goals", async (req, res) => {
     try {
       const goals = await storage.getGoals(DEMO_USER_ID);
+      const goalsWithAccounts = await Promise.all(
+        goals.map(async (goal) => {
+          const goalAccounts = await storage.getGoalAccounts(goal.id);
+          const accounts = await Promise.all(
+            goalAccounts.map(async (ga) => {
+              const account = await storage.getBankAccountById(ga.accountId);
+              return account;
+            })
+          );
+          
+          // Calculate current amount based on linked accounts
+          const currentAmount = accounts
+            .filter(Boolean)
+            .reduce((sum, account) => sum + parseFloat(account!.balance), 0);
+          
+          // Update goal progress
+          await storage.updateGoalProgress(goal.id, currentAmount.toString());
+          
+          return {
+            ...goal,
+            currentAmount: currentAmount.toString(),
+            accounts: accounts.filter(Boolean),
+            progress: Math.min((currentAmount / parseFloat(goal.targetAmount)) * 100, 100)
+          };
+        })
+      );
       
-      const goalsWithProgress = goals.map(goal => {
-        // Calculate current amount based on linked accounts
-        const currentAmount = goal.accounts.reduce((sum, account) => sum + parseFloat(account.balance), 0);
-        const progress = Math.min((currentAmount / parseFloat(goal.targetAmount)) * 100, 100);
-        
-        return {
-          ...goal,
-          currentAmount: currentAmount.toString(),
-          progress
-        };
-      });
-      
-      res.json(goalsWithProgress);
+      res.json(goalsWithAccounts);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar metas" });
     }
@@ -227,8 +266,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Link accounts to goal
       if (accounts && accounts.length > 0) {
         await Promise.all(
-          accounts.map(async (accountId: string) => {
-            await storage.createGoalAccount({
+          accounts.map(async (accountId: number) => {
+            await storage.addAccountToGoal({
               goalId: goal.id,
               accountId
             });
@@ -246,6 +285,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/goals/:id", async (req, res) => {
+    try {
+      const goalId = parseInt(req.params.id);
+      await storage.deleteGoal(goalId);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao deletar meta" });
+    }
+  });
+
   // AI Tips
   app.get("/api/ai-tips", async (req, res) => {
     try {
@@ -254,7 +303,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const categories = await storage.getCategories(DEMO_USER_ID);
       
       // Calculate expenses by category
-      const categoryTotals = new Map<string, number>();
+      const categoryTotals = new Map<number, number>();
       expenses.forEach(expense => {
         const current = categoryTotals.get(expense.categoryId) || 0;
         categoryTotals.set(expense.categoryId, current + parseFloat(expense.amount));
