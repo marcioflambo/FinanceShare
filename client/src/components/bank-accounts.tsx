@@ -1,11 +1,14 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import { Plus, Building, Smartphone, PiggyBank } from "lucide-react";
 import type { BankAccount } from "@shared/schema";
+import { BankAccountModal } from "./bank-account-modal";
 
 export function BankAccounts() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { data: accounts = [] } = useQuery<BankAccount[]>({
     queryKey: ["/api/bank-accounts"],
   });
@@ -39,7 +42,12 @@ export function BankAccounts() {
       <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle className="text-lg font-semibold">Contas Bancárias</CardTitle>
-          <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-primary hover:text-primary/80"
+            onClick={() => setIsModalOpen(true)}
+          >
             <Plus className="w-4 h-4 mr-1" />
             Adicionar Conta
           </Button>
@@ -81,6 +89,10 @@ export function BankAccounts() {
           </div>
         )}
       </CardContent>
+      <BankAccountModal 
+        open={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+      />
     </Card>
   );
 }
