@@ -208,35 +208,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const bankAccounts = await storage.getBankAccounts(DEMO_USER_ID);
       const billSplits = await storage.getBillSplits(DEMO_USER_ID);
       
-      // Calculate total balance
-      const totalBalance = bankAccounts.reduce((sum, account) => sum + parseFloat(account.balance), 0);
+      // Calculate total balance from all accounts
+      const totalBalance = bankAccounts.reduce((sum, account) => {
+        return sum + parseFloat(account.balance);
+      }, 0);
       
       // Calculate monthly expenses (current month)
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const monthlyExpenses = expenses
-        .filter(expense => expense.date >= startOfMonth)
+        .filter(expense => new Date(expense.date) >= startOfMonth)
         .reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
       
-      // Calculate pending bill splits
+      // Calculate pending bill splits (amounts owed to user)
       const pendingSplits = await Promise.all(
         billSplits.map(async (split) => {
           const participants = await storage.getBillSplitParticipants(split.id);
-          return participants.filter(p => !p.isPaid && p.userId !== DEMO_USER_ID);
+          return participants.filter(p => !p.isPaid);
         })
       );
       const pendingAmount = pendingSplits.flat().reduce((sum, p) => sum + parseFloat(p.amount), 0);
       
-      // Calculate savings (simplified as total balance - monthly expenses)
+      // Calculate savings (total balance minus monthly expenses)
       const savings = Math.max(0, totalBalance - monthlyExpenses);
       
       res.json({
-        totalBalance,
-        monthlyExpenses,
-        pendingSplits: pendingAmount,
-        savings
+        totalBalance: Math.round(totalBalance * 100) / 100,
+        monthlyExpenses: Math.round(monthlyExpenses * 100) / 100,
+        pendingSplits: Math.round(pendingAmount * 100) / 100,
+        savings: Math.round(savings * 100) / 100
       });
     } catch (error) {
+      console.error('Erro ao calcular estatísticas:', error);
       res.status(500).json({ message: "Erro ao calcular estatísticas" });
     }
   });
