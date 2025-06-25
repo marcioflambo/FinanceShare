@@ -18,7 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrencyDisplay } from "@/lib/currency";
 import { Plus, Building, Smartphone, PiggyBank, MoreVertical, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -156,7 +156,7 @@ export function BankAccounts() {
                 </div>
                 <div className="mb-3">
                   <p className="text-xs opacity-75 mb-1">Saldo Disponível</p>
-                  <p className="text-2xl font-bold">{formatCurrency(account.balance)}</p>
+                  <p className="text-2xl font-bold">{formatCurrencyDisplay(account.balance)}</p>
                 </div>
                 {account.lastFourDigits && (
                   <p className="text-xs opacity-75">**** **** **** {account.lastFourDigits}</p>

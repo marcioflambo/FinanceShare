@@ -29,12 +29,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { formatCurrencyInput, parseCurrencyInput } from "@/lib/currency";
 import type { BankAccount } from "@shared/schema";
 
 const formSchema = z.object({
   name: z.string().min(1, "Nome da conta é obrigatório"),
   type: z.enum(["checking", "savings", "credit"]),
-  balance: z.string().min(1, "Saldo inicial é obrigatório"),
+  balance: z.string(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -73,26 +74,33 @@ export function BankAccountModal({ open, onClose, editingAccount }: BankAccountM
     defaultValues: {
       name: "",
       type: "checking",
-      balance: "",
+      balance: "0,00",
     },
   });
+
+
 
   // Atualizar os campos quando abrindo para edição
   useEffect(() => {
     if (editingAccount) {
       form.setValue("name", editingAccount.name);
       form.setValue("type", editingAccount.type as "checking" | "savings" | "credit");
-      form.setValue("balance", editingAccount.balance);
+      form.setValue("balance", formatCurrencyInput(editingAccount.balance.replace('.', '')));
       setSelectedColor(editingAccount.color);
     } else {
       form.reset();
+      form.setValue("balance", "0,00");
       setSelectedColor(accountColors[0]);
     }
   }, [editingAccount, form]);
 
   const saveMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      const payload = { ...data, color: selectedColor };
+      const payload = { 
+        ...data, 
+        color: selectedColor,
+        balance: parseCurrencyInput(data.balance)
+      };
       
       if (isEditing && editingAccount) {
         const response = await apiRequest("PUT", `/api/bank-accounts/${editingAccount.id}`, payload);
@@ -187,10 +195,12 @@ export function BankAccountModal({ open, onClose, editingAccount }: BankAccountM
                   <FormLabel>Saldo Inicial</FormLabel>
                   <FormControl>
                     <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="0.00"
+                      placeholder="0,00"
                       {...field}
+                      onChange={(e) => {
+                        const formatted = formatCurrencyInput(e.target.value);
+                        field.onChange(formatted);
+                      }}
                     />
                   </FormControl>
                   <FormMessage />

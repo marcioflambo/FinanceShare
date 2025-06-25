@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrencyDisplay } from "@/lib/currency";
 import { TrendingUp, TrendingDown, Users, PiggyBank, Target } from "lucide-react";
 
 interface StatisticsData {
@@ -82,7 +82,7 @@ export function StatsCards() {
             </span>
           </div>
           <p className="text-lg md:text-2xl font-bold text-gray-900 mb-1">
-            {formatCurrency(card.value)}
+            {formatCurrencyDisplay(card.value)}
           </p>
           <p className="text-xs md:text-sm text-gray-600">{card.title}</p>
         </Card>
