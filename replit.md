@@ -10,7 +10,7 @@ The application follows a full-stack architecture with clear separation between 
 
 - **Frontend**: React-based SPA using Vite for build tooling
 - **Backend**: Express.js REST API server
-- **Database**: PostgreSQL with Drizzle ORM (migrated from in-memory storage)
+- **Database**: PostgreSQL with Drizzle ORM infrastructure prepared (currently using in-memory storage with database schema ready for migration)
 - **UI Framework**: Tailwind CSS with shadcn/ui components
 - **State Management**: TanStack Query for server state management
 - **Routing**: Wouter for client-side routing
@@ -95,7 +95,8 @@ Preferred communication style: Simple, everyday language.
 - June 25, 2025. Added comprehensive financial goals system with account linking and progress tracking
 - June 25, 2025. Improved mobile responsiveness with 2x2 card grid layout for phones and 4-column for desktop
 - June 25, 2025. Resolved infinite chart rendering loop and optimized component performance
-- June 25, 2025. Migrated from in-memory storage to PostgreSQL database with complete data persistence
+- June 25, 2025. Fixed "Adicionar Conta" button functionality with complete bank account creation modal
+- June 25, 2025. Prepared PostgreSQL database infrastructure with Drizzle ORM schema and migrations ready
 - June 25, 2025. Implementing user authentication system with email/password registration and Google OAuth support
 
 ## Key Features

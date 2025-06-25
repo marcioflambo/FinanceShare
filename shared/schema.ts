@@ -1,4 +1,5 @@
 import { pgTable, text, serial, integer, boolean, decimal, timestamp, varchar, jsonb, index } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -97,6 +98,94 @@ export const goalAccounts = pgTable("goal_accounts", {
   goalId: integer("goal_id").notNull(),
   accountId: integer("account_id").notNull(),
 });
+
+// Relations
+export const usersRelations = relations(users, ({ many }) => ({
+  categories: many(categories),
+  bankAccounts: many(bankAccounts),
+  expenses: many(expenses),
+  billSplits: many(billSplits),
+  billSplitParticipants: many(billSplitParticipants),
+  roommates: many(roommates),
+  goals: many(goals),
+}));
+
+export const categoriesRelations = relations(categories, ({ one, many }) => ({
+  user: one(users, {
+    fields: [categories.userId],
+    references: [users.id],
+  }),
+  expenses: many(expenses),
+}));
+
+export const bankAccountsRelations = relations(bankAccounts, ({ one, many }) => ({
+  user: one(users, {
+    fields: [bankAccounts.userId],
+    references: [users.id],
+  }),
+  expenses: many(expenses),
+  goalAccounts: many(goalAccounts),
+}));
+
+export const expensesRelations = relations(expenses, ({ one }) => ({
+  user: one(users, {
+    fields: [expenses.userId],
+    references: [users.id],
+  }),
+  category: one(categories, {
+    fields: [expenses.categoryId],
+    references: [categories.id],
+  }),
+  account: one(bankAccounts, {
+    fields: [expenses.accountId],
+    references: [bankAccounts.id],
+  }),
+}));
+
+export const billSplitsRelations = relations(billSplits, ({ one, many }) => ({
+  creator: one(users, {
+    fields: [billSplits.createdBy],
+    references: [users.id],
+  }),
+  participants: many(billSplitParticipants),
+}));
+
+export const billSplitParticipantsRelations = relations(billSplitParticipants, ({ one }) => ({
+  billSplit: one(billSplits, {
+    fields: [billSplitParticipants.billSplitId],
+    references: [billSplits.id],
+  }),
+  user: one(users, {
+    fields: [billSplitParticipants.userId],
+    references: [users.id],
+  }),
+}));
+
+export const roommatesRelations = relations(roommates, ({ one }) => ({
+  user: one(users, {
+    fields: [roommates.userId],
+    references: [users.id],
+  }),
+}));
+
+export const goalsRelations = relations(goals, ({ one, many }) => ({
+  user: one(users, {
+    fields: [goals.userId],
+    references: [users.id],
+  }),
+  goalAccounts: many(goalAccounts),
+}));
+
+export const goalAccountsRelations = relations(goalAccounts, ({ one }) => ({
+  goal: one(goals, {
+    fields: [goalAccounts.goalId],
+    references: [goals.id],
+  }),
+  account: one(bankAccounts, {
+    fields: [goalAccounts.accountId],
+    references: [bankAccounts.id],
+  }),
+}));
 
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({

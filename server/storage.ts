@@ -373,4 +373,245 @@ export class MemStorage implements IStorage {
   }
 }
 
+import { db, isDatabaseAvailable } from "./db";
+import { eq, and, desc, gte, lte } from "drizzle-orm";
+import { 
+  users, categories, bankAccounts, expenses, billSplits, billSplitParticipants, 
+  roommates, goals, goalAccounts 
+} from "@shared/schema";
+import bcrypt from "bcrypt";
+
+export class DatabaseStorage implements IStorage {
+  // Users
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const hashedPassword = await bcrypt.hash(insertUser.password, 10);
+    const [user] = await db
+      .insert(users)
+      .values({
+        ...insertUser,
+        password: hashedPassword,
+        authProvider: "local",
+      })
+      .returning();
+    return user;
+  }
+
+  async authenticateUser(email: string, password: string): Promise<User | null> {
+    const user = await this.getUserByEmail(email);
+    if (!user || !user.password) return null;
+    
+    const isValid = await bcrypt.compare(password, user.password);
+    return isValid ? user : null;
+  }
+
+  // Categories
+  async getCategories(userId: number): Promise<Category[]> {
+    return await db.select().from(categories).where(eq(categories.userId, userId));
+  }
+
+  async createCategory(insertCategory: InsertCategory): Promise<Category> {
+    const [category] = await db
+      .insert(categories)
+      .values(insertCategory)
+      .returning();
+    return category;
+  }
+
+  async getCategoryById(id: number): Promise<Category | undefined> {
+    const [category] = await db.select().from(categories).where(eq(categories.id, id));
+    return category || undefined;
+  }
+
+  // Bank Accounts
+  async getBankAccounts(userId: number): Promise<BankAccount[]> {
+    return await db.select().from(bankAccounts).where(eq(bankAccounts.userId, userId));
+  }
+
+  async createBankAccount(insertAccount: InsertBankAccount): Promise<BankAccount> {
+    const [account] = await db
+      .insert(bankAccounts)
+      .values(insertAccount)
+      .returning();
+    return account;
+  }
+
+  async getBankAccountById(id: number): Promise<BankAccount | undefined> {
+    const [account] = await db.select().from(bankAccounts).where(eq(bankAccounts.id, id));
+    return account || undefined;
+  }
+
+  async updateBankAccountBalance(id: number, balance: string): Promise<void> {
+    await db
+      .update(bankAccounts)
+      .set({ balance })
+      .where(eq(bankAccounts.id, id));
+  }
+
+  // Expenses
+  async getExpenses(userId: number): Promise<Expense[]> {
+    return await db
+      .select()
+      .from(expenses)
+      .where(eq(expenses.userId, userId))
+      .orderBy(desc(expenses.date));
+  }
+
+  async createExpense(insertExpense: InsertExpense): Promise<Expense> {
+    const [expense] = await db
+      .insert(expenses)
+      .values(insertExpense)
+      .returning();
+    return expense;
+  }
+
+  async getExpensesByDateRange(userId: number, startDate: Date, endDate: Date): Promise<Expense[]> {
+    return await db
+      .select()
+      .from(expenses)
+      .where(
+        and(
+          eq(expenses.userId, userId),
+          gte(expenses.date, startDate),
+          lte(expenses.date, endDate)
+        )
+      );
+  }
+
+  async getExpensesByCategory(userId: number, categoryId: number): Promise<Expense[]> {
+    return await db
+      .select()
+      .from(expenses)
+      .where(
+        and(
+          eq(expenses.userId, userId),
+          eq(expenses.categoryId, categoryId)
+        )
+      );
+  }
+
+  // Bill Splits
+  async getBillSplits(userId: number): Promise<BillSplit[]> {
+    return await db.select().from(billSplits).where(eq(billSplits.createdBy, userId));
+  }
+
+  async createBillSplit(insertBillSplit: InsertBillSplit): Promise<BillSplit> {
+    const [billSplit] = await db
+      .insert(billSplits)
+      .values(insertBillSplit)
+      .returning();
+    return billSplit;
+  }
+
+  async getBillSplitById(id: number): Promise<BillSplit | undefined> {
+    const [billSplit] = await db.select().from(billSplits).where(eq(billSplits.id, id));
+    return billSplit || undefined;
+  }
+
+  async getBillSplitParticipants(billSplitId: number): Promise<BillSplitParticipant[]> {
+    return await db
+      .select()
+      .from(billSplitParticipants)
+      .where(eq(billSplitParticipants.billSplitId, billSplitId));
+  }
+
+  async createBillSplitParticipant(insertParticipant: InsertBillSplitParticipant): Promise<BillSplitParticipant> {
+    const [participant] = await db
+      .insert(billSplitParticipants)
+      .values(insertParticipant)
+      .returning();
+    return participant;
+  }
+
+  async updateParticipantPaymentStatus(id: number, isPaid: boolean): Promise<void> {
+    await db
+      .update(billSplitParticipants)
+      .set({ 
+        isPaid, 
+        paidAt: isPaid ? new Date() : null 
+      })
+      .where(eq(billSplitParticipants.id, id));
+  }
+
+  // Roommates
+  async getRoommates(userId: number): Promise<Roommate[]> {
+    return await db.select().from(roommates).where(eq(roommates.userId, userId));
+  }
+
+  async createRoommate(insertRoommate: InsertRoommate): Promise<Roommate> {
+    const [roommate] = await db
+      .insert(roommates)
+      .values(insertRoommate)
+      .returning();
+    return roommate;
+  }
+
+  // Goals
+  async getGoals(userId: number): Promise<Goal[]> {
+    return await db.select().from(goals).where(eq(goals.userId, userId));
+  }
+
+  async createGoal(insertGoal: InsertGoal): Promise<Goal> {
+    const [goal] = await db
+      .insert(goals)
+      .values({
+        ...insertGoal,
+        currentAmount: "0",
+        isCompleted: false,
+      })
+      .returning();
+    return goal;
+  }
+
+  async getGoalById(id: number): Promise<Goal | undefined> {
+    const [goal] = await db.select().from(goals).where(eq(goals.id, id));
+    return goal || undefined;
+  }
+
+  async updateGoalProgress(id: number, currentAmount: string): Promise<void> {
+    await db
+      .update(goals)
+      .set({ currentAmount })
+      .where(eq(goals.id, id));
+  }
+
+  async deleteGoal(id: number): Promise<void> {
+    await db.delete(goals).where(eq(goals.id, id));
+  }
+
+  // Goal Accounts
+  async getGoalAccounts(goalId: number): Promise<GoalAccount[]> {
+    return await db.select().from(goalAccounts).where(eq(goalAccounts.goalId, goalId));
+  }
+
+  async addAccountToGoal(insertGoalAccount: InsertGoalAccount): Promise<GoalAccount> {
+    const [goalAccount] = await db
+      .insert(goalAccounts)
+      .values(insertGoalAccount)
+      .returning();
+    return goalAccount;
+  }
+
+  async removeAccountFromGoal(goalId: number, accountId: number): Promise<void> {
+    await db
+      .delete(goalAccounts)
+      .where(
+        and(
+          eq(goalAccounts.goalId, goalId),
+          eq(goalAccounts.accountId, accountId)
+        )
+      );
+  }
+}
+
+// Use MemStorage for now - database migration will be completed later
 export const storage = new MemStorage();
