@@ -29,9 +29,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { insertBankAccountSchema } from "@shared/schema";
 
-const formSchema = insertBankAccountSchema.extend({
+const formSchema = z.object({
+  name: z.string().min(1, "Nome da conta é obrigatório"),
+  type: z.enum(["checking", "savings", "credit"]),
   balance: z.string().min(1, "Saldo inicial é obrigatório"),
 });
 
@@ -70,19 +71,27 @@ export function BankAccountModal({ open, onClose }: BankAccountModalProps) {
       name: "",
       type: "checking",
       balance: "",
-      color: accountColors[0],
     },
   });
 
   const createMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      const response = await apiRequest("POST", "/api/bank-accounts", { 
-        ...data, 
-        color: selectedColor 
-      });
-      return response.json();
+      console.log("Making API request with data:", { ...data, color: selectedColor });
+      try {
+        const response = await apiRequest("POST", "/api/bank-accounts", { 
+          ...data, 
+          color: selectedColor 
+        });
+        const result = await response.json();
+        console.log("API response:", result);
+        return result;
+      } catch (error) {
+        console.error("API request failed:", error);
+        throw error;
+      }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Mutation succeeded:", data);
       queryClient.invalidateQueries({ queryKey: ["/api/bank-accounts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/statistics"] });
       toast({
@@ -94,6 +103,7 @@ export function BankAccountModal({ open, onClose }: BankAccountModalProps) {
       onClose();
     },
     onError: (error: Error) => {
+      console.error("Mutation failed:", error);
       toast({
         title: "Erro ao criar conta",
         description: error.message,
@@ -103,6 +113,9 @@ export function BankAccountModal({ open, onClose }: BankAccountModalProps) {
   });
 
   const onSubmit = (data: FormData) => {
+    console.log("Form submitted with data:", data);
+    console.log("Selected color:", selectedColor);
+    console.log("Form errors:", form.formState.errors);
     createMutation.mutate(data);
   };
 
