@@ -55,6 +55,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/bank-accounts/:id", async (req, res) => {
+    try {
+      const accountId = parseInt(req.params.id);
+      const accountData = insertBankAccountSchema.parse({ ...req.body, userId: DEMO_USER_ID });
+      const account = await storage.updateBankAccount(accountId, accountData);
+      res.json(account);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Dados inválidos", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Erro ao atualizar conta bancária" });
+      }
+    }
+  });
+
+  app.delete("/api/bank-accounts/:id", async (req, res) => {
+    try {
+      const accountId = parseInt(req.params.id);
+      await storage.deleteBankAccount(accountId);
+      res.json({ message: "Conta bancária excluída com sucesso" });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao excluir conta bancária" });
+    }
+  });
+
   // Expenses
   app.get("/api/expenses", async (req, res) => {
     try {

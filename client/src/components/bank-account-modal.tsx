@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -29,6 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import type { BankAccount } from "@shared/schema";
 
 const formSchema = z.object({
   name: z.string().min(1, "Nome da conta é obrigatório"),
@@ -41,6 +42,7 @@ type FormData = z.infer<typeof formSchema>;
 interface BankAccountModalProps {
   open: boolean;
   onClose: () => void;
+  editingAccount?: BankAccount | null;
 }
 
 const accountTypes = [
@@ -60,10 +62,11 @@ const accountColors = [
   "#84CC16", // Lime
 ];
 
-export function BankAccountModal({ open, onClose }: BankAccountModalProps) {
+export function BankAccountModal({ open, onClose, editingAccount }: BankAccountModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedColor, setSelectedColor] = useState(accountColors[0]);
+  const isEditing = !!editingAccount;
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -74,38 +77,45 @@ export function BankAccountModal({ open, onClose }: BankAccountModalProps) {
     },
   });
 
-  const createMutation = useMutation({
+  // Atualizar os campos quando abrindo para edição
+  useEffect(() => {
+    if (editingAccount) {
+      form.setValue("name", editingAccount.name);
+      form.setValue("type", editingAccount.type as "checking" | "savings" | "credit");
+      form.setValue("balance", editingAccount.balance);
+      setSelectedColor(editingAccount.color);
+    } else {
+      form.reset();
+      setSelectedColor(accountColors[0]);
+    }
+  }, [editingAccount, form]);
+
+  const saveMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      console.log("Making API request with data:", { ...data, color: selectedColor });
-      try {
-        const response = await apiRequest("POST", "/api/bank-accounts", { 
-          ...data, 
-          color: selectedColor 
-        });
-        const result = await response.json();
-        console.log("API response:", result);
-        return result;
-      } catch (error) {
-        console.error("API request failed:", error);
-        throw error;
+      const payload = { ...data, color: selectedColor };
+      
+      if (isEditing && editingAccount) {
+        const response = await apiRequest("PUT", `/api/bank-accounts/${editingAccount.id}`, payload);
+        return response.json();
+      } else {
+        const response = await apiRequest("POST", "/api/bank-accounts", payload);
+        return response.json();
       }
     },
-    onSuccess: (data) => {
-      console.log("Mutation succeeded:", data);
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/bank-accounts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/statistics"] });
       toast({
-        title: "Conta criada com sucesso!",
-        description: "Sua nova conta bancária foi adicionada.",
+        title: isEditing ? "Conta atualizada com sucesso!" : "Conta criada com sucesso!",
+        description: isEditing ? "Os dados da conta foram atualizados." : "Sua nova conta bancária foi adicionada.",
       });
       form.reset();
       setSelectedColor(accountColors[0]);
       onClose();
     },
     onError: (error: Error) => {
-      console.error("Mutation failed:", error);
       toast({
-        title: "Erro ao criar conta",
+        title: isEditing ? "Erro ao atualizar conta" : "Erro ao criar conta",
         description: error.message,
         variant: "destructive",
       });
@@ -113,19 +123,19 @@ export function BankAccountModal({ open, onClose }: BankAccountModalProps) {
   });
 
   const onSubmit = (data: FormData) => {
-    console.log("Form submitted with data:", data);
-    console.log("Selected color:", selectedColor);
-    console.log("Form errors:", form.formState.errors);
-    createMutation.mutate(data);
+    saveMutation.mutate(data);
   };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Adicionar Nova Conta</DialogTitle>
+          <DialogTitle>{isEditing ? "Editar Conta" : "Adicionar Nova Conta"}</DialogTitle>
           <DialogDescription>
-            Adicione uma nova conta bancária para gerenciar suas finanças.
+            {isEditing 
+              ? "Atualize as informações da sua conta bancária." 
+              : "Adicione uma nova conta bancária para gerenciar suas finanças."
+            }
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -209,8 +219,10 @@ export function BankAccountModal({ open, onClose }: BankAccountModalProps) {
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={createMutation.isPending}>
-                {createMutation.isPending ? "Criando..." : "Criar Conta"}
+              <Button type="submit" disabled={saveMutation.isPending}>
+                {saveMutation.isPending 
+                  ? (isEditing ? "Atualizando..." : "Criando...") 
+                  : (isEditing ? "Atualizar Conta" : "Criar Conta")}
               </Button>
             </div>
           </form>

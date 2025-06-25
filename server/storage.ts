@@ -16,7 +16,9 @@ export interface IStorage {
   getBankAccounts(userId: number): Promise<BankAccount[]>;
   createBankAccount(account: InsertBankAccount): Promise<BankAccount>;
   getBankAccountById(id: number): Promise<BankAccount | undefined>;
+  updateBankAccount(id: number, account: InsertBankAccount): Promise<BankAccount>;
   updateBankAccountBalance(id: number, balance: string): Promise<void>;
+  deleteBankAccount(id: number): Promise<void>;
 
   // Expenses
   getExpenses(userId: number): Promise<Expense[]>;
@@ -225,12 +227,31 @@ export class MemStorage implements IStorage {
     return this.bankAccounts.get(id);
   }
 
+  async updateBankAccount(id: number, insertAccount: InsertBankAccount): Promise<BankAccount> {
+    const existingAccount = this.bankAccounts.get(id);
+    if (!existingAccount) {
+      throw new Error("Conta bancária não encontrada");
+    }
+    
+    const updatedAccount: BankAccount = { 
+      ...existingAccount,
+      ...insertAccount,
+      id 
+    };
+    this.bankAccounts.set(id, updatedAccount);
+    return updatedAccount;
+  }
+
   async updateBankAccountBalance(id: number, balance: string): Promise<void> {
     const account = this.bankAccounts.get(id);
     if (account) {
       account.balance = balance;
       this.bankAccounts.set(id, account);
     }
+  }
+
+  async deleteBankAccount(id: number): Promise<void> {
+    this.bankAccounts.delete(id);
   }
 
   // Expenses
@@ -450,10 +471,25 @@ export class DatabaseStorage implements IStorage {
     return account || undefined;
   }
 
+  async updateBankAccount(id: number, insertAccount: InsertBankAccount): Promise<BankAccount> {
+    const [updatedAccount] = await db
+      .update(bankAccounts)
+      .set(insertAccount)
+      .where(eq(bankAccounts.id, id))
+      .returning();
+    return updatedAccount;
+  }
+
   async updateBankAccountBalance(id: number, balance: string): Promise<void> {
     await db
       .update(bankAccounts)
       .set({ balance })
+      .where(eq(bankAccounts.id, id));
+  }
+
+  async deleteBankAccount(id: number): Promise<void> {
+    await db
+      .delete(bankAccounts)
       .where(eq(bankAccounts.id, id));
   }
 
