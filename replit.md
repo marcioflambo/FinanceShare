@@ -99,6 +99,7 @@ Preferred communication style: Simple, everyday language.
 - June 25, 2025. Prepared PostgreSQL database infrastructure with Drizzle ORM schema and migrations ready
 - June 25, 2025. Implementing user authentication system with email/password registration and Google OAuth support
 - June 25, 2025. Successfully migrated from in-memory storage to PostgreSQL database with all demo data persisted
+- June 25, 2025. Implemented active/inactive status for bank accounts - inactive accounts don't count in total balance but can still be used in financial goals
 
 ## Key Features
 
@@ -108,6 +109,12 @@ Preferred communication style: Simple, everyday language.
 - **Progress Tracking**: Real-time calculation of goal completion based on selected account balances
 - **Goal Presets**: Quick templates for common goals (travel, emergency fund, electronics, etc.)
 - **Visual Progress**: Color-coded progress bars and completion indicators
+
+### Bank Account Management
+- **Active/Inactive Status**: Accounts can be marked as active or inactive
+- **Selective Balance Calculation**: Only active accounts contribute to total balance statistics
+- **Flexible Goal Integration**: Both active and inactive accounts can be linked to financial goals
+- **Visual Status Indicators**: Clear labeling of inactive accounts throughout the interface
 
 ### Expense Management
 - **Quick Expense Entry**: Floating action button and modal for rapid expense recording

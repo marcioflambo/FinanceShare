@@ -208,10 +208,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const bankAccounts = await storage.getBankAccounts(DEMO_USER_ID);
       const billSplits = await storage.getBillSplits(DEMO_USER_ID);
       
-      // Calculate total balance from all accounts
-      const totalBalance = bankAccounts.reduce((sum, account) => {
-        return sum + parseFloat(account.balance);
-      }, 0);
+      // Calculate total balance from active accounts only
+      const totalBalance = bankAccounts
+        .filter(account => account.isActive !== false)
+        .reduce((sum, account) => {
+          return sum + parseFloat(account.balance);
+        }, 0);
       
       // Calculate monthly expenses (current month)
       const now = new Date();

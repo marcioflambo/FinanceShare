@@ -325,7 +325,14 @@ export function GoalModal({ open, onClose }: GoalModalProps) {
                           {account.name.charAt(0)}
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">{account.name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-gray-900">{account.name}</p>
+                            {account.isActive === false && (
+                              <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+                                Inativa
+                              </span>
+                            )}
+                          </div>
                           <p className="text-sm text-gray-600">
                             {account.type === 'checking' ? 'Conta Corrente' :
                              account.type === 'savings' ? 'Poupança' : 'Digital'}

@@ -36,6 +36,7 @@ const formSchema = z.object({
   name: z.string().min(1, "Nome da conta é obrigatório"),
   type: z.enum(["checking", "savings", "credit"]),
   balance: z.string(),
+  isActive: z.boolean().default(true),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -86,10 +87,12 @@ export function BankAccountModal({ open, onClose, editingAccount }: BankAccountM
       form.setValue("name", editingAccount.name);
       form.setValue("type", editingAccount.type as "checking" | "savings" | "credit");
       form.setValue("balance", formatCurrencyInput(editingAccount.balance.replace('.', '')));
+      form.setValue("isActive", editingAccount.isActive !== false);
       setSelectedColor(editingAccount.color);
     } else {
       form.reset();
       form.setValue("balance", "0,00");
+      form.setValue("isActive", true);
       setSelectedColor(accountColors[0]);
     }
   }, [editingAccount, form]);
@@ -204,6 +207,31 @@ export function BankAccountModal({ open, onClose, editingAccount }: BankAccountM
                     />
                   </FormControl>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="isActive"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">
+                      Conta Ativa
+                    </FormLabel>
+                    <div className="text-sm text-muted-foreground">
+                      Contas inativas não aparecem no saldo total, mas podem ser usadas em metas
+                    </div>
+                  </div>
+                  <FormControl>
+                    <input
+                      type="checkbox"
+                      checked={field.value}
+                      onChange={field.onChange}
+                      className="h-4 w-4"
+                    />
+                  </FormControl>
                 </FormItem>
               )}
             />

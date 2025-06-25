@@ -118,7 +118,14 @@ export function BankAccounts() {
               >
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <p className="text-sm opacity-90">{account.name}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm opacity-90">{account.name}</p>
+                      {account.isActive === false && (
+                        <span className="text-xs bg-black/20 px-2 py-1 rounded-full opacity-75">
+                          Inativa
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs opacity-75">{getAccountTypeLabel(account.type)}</p>
                   </div>
                   <div className="flex items-center gap-2">

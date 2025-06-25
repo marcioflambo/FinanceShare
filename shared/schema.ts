@@ -40,6 +40,7 @@ export const bankAccounts = pgTable("bank_accounts", {
   color: text("color").notNull(),
   lastFourDigits: text("last_four_digits"),
   userId: integer("user_id").notNull(),
+  isActive: boolean("is_active").default(true),
 });
 
 export const expenses = pgTable("expenses", {
@@ -223,6 +224,7 @@ export const insertBankAccountSchema = createInsertSchema(bankAccounts).pick({
   color: true,
   lastFourDigits: true,
   userId: true,
+  isActive: true,
 });
 
 export const insertExpenseSchema = createInsertSchema(expenses).pick({
