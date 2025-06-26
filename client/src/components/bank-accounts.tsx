@@ -181,35 +181,37 @@ export function BankAccounts({ onTransferClick, onAccountSelect, selectedAccount
   };
 
   const nextAccount = () => {
+    if (currentIndex >= accounts.length - 1) return; // Prevent click when at last account
+    
     console.log('nextAccount clicked, currentIndex:', currentIndex, 'accounts.length:', accounts.length);
     const newIndex = currentIndex + 1;
-    if (newIndex < accounts.length) {
-      console.log('Setting new index to:', newIndex);
-      setCurrentIndex(newIndex);
-      // Update the filter after state change
-      setTimeout(() => {
-        if (onAccountSelect && accounts[newIndex]) {
-          console.log('Calling onAccountSelect with:', accounts[newIndex].id);
-          onAccountSelect(accounts[newIndex].id);
-        }
-      }, 0);
-    }
+    console.log('Setting new index to:', newIndex);
+    setCurrentIndex(newIndex);
+    
+    // Update the filter after state change
+    setTimeout(() => {
+      if (onAccountSelect && accounts[newIndex]) {
+        console.log('Calling onAccountSelect with:', accounts[newIndex].id);
+        onAccountSelect(accounts[newIndex].id);
+      }
+    }, 0);
   };
 
   const prevAccount = () => {
+    if (currentIndex <= 0) return; // Prevent click when at first account
+    
     console.log('prevAccount clicked, currentIndex:', currentIndex, 'accounts.length:', accounts.length);
     const newIndex = currentIndex - 1;
-    if (newIndex >= 0) {
-      console.log('Setting new index to:', newIndex);
-      setCurrentIndex(newIndex);
-      // Update the filter after state change
-      setTimeout(() => {
-        if (onAccountSelect && accounts[newIndex]) {
-          console.log('Calling onAccountSelect with:', accounts[newIndex].id);
-          onAccountSelect(accounts[newIndex].id);
-        }
-      }, 0);
-    }
+    console.log('Setting new index to:', newIndex);
+    setCurrentIndex(newIndex);
+    
+    // Update the filter after state change
+    setTimeout(() => {
+      if (onAccountSelect && accounts[newIndex]) {
+        console.log('Calling onAccountSelect with:', accounts[newIndex].id);
+        onAccountSelect(accounts[newIndex].id);
+      }
+    }, 0);
   };
 
   if (accounts.length === 0) {
@@ -360,21 +362,21 @@ export function BankAccounts({ onTransferClick, onAccountSelect, selectedAccount
                       variant="ghost"
                       size="sm"
                       onClick={prevAccount}
-                      disabled={validCurrentIndex === 0}
+                      disabled={currentIndex === 0}
                       className="h-6 w-6 p-0"
                     >
                       <ChevronLeft className="h-3 w-3" />
                     </Button>
                     
                     <span className="text-xs text-gray-500">
-                      {validCurrentIndex + 1} de {accounts.length}
+                      {currentIndex + 1} de {accounts.length}
                     </span>
                     
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={nextAccount}
-                      disabled={validCurrentIndex === accounts.length - 1}
+                      disabled={currentIndex === accounts.length - 1}
                       className="h-6 w-6 p-0"
                     >
                       <ChevronRight className="h-3 w-3" />
