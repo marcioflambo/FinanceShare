@@ -104,6 +104,7 @@ Preferred communication style: Simple, everyday language.
 - June 26, 2025. Added "Soma das Contas Ativas" statistics card showing real-time sum of active accounts only
 - June 26, 2025. Added "Contas Ativas" card, removed "Saldo Total" card, removed last 4 digits display from bank accounts for cleaner interface
 - June 26, 2025. Created comprehensive fake data for testing: expenses across categories, bill splits with pending payments, roommates, and financial goals with account linking - dashboard metrics now update dynamically with real transaction data
+- June 26, 2025. Implemented proper active/inactive account filtering: dashboard statistics only count active accounts while inactive accounts remain visible with status indicators for easy reactivation
 
 ## Key Features
 

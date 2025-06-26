@@ -40,8 +40,8 @@ export function BankAccounts() {
     queryKey: ["/api/bank-accounts"],
   });
 
-  // Filter to only show active accounts
-  const accounts = allAccounts.filter(account => account.isActive !== false);
+  // Show all accounts but mark inactive ones
+  const accounts = allAccounts;
 
   // Ensure currentIndex is valid for active accounts
   const validCurrentIndex = Math.min(currentIndex, Math.max(0, accounts.length - 1));
@@ -190,6 +190,11 @@ export function BankAccounts() {
                     {accounts[validCurrentIndex]?.name}
                   </span>
                   <p className="text-xs text-gray-500">{getAccountTypeLabel(accounts[validCurrentIndex]?.type)}</p>
+                  {accounts[validCurrentIndex]?.isActive === false && (
+                    <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full mt-1 inline-block">
+                      Inativa
+                    </span>
+                  )}
                 </div>
               </div>
               <DropdownMenu>
