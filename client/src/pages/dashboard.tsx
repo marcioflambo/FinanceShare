@@ -52,7 +52,10 @@ export default function Dashboard() {
 
   const renderMobileSection = () => {
     if (showAllTransactions) {
-      return <AllTransactions onBack={() => setShowAllTransactions(false)} />;
+      return <AllTransactions 
+        onBack={() => setShowAllTransactions(false)} 
+        selectedAccountIds={selectedAccountIds}
+      />;
     }
 
     switch (activeSection) {
@@ -149,7 +152,10 @@ export default function Dashboard() {
         {/* Desktop: Show all content */}
         <div className="hidden md:block">
           {showAllTransactions ? (
-            <AllTransactions onBack={() => setShowAllTransactions(false)} />
+            <AllTransactions 
+              onBack={() => setShowAllTransactions(false)} 
+              selectedAccountIds={selectedAccountIds}
+            />
           ) : (
             <>
               <div className="mb-8">

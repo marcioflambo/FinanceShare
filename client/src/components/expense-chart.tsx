@@ -94,7 +94,7 @@ export function ExpenseChart({ selectedAccountIds = [], onAccountSelectionChange
         };
       })
       .sort((a, b) => b.amount - a.amount);
-  }, [expenses, categories, accounts, period, customStartDate, customEndDate]);
+  }, [expenses, categories, accounts, period, customStartDate, customEndDate, selectedAccountIds]);
 
   const applyCustomFilter = () => {
     if (customStartDate && customEndDate) {

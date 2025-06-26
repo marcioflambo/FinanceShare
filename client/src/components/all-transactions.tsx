@@ -12,9 +12,10 @@ import type { Expense, Category, BankAccount } from "@shared/schema";
 
 interface AllTransactionsProps {
   onBack: () => void;
+  selectedAccountIds?: number[];
 }
 
-export function AllTransactions({ onBack }: AllTransactionsProps) {
+export function AllTransactions({ onBack, selectedAccountIds = [] }: AllTransactionsProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedMonthYear, setSelectedMonthYear] = useState<string>("all");
 
@@ -31,14 +32,21 @@ export function AllTransactions({ onBack }: AllTransactionsProps) {
   });
 
   const { transactionsByMonth, availableMonths, filteredTransactions } = useMemo(() => {
-    // Get active account IDs
-    const activeAccountIds = accounts
-      .filter(account => account.isActive !== false)
-      .map(account => account.id);
+    // Filter accounts based on selection
+    let accountIds: number[];
+    if (selectedAccountIds.length > 0) {
+      // Show only selected accounts
+      accountIds = selectedAccountIds;
+    } else {
+      // Show all active accounts if no accounts are selected
+      accountIds = accounts
+        .filter(account => account.isActive !== false)
+        .map(account => account.id);
+    }
 
     // Filter and enhance transactions
     const enhancedTransactions = expenses
-      .filter(expense => activeAccountIds.includes(expense.accountId))
+      .filter(expense => accountIds.includes(expense.accountId))
       .map(expense => {
         const category = categories.find(c => c.id === expense.categoryId);
         const account = accounts.find(a => a.id === expense.accountId);
@@ -99,7 +107,7 @@ export function AllTransactions({ onBack }: AllTransactionsProps) {
       availableMonths: last6Months,
       filteredTransactions: filtered
     };
-  }, [expenses, categories, accounts, selectedMonthYear, searchTerm]);
+  }, [expenses, categories, accounts, selectedMonthYear, searchTerm, selectedAccountIds]);
 
   const formatDateLabel = (date: Date) => {
     if (isToday(date)) {

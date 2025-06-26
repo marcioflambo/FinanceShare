@@ -50,7 +50,7 @@ export function RecentTransactions({ onViewAll, selectedAccountIds = [] }: Recen
           account
         };
       });
-  }, [expenses, categories, accounts]);
+  }, [expenses, categories, accounts, selectedAccountIds]);
 
   return (
     <Card className="shadow-sm border-gray-100">
