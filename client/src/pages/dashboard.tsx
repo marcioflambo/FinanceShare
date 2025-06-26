@@ -14,6 +14,7 @@ import { AdvancedExpenseModal } from "@/components/advanced-expense-modal";
 import { BillSplitModal } from "@/components/bill-split-modal";
 import { GoalModal } from "@/components/goal-modal";
 import { TransferModal } from "@/components/transfer-modal";
+import { AccountFilter } from "@/components/account-filter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Lightbulb, Download, Users, Target } from "lucide-react";
@@ -28,7 +29,7 @@ export default function Dashboard() {
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<ActiveSection>('dashboard');
   const [showAllTransactions, setShowAllTransactions] = useState(false);
-  const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null);
+  const [selectedAccountIds, setSelectedAccountIds] = useState<number[]>([]);
 
   const { data: aiTip } = useQuery<{ tip: string }>({
     queryKey: ["/api/ai-tips"],
@@ -44,9 +45,9 @@ export default function Dashboard() {
         return (
           <div className="space-y-6">
             <div className="grid grid-cols-1 gap-6">
-              <ExpenseChart selectedAccountId={selectedAccountId} />
-              <RecentTransactions onViewAll={() => setShowAllTransactions(true)} selectedAccountId={selectedAccountId} />
-              <BankAccounts onAccountSelect={setSelectedAccountId} selectedAccountId={selectedAccountId} />
+              <ExpenseChart selectedAccountIds={selectedAccountIds} />
+              <RecentTransactions onViewAll={() => setShowAllTransactions(true)} selectedAccountIds={selectedAccountIds} />
+              <BankAccounts />
             </div>
           </div>
         );
@@ -68,11 +69,17 @@ export default function Dashboard() {
             <div className="mb-6">
               <StatsCards />
               <div className="mt-4">
-                <BankAccounts onAccountSelect={setSelectedAccountId} selectedAccountId={selectedAccountId} />
+                <BankAccounts />
               </div>
             </div>
+            <div className="mb-4">
+              <AccountFilter 
+                selectedAccountIds={selectedAccountIds} 
+                onSelectionChange={setSelectedAccountIds} 
+              />
+            </div>
             <div className="grid grid-cols-1 gap-6 mb-8">
-              <ExpenseChart selectedAccountId={selectedAccountId} />
+              <ExpenseChart selectedAccountIds={selectedAccountIds} />
               <Card className="shadow-sm border-gray-100">
                 <CardContent className="p-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Ações Rápidas</h3>
@@ -141,8 +148,15 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                <ExpenseChart selectedAccountId={selectedAccountId} />
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+                <div className="lg:col-span-2">
+                  <ExpenseChart selectedAccountIds={selectedAccountIds} />
+                </div>
+                
+                <AccountFilter 
+                  selectedAccountIds={selectedAccountIds}
+                  onSelectionChange={setSelectedAccountIds}
+                />
 
                 <div className="space-y-4">
                   <Card className="shadow-sm border-gray-100">
@@ -207,7 +221,7 @@ export default function Dashboard() {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                <RecentTransactions onViewAll={() => setShowAllTransactions(true)} selectedAccountId={selectedAccountId} />
+                <RecentTransactions onViewAll={() => setShowAllTransactions(true)} selectedAccountIds={selectedAccountIds} />
                 <BillSplits />
               </div>
 

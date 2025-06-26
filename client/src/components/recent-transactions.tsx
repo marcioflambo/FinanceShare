@@ -7,10 +7,10 @@ import type { Expense, Category, BankAccount } from "@shared/schema";
 
 interface RecentTransactionsProps {
   onViewAll?: () => void;
-  selectedAccountId?: number | null;
+  selectedAccountIds?: number[];
 }
 
-export function RecentTransactions({ onViewAll, selectedAccountId }: RecentTransactionsProps) {
+export function RecentTransactions({ onViewAll, selectedAccountIds = [] }: RecentTransactionsProps) {
   const { data: expenses = [] } = useQuery<Expense[]>({
     queryKey: ["/api/expenses"],
   });
@@ -26,11 +26,11 @@ export function RecentTransactions({ onViewAll, selectedAccountId }: RecentTrans
   const recentTransactions = useMemo(() => {
     // Filter accounts based on selection
     let accountIds: number[];
-    if (selectedAccountId) {
-      // Show only selected account
-      accountIds = [selectedAccountId];
+    if (selectedAccountIds.length > 0) {
+      // Show only selected accounts
+      accountIds = selectedAccountIds;
     } else {
-      // Show all active accounts if no account is selected
+      // Show all active accounts if no accounts are selected
       accountIds = accounts
         .filter(account => account.isActive !== false)
         .map(account => account.id);
@@ -58,9 +58,9 @@ export function RecentTransactions({ onViewAll, selectedAccountId }: RecentTrans
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
             <CardTitle className="text-lg font-semibold">Transações Recentes</CardTitle>
-            {selectedAccountId && (
+            {selectedAccountIds.length > 0 && (
               <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                Conta selecionada
+                {selectedAccountIds.length === 1 ? "1 conta" : `${selectedAccountIds.length} contas`} selecionada{selectedAccountIds.length > 1 ? "s" : ""}
               </span>
             )}
           </div>

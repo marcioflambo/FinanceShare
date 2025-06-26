@@ -13,10 +13,10 @@ import { ptBR } from "date-fns/locale";
 import type { Expense, Category, BankAccount } from "@shared/schema";
 
 interface ExpenseChartProps {
-  selectedAccountId?: number | null;
+  selectedAccountIds?: number[];
 }
 
-export function ExpenseChart({ selectedAccountId }: ExpenseChartProps) {
+export function ExpenseChart({ selectedAccountIds = [] }: ExpenseChartProps) {
   const [period, setPeriod] = useState("30");
   const [customStartDate, setCustomStartDate] = useState<Date | undefined>();
   const [customEndDate, setCustomEndDate] = useState<Date | undefined>();
@@ -39,11 +39,11 @@ export function ExpenseChart({ selectedAccountId }: ExpenseChartProps) {
 
     // Filter accounts based on selection
     let accountIds: number[];
-    if (selectedAccountId) {
-      // Show only selected account
-      accountIds = [selectedAccountId];
+    if (selectedAccountIds.length > 0) {
+      // Show only selected accounts
+      accountIds = selectedAccountIds;
     } else {
-      // Show all active accounts if no account is selected
+      // Show all active accounts if no accounts are selected
       accountIds = accounts
         .filter(account => account.isActive !== false)
         .map(account => account.id);
@@ -114,9 +114,9 @@ export function ExpenseChart({ selectedAccountId }: ExpenseChartProps) {
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
             <CardTitle className="text-lg font-semibold">Despesas por Categoria</CardTitle>
-            {selectedAccountId && (
+            {selectedAccountIds.length > 0 && (
               <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                Conta selecionada
+                {selectedAccountIds.length === 1 ? "1 conta" : `${selectedAccountIds.length} contas`} selecionada{selectedAccountIds.length > 1 ? "s" : ""}
               </span>
             )}
           </div>
