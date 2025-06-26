@@ -170,30 +170,30 @@ export class MemStorage implements IStorage {
     // Create comprehensive demo expenses
     const demoExpenses: Expense[] = [
       // Recent expenses (this month)
-      { id: 1, description: "Supermercado Extra", amount: "245.67", date: new Date("2025-06-25"), categoryId: 1, accountId: 1, userId: 1 },
-      { id: 2, description: "Posto de Gasolina", amount: "89.50", date: new Date("2025-06-24"), categoryId: 2, accountId: 2, userId: 1 },
-      { id: 3, description: "Farmácia Drogasil", amount: "45.20", date: new Date("2025-06-23"), categoryId: 3, accountId: 1, userId: 1 },
-      { id: 4, description: "Netflix", amount: "39.90", date: new Date("2025-06-22"), categoryId: 4, accountId: 2, userId: 1 },
-      { id: 5, description: "Uber", amount: "25.40", date: new Date("2025-06-21"), categoryId: 2, accountId: 2, userId: 1 },
-      { id: 6, description: "Padaria do João", amount: "12.50", date: new Date("2025-06-20"), categoryId: 1, accountId: 1, userId: 1 },
-      { id: 7, description: "Shopping Iguatemi", amount: "156.80", date: new Date("2025-06-19"), categoryId: 5, accountId: 1, userId: 1 },
-      { id: 8, description: "Academia Smart Fit", amount: "49.90", date: new Date("2025-06-18"), categoryId: 6, accountId: 2, userId: 1 },
+      { id: 1, description: "Supermercado Extra", amount: "245.67", date: new Date("2025-06-25"), categoryId: 1, accountId: 1, userId: 1, createdAt: new Date("2025-06-25") },
+      { id: 2, description: "Posto de Gasolina", amount: "89.50", date: new Date("2025-06-24"), categoryId: 2, accountId: 2, userId: 1, createdAt: new Date("2025-06-24") },
+      { id: 3, description: "Farmácia Drogasil", amount: "45.20", date: new Date("2025-06-23"), categoryId: 3, accountId: 1, userId: 1, createdAt: new Date("2025-06-23") },
+      { id: 4, description: "Netflix", amount: "39.90", date: new Date("2025-06-22"), categoryId: 4, accountId: 2, userId: 1, createdAt: new Date("2025-06-22") },
+      { id: 5, description: "Uber", amount: "25.40", date: new Date("2025-06-21"), categoryId: 2, accountId: 2, userId: 1, createdAt: new Date("2025-06-21") },
+      { id: 6, description: "Padaria do João", amount: "12.50", date: new Date("2025-06-20"), categoryId: 1, accountId: 1, userId: 1, createdAt: new Date("2025-06-20") },
+      { id: 7, description: "Shopping Iguatemi", amount: "156.80", date: new Date("2025-06-19"), categoryId: 5, accountId: 1, userId: 1, createdAt: new Date("2025-06-19") },
+      { id: 8, description: "Academia Smart Fit", amount: "49.90", date: new Date("2025-06-18"), categoryId: 6, accountId: 2, userId: 1, createdAt: new Date("2025-06-18") },
       
       // Previous month expenses
-      { id: 9, description: "Conta de Luz", amount: "189.45", date: new Date("2025-05-15"), categoryId: 1, accountId: 1, userId: 1 },
-      { id: 10, description: "Supermercado Carrefour", amount: "312.88", date: new Date("2025-05-14"), categoryId: 1, accountId: 1, userId: 1 },
-      { id: 11, description: "Posto Shell", amount: "95.20", date: new Date("2025-05-13"), categoryId: 2, accountId: 2, userId: 1 },
-      { id: 12, description: "Restaurante Outback", amount: "185.60", date: new Date("2025-05-12"), categoryId: 1, accountId: 1, userId: 1 },
-      { id: 13, description: "Spotify Premium", date: new Date("2025-05-10"), amount: "19.90", categoryId: 4, accountId: 2, userId: 1 },
-      { id: 14, description: "Zara", amount: "298.50", date: new Date("2025-05-08"), categoryId: 5, accountId: 1, userId: 1 },
-      { id: 15, description: "Dentista", amount: "380.00", date: new Date("2025-05-05"), categoryId: 3, accountId: 1, userId: 1 },
+      { id: 9, description: "Conta de Luz", amount: "189.45", date: new Date("2025-05-15"), categoryId: 1, accountId: 1, userId: 1, createdAt: new Date("2025-05-15") },
+      { id: 10, description: "Supermercado Carrefour", amount: "312.88", date: new Date("2025-05-14"), categoryId: 1, accountId: 1, userId: 1, createdAt: new Date("2025-05-14") },
+      { id: 11, description: "Posto Shell", amount: "95.20", date: new Date("2025-05-13"), categoryId: 2, accountId: 2, userId: 1, createdAt: new Date("2025-05-13") },
+      { id: 12, description: "Restaurante Outback", amount: "185.60", date: new Date("2025-05-12"), categoryId: 1, accountId: 1, userId: 1, createdAt: new Date("2025-05-12") },
+      { id: 13, description: "Spotify Premium", date: new Date("2025-05-10"), amount: "19.90", categoryId: 4, accountId: 2, userId: 1, createdAt: new Date("2025-05-10") },
+      { id: 14, description: "Zara", amount: "298.50", date: new Date("2025-05-08"), categoryId: 5, accountId: 1, userId: 1, createdAt: new Date("2025-05-08") },
+      { id: 15, description: "Dentista", amount: "380.00", date: new Date("2025-05-05"), categoryId: 3, accountId: 1, userId: 1, createdAt: new Date("2025-05-05") },
       
       // Older expenses
-      { id: 16, description: "iFood - Pizza", amount: "67.40", date: new Date("2025-04-28"), categoryId: 1, accountId: 2, userId: 1 },
-      { id: 17, description: "Combustível", amount: "78.90", date: new Date("2025-04-25"), categoryId: 2, accountId: 2, userId: 1 },
-      { id: 18, description: "Livros Amazon", amount: "129.90", date: new Date("2025-04-20"), categoryId: 6, accountId: 1, userId: 1 },
-      { id: 19, description: "Cinema", amount: "45.00", date: new Date("2025-04-15"), categoryId: 4, accountId: 2, userId: 1 },
-      { id: 20, description: "Mercado Municipal", amount: "87.35", date: new Date("2025-04-10"), categoryId: 1, accountId: 1, userId: 1 }
+      { id: 16, description: "iFood - Pizza", amount: "67.40", date: new Date("2025-04-28"), categoryId: 1, accountId: 2, userId: 1, createdAt: new Date("2025-04-28") },
+      { id: 17, description: "Combustível", amount: "78.90", date: new Date("2025-04-25"), categoryId: 2, accountId: 2, userId: 1, createdAt: new Date("2025-04-25") },
+      { id: 18, description: "Livros Amazon", amount: "129.90", date: new Date("2025-04-20"), categoryId: 6, accountId: 1, userId: 1, createdAt: new Date("2025-04-20") },
+      { id: 19, description: "Cinema", amount: "45.00", date: new Date("2025-04-15"), categoryId: 4, accountId: 2, userId: 1, createdAt: new Date("2025-04-15") },
+      { id: 20, description: "Mercado Municipal", amount: "87.35", date: new Date("2025-04-10"), categoryId: 1, accountId: 1, userId: 1, createdAt: new Date("2025-04-10") }
     ];
     demoExpenses.forEach(expense => this.expenses.set(expense.id, expense));
     this.currentIds.expenses = 21;
@@ -765,9 +765,14 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Always use DatabaseStorage - 100% database-driven
-if (!isDatabaseAvailable) {
-  throw new Error("Database is required but not available. Please check DATABASE_URL environment variable.");
+// Use DatabaseStorage when available, MemStorage during migration
+let storage: IStorage;
+if (isDatabaseAvailable) {
+  storage = new DatabaseStorage();
+} else {
+  // Temporary fallback for migration - will be replaced with database
+  console.log("Using temporary in-memory storage during migration. Database will be configured.");
+  storage = new MemStorage();
 }
 
-export const storage = new DatabaseStorage();
+export { storage };
