@@ -19,12 +19,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { formatCurrencyDisplay } from "@/lib/currency";
-import { Plus, Building, Smartphone, PiggyBank, MoreVertical, Edit, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Building, PiggyBank, MoreVertical, Edit, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { BankAccount } from "@shared/schema";
 import { BankAccountModal } from "./bank-account-modal";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 export function BankAccounts() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -33,7 +32,6 @@ export function BankAccounts() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const isMobile = useIsMobile();
   const startX = useRef<number>(0);
   
   const { data: accounts = [] } = useQuery<BankAccount[]>({
@@ -93,11 +91,6 @@ export function BankAccounts() {
     }
   };
 
-  const handleEdit = (account: BankAccount) => {
-    setEditingAccount(account);
-    setIsModalOpen(true);
-  };
-
   const handleTouchStart = (e: React.TouchEvent) => {
     startX.current = e.touches[0].clientX;
   };
@@ -131,11 +124,11 @@ export function BankAccounts() {
     }
   };
 
-  return (
-    <div className="h-full">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-base font-semibold text-gray-900">Minhas Contas</h2>
+  if (accounts.length === 0) {
+    return (
+      <Card className="w-full md:w-80 h-32 p-4 text-center text-gray-500 border-dashed flex flex-col justify-center items-center">
+        <Building className="w-6 h-6 mx-auto mb-2 opacity-50" />
+        <p className="text-xs mb-2">Adicione sua primeira conta</p>
         <Button 
           variant="ghost" 
           size="sm" 
@@ -143,209 +136,134 @@ export function BankAccounts() {
           onClick={() => setIsModalOpen(true)}
         >
           <Plus className="w-3 h-3 mr-1" />
-          Adicionar
+          Adicionar Conta
         </Button>
-      </div>
+        
+        <BankAccountModal
+          open={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setEditingAccount(null);
+          }}
+          editingAccount={editingAccount}
+        />
+      </Card>
+    );
+  }
 
-      {accounts.length === 0 ? (
-        <Card className="p-6 text-center text-gray-500 border-dashed">
-          <Building className="w-8 h-8 mx-auto mb-2 opacity-50" />
-          <p className="text-sm">Adicione sua primeira conta</p>
-        </Card>
-      ) : (
-        <div className="relative">
-          {/* Desktop: Vertical stack of compact cards */}
-          <div className="hidden md:block">
-            <div className="space-y-3 max-h-80 overflow-y-auto">
-              {accounts.map((account) => (
-                <Card
-                  key={account.id}
-                  className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                  style={{
-                    background: `linear-gradient(135deg, ${account.color}15 0%, ${account.color}25 100%)`
-                  }}
-                >
-                  <CardContent className="p-3">
-                    <div className="flex justify-between items-center">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          {getAccountIcon(account.type)}
-                          <span 
-                            className="text-sm font-medium truncate"
-                            style={{ color: account.color }}
-                          >
-                            {account.name}
-                          </span>
-                          {account.isActive === false && (
-                            <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">
-                              Inativa
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-gray-500">{getAccountTypeLabel(account.type)}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="text-right">
-                          <p className="text-sm font-bold text-gray-900">
-                            {formatCurrencyDisplay(account.balance)}
-                          </p>
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
-                            >
-                              <MoreVertical className="h-3 w-3" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setEditingAccount(account);
-                                setIsModalOpen(true);
-                              }}
-                            >
-                              <Edit className="h-4 w-4 mr-2" />
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => setAccountToDelete(account)}
-                              className="text-red-600"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Excluir
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-
-          {/* Mobile: Swipeable single account */}
-          <div className="md:hidden">
-            <div 
-              className="relative overflow-hidden"
-              onTouchStart={handleTouchStart}
-              onTouchEnd={handleTouchEnd}
-            >
-              <Card
-                key={accounts[currentIndex]?.id}
-                className="relative overflow-hidden"
-                style={{
-                  background: `linear-gradient(135deg, ${accounts[currentIndex]?.color}15 0%, ${accounts[currentIndex]?.color}25 100%)`
-                }}
-              >
-                <CardContent className="p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex items-center gap-2">
-                      {getAccountIcon(accounts[currentIndex]?.type)}
-                      <div>
-                        <p 
-                          className="font-semibold text-lg"
-                          style={{ color: accounts[currentIndex]?.color }}
-                        >
-                          {accounts[currentIndex]?.name}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          {getAccountTypeLabel(accounts[currentIndex]?.type)}
-                        </p>
-                        {accounts[currentIndex]?.isActive === false && (
-                          <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full mt-1 inline-block">
-                            Inativa
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-white hover:bg-white/20"
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setEditingAccount(accounts[currentIndex]);
-                            setIsModalOpen(true);
-                          }}
-                        >
-                          <Edit className="h-4 w-4 mr-2" />
-                          Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => setAccountToDelete(accounts[currentIndex])}
-                          className="text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                  
-                  <div className="text-right">
-                    <p className="text-sm text-gray-600 mb-1">Saldo</p>
-                    <p 
-                      className="text-2xl font-bold"
-                      style={{ color: accounts[currentIndex]?.color }}
-                    >
-                      {formatCurrencyDisplay(accounts[currentIndex]?.balance)}
-                    </p>
-                  </div>
-                  
-                </CardContent>
-              </Card>
-              
-              {/* Navigation indicators and arrows for mobile */}
-              {accounts.length > 1 && (
-                <div className="flex justify-center items-center mt-4 space-x-4">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={prevAccount}
-                    disabled={currentIndex === 0}
-                    className="h-8 w-8 p-0"
+  return (
+    <div className="w-full md:w-80">
+      <div
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
+        <Card
+          className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow"
+          style={{
+            background: `linear-gradient(135deg, ${accounts[currentIndex]?.color}15 0%, ${accounts[currentIndex]?.color}25 100%)`
+          }}
+        >
+          <CardContent className="p-4">
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex items-center gap-2">
+                {getAccountIcon(accounts[currentIndex]?.type)}
+                <div>
+                  <span 
+                    className="text-sm font-medium block"
+                    style={{ color: accounts[currentIndex]?.color }}
                   >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  
-                  <div className="flex space-x-1">
-                    {accounts.map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setCurrentIndex(index)}
-                        className={`w-2 h-2 rounded-full transition-colors ${
-                          index === currentIndex ? 'bg-blue-500' : 'bg-gray-300'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={nextAccount}
-                    disabled={currentIndex === accounts.length - 1}
-                    className="h-8 w-8 p-0"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
+                    {accounts[currentIndex]?.name}
+                  </span>
+                  <p className="text-xs text-gray-500">{getAccountTypeLabel(accounts[currentIndex]?.type)}</p>
+                  {accounts[currentIndex]?.isActive === false && (
+                    <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full mt-1 inline-block">
+                      Inativa
+                    </span>
+                  )}
                 </div>
-              )}
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
+                  >
+                    <MoreVertical className="h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setEditingAccount(accounts[currentIndex]);
+                      setIsModalOpen(true);
+                    }}
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Editar
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setAccountToDelete(accounts[currentIndex])}
+                    className="text-red-600"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Excluir
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-          </div>
-        </div>
-      )}
+            
+            <div className="text-right mb-3">
+              <p className="text-xs text-gray-500 mb-1">Saldo</p>
+              <p className="text-lg font-bold text-gray-900">
+                {formatCurrencyDisplay(accounts[currentIndex]?.balance)}
+              </p>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-2">
+                {accounts.length > 1 && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={prevAccount}
+                      disabled={currentIndex === 0}
+                      className="h-6 w-6 p-0"
+                    >
+                      <ChevronLeft className="h-3 w-3" />
+                    </Button>
+                    
+                    <span className="text-xs text-gray-500">
+                      {currentIndex + 1} de {accounts.length}
+                    </span>
+                    
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={nextAccount}
+                      disabled={currentIndex === accounts.length - 1}
+                      className="h-6 w-6 p-0"
+                    >
+                      <ChevronRight className="h-3 w-3" />
+                    </Button>
+                  </>
+                )}
+              </div>
+              
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 text-xs"
+                onClick={() => setIsModalOpen(true)}
+              >
+                <Plus className="w-3 h-3 mr-1" />
+                Adicionar
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       <BankAccountModal
         open={isModalOpen}

@@ -57,14 +57,6 @@ export function StatsCards() {
       changeColor: "text-blue-600 bg-blue-100",
     },
     {
-      title: "Contas Ativas",
-      value: activeAccountsCount,
-      icon: <i className="fas fa-credit-card text-emerald-600 text-sm"></i>,
-      iconBg: "bg-emerald-50",
-      change: `de ${totalAccountsCount} total`,
-      changeColor: "text-emerald-600 bg-emerald-100",
-    },
-    {
       title: "Gastos do Mês",
       value: stats.monthlyExpenses,
       icon: <TrendingDown className="w-4 h-4 text-red-500" />,

@@ -54,7 +54,12 @@ export default function Dashboard() {
       default: // dashboard
         return (
           <>
-            <StatsCards />
+            <div className="mb-6">
+              <StatsCards />
+              <div className="mt-4">
+                <BankAccounts />
+              </div>
+            </div>
             <div className="grid grid-cols-1 gap-6 mb-8">
               <ExpenseChart />
               <Card className="shadow-sm border-gray-100">
@@ -110,11 +115,9 @@ export default function Dashboard() {
         
         {/* Desktop: Show all content */}
         <div className="hidden md:block">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <div className="lg:col-span-2">
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
               <StatsCards />
-            </div>
-            <div className="lg:col-span-1">
               <BankAccounts />
             </div>
           </div>
