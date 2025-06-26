@@ -615,10 +615,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCategory(insertCategory: InsertCategory): Promise<Category> {
-    const [category] = await db
+    const result = await db
       .insert(categories)
-      .values(insertCategory)
-      .returning();
+      .values(insertCategory);
+    
+    const [category] = await db
+      .select()
+      .from(categories)
+      .where(eq(categories.id, result.insertId))
+      .limit(1);
+      
     return category;
   }
 
@@ -647,18 +653,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createBankAccount(insertAccount: InsertBankAccount): Promise<BankAccount> {
-    try {
-      console.log('Creating bank account with data:', insertAccount);
-      const [account] = await db
-        .insert(bankAccounts)
-        .values(insertAccount)
-        .returning();
-      console.log('Created account:', account);
-      return account;
-    } catch (error) {
-      console.error('Database error creating bank account:', error);
-      throw error;
-    }
+    const result = await db
+      .insert(bankAccounts)
+      .values(insertAccount);
+    
+    // Get the inserted account by ID
+    const [account] = await db
+      .select()
+      .from(bankAccounts)
+      .where(eq(bankAccounts.id, result.insertId))
+      .limit(1);
+      
+    return account;
   }
 
   async getBankAccountById(id: number): Promise<BankAccount | undefined> {
@@ -667,11 +673,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateBankAccount(id: number, insertAccount: InsertBankAccount): Promise<BankAccount> {
-    const [updatedAccount] = await db
+    await db
       .update(bankAccounts)
       .set(insertAccount)
+      .where(eq(bankAccounts.id, id));
+    
+    const [updatedAccount] = await db
+      .select()
+      .from(bankAccounts)
       .where(eq(bankAccounts.id, id))
-      .returning();
+      .limit(1);
+      
     return updatedAccount;
   }
 
@@ -708,10 +720,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createExpense(insertExpense: InsertExpense): Promise<Expense> {
-    const [expense] = await db
+    const result = await db
       .insert(expenses)
-      .values(insertExpense)
-      .returning();
+      .values(insertExpense);
+    
+    const [expense] = await db
+      .select()
+      .from(expenses)
+      .where(eq(expenses.id, result.insertId))
+      .limit(1);
+      
     return expense;
   }
 
@@ -746,10 +764,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createBillSplit(insertBillSplit: InsertBillSplit): Promise<BillSplit> {
-    const [billSplit] = await db
+    const result = await db
       .insert(billSplits)
-      .values(insertBillSplit)
-      .returning();
+      .values(insertBillSplit);
+    
+    const [billSplit] = await db
+      .select()
+      .from(billSplits)
+      .where(eq(billSplits.id, result.insertId))
+      .limit(1);
+      
     return billSplit;
   }
 
@@ -766,10 +790,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createBillSplitParticipant(insertParticipant: InsertBillSplitParticipant): Promise<BillSplitParticipant> {
-    const [participant] = await db
+    const result = await db
       .insert(billSplitParticipants)
-      .values(insertParticipant)
-      .returning();
+      .values(insertParticipant);
+    
+    const [participant] = await db
+      .select()
+      .from(billSplitParticipants)
+      .where(eq(billSplitParticipants.id, result.insertId))
+      .limit(1);
+      
     return participant;
   }
 
@@ -789,10 +819,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createRoommate(insertRoommate: InsertRoommate): Promise<Roommate> {
-    const [roommate] = await db
+    const result = await db
       .insert(roommates)
-      .values(insertRoommate)
-      .returning();
+      .values(insertRoommate);
+    
+    const [roommate] = await db
+      .select()
+      .from(roommates)
+      .where(eq(roommates.id, result.insertId))
+      .limit(1);
+      
     return roommate;
   }
 
@@ -802,14 +838,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createGoal(insertGoal: InsertGoal): Promise<Goal> {
-    const [goal] = await db
+    const result = await db
       .insert(goals)
       .values({
         ...insertGoal,
         currentAmount: "0",
         isCompleted: false,
-      })
-      .returning();
+      });
+    
+    const [goal] = await db
+      .select()
+      .from(goals)
+      .where(eq(goals.id, result.insertId))
+      .limit(1);
+      
     return goal;
   }
 
@@ -835,10 +877,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async addAccountToGoal(insertGoalAccount: InsertGoalAccount): Promise<GoalAccount> {
-    const [goalAccount] = await db
+    const result = await db
       .insert(goalAccounts)
-      .values(insertGoalAccount)
-      .returning();
+      .values(insertGoalAccount);
+    
+    const [goalAccount] = await db
+      .select()
+      .from(goalAccounts)
+      .where(eq(goalAccounts.id, result.insertId))
+      .limit(1);
+      
     return goalAccount;
   }
 
@@ -859,10 +907,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTransfer(insertTransfer: InsertTransfer): Promise<Transfer> {
-    const [transfer] = await db
+    const result = await db
       .insert(transfers)
-      .values(insertTransfer)
-      .returning();
+      .values(insertTransfer);
     
     // Update account balances
     const amount = parseFloat(insertTransfer.amount);
@@ -877,6 +924,12 @@ export class DatabaseStorage implements IStorage {
       .set({ balance: sql`balance + ${amount}` })
       .where(eq(bankAccounts.id, insertTransfer.toAccountId));
     
+    const [transfer] = await db
+      .select()
+      .from(transfers)
+      .where(eq(transfers.id, result.insertId))
+      .limit(1);
+      
     return transfer;
   }
 

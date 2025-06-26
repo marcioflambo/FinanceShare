@@ -261,6 +261,7 @@ export const insertBankAccountSchema = createInsertSchema(bankAccounts).pick({
   lastFourDigits: true,
   userId: true,
   isActive: true,
+  sortOrder: true,
 });
 
 export const insertExpenseSchema = createInsertSchema(expenses).pick({
