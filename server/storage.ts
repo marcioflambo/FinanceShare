@@ -130,9 +130,9 @@ export class MemStorage implements IStorage {
 
     // Create demo bank accounts
     const demoBankAccounts: BankAccount[] = [
-      { id: 1, name: "Banco do Brasil", type: "checking", balance: "1245.30", color: "#1E3A8A", lastFourDigits: "1234", userId: 1 },
-      { id: 2, name: "Nubank", type: "checking", balance: "892.45", color: "#059669", lastFourDigits: "5678", userId: 1 },
-      { id: 3, name: "Poupança", type: "savings", balance: "2850.00", color: "#F59E0B", lastFourDigits: "9012", userId: 1 },
+      { id: 1, name: "Banco do Brasil", type: "checking", balance: "1245.30", color: "#1E3A8A", lastFourDigits: "1234", userId: 1, isActive: true, sortOrder: 1 },
+      { id: 2, name: "Nubank", type: "checking", balance: "892.45", color: "#059669", lastFourDigits: "5678", userId: 1, isActive: true, sortOrder: 2 },
+      { id: 3, name: "Poupança", type: "savings", balance: "2850.00", color: "#F59E0B", lastFourDigits: "9012", userId: 1, isActive: true, sortOrder: 3 },
     ];
     demoBankAccounts.forEach(acc => this.bankAccounts.set(acc.id, acc));
     this.currentIds.bankAccounts = 4;
@@ -186,8 +186,10 @@ export class MemStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.currentIds.users++;
     const user: User = { 
-      ...insertUser, 
       id,
+      name: insertUser.name,
+      email: insertUser.email || null,
+      password: insertUser.password || null,
       authProvider: "manual",
       profileImageUrl: null,
       createdAt: new Date()
@@ -220,7 +222,17 @@ export class MemStorage implements IStorage {
 
   async createBankAccount(insertAccount: InsertBankAccount): Promise<BankAccount> {
     const id = this.currentIds.bankAccounts++;
-    const account: BankAccount = { ...insertAccount, id };
+    const account: BankAccount = { 
+      id,
+      name: insertAccount.name,
+      type: insertAccount.type,
+      color: insertAccount.color,
+      userId: insertAccount.userId,
+      balance: insertAccount.balance,
+      lastFourDigits: insertAccount.lastFourDigits || null,
+      isActive: insertAccount.isActive ?? true,
+      sortOrder: this.bankAccounts.size + 1
+    };
     this.bankAccounts.set(id, account);
     return account;
   }
@@ -303,9 +315,11 @@ export class MemStorage implements IStorage {
   async createBillSplit(insertBillSplit: InsertBillSplit): Promise<BillSplit> {
     const id = this.currentIds.billSplits++;
     const billSplit: BillSplit = { 
-      ...insertBillSplit, 
       id,
-      date: new Date(),
+      title: insertBillSplit.title,
+      description: insertBillSplit.description || null,
+      totalAmount: insertBillSplit.totalAmount,
+      createdBy: insertBillSplit.createdBy,
       createdAt: new Date()
     };
     this.billSplits.set(id, billSplit);
@@ -323,10 +337,12 @@ export class MemStorage implements IStorage {
   async createBillSplitParticipant(insertParticipant: InsertBillSplitParticipant): Promise<BillSplitParticipant> {
     const id = this.currentIds.billSplitParticipants++;
     const participant: BillSplitParticipant = { 
-      ...insertParticipant, 
       id,
-      paidAt: null,
-      createdAt: new Date()
+      billSplitId: insertParticipant.billSplitId,
+      userId: insertParticipant.userId,
+      amount: insertParticipant.amount,
+      isPaid: insertParticipant.isPaid || null,
+      paidAt: null
     };
     this.billSplitParticipants.set(id, participant);
     return participant;
@@ -686,5 +702,5 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Use MemStorage for now - database migration will be completed later
-export const storage = new DatabaseStorage();
+// Use MemStorage for now - database connection issues will be resolved
+export const storage = new MemStorage();
