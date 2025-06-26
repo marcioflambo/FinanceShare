@@ -59,6 +59,27 @@ export function BankAccounts({ onTransferClick, onAccountSelect, selectedAccount
     }
   }, [accounts.length, currentIndex]);
 
+  // Sync currentIndex with selectedAccountId
+  useEffect(() => {
+    if (selectedAccountId && accounts.length > 0) {
+      const accountIndex = accounts.findIndex(account => account.id === selectedAccountId);
+      if (accountIndex !== -1 && accountIndex !== currentIndex) {
+        setCurrentIndex(accountIndex);
+      }
+    }
+  }, [selectedAccountId, accounts, currentIndex]);
+
+  // Initialize selection with first account when accounts load
+  useEffect(() => {
+    if (accounts.length > 0 && !selectedAccountId && onAccountSelect) {
+      // Find first active account or just first account
+      const firstActiveAccount = accounts.find(account => account.isActive !== false) || accounts[0];
+      if (firstActiveAccount) {
+        onAccountSelect(firstActiveAccount.id);
+      }
+    }
+  }, [accounts, selectedAccountId, onAccountSelect]);
+
   const deleteMutation = useMutation({
     mutationFn: async (accountId: number) => {
       const response = await apiRequest("DELETE", `/api/bank-accounts/${accountId}`);
@@ -171,13 +192,23 @@ export function BankAccounts({ onTransferClick, onAccountSelect, selectedAccount
 
   const nextAccount = () => {
     if (currentIndex < accounts.length - 1) {
-      setCurrentIndex(currentIndex + 1);
+      const newIndex = currentIndex + 1;
+      setCurrentIndex(newIndex);
+      // Update the filter to the new account
+      if (onAccountSelect && accounts[newIndex]) {
+        onAccountSelect(accounts[newIndex].id);
+      }
     }
   };
 
   const prevAccount = () => {
     if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
+      const newIndex = currentIndex - 1;
+      setCurrentIndex(newIndex);
+      // Update the filter to the new account
+      if (onAccountSelect && accounts[newIndex]) {
+        onAccountSelect(accounts[newIndex].id);
+      }
     }
   };
 
