@@ -259,8 +259,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       const pendingAmount = pendingSplits.flat().reduce((sum, p) => sum + parseFloat(p.amount), 0);
       
-      // Calculate savings (total balance minus monthly expenses)
-      const savings = Math.max(0, totalBalance - monthlyExpenses);
+      // Calculate savings (only from savings accounts)
+      const savings = bankAccounts
+        .filter(account => account.type === 'savings' && account.isActive !== false)
+        .reduce((sum, account) => sum + parseFloat(account.balance), 0);
       
       res.json({
         totalBalance: Math.round(totalBalance * 100) / 100,

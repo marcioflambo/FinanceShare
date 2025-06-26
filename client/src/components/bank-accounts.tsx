@@ -83,21 +83,30 @@ export function BankAccounts({ onTransferClick }: BankAccountsProps) {
   const toggleAccountStatus = async (account: BankAccount) => {
     try {
       const newStatus = !account.isActive;
-      const response = await apiRequest("PATCH", `/api/bank-accounts/${account.id}`, {
-        ...account,
-        isActive: newStatus
+      
+      // Use PUT instead of PATCH and send all required fields
+      await fetch(`/api/bank-accounts/${account.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: account.name,
+          type: account.type,
+          balance: account.balance,
+          color: account.color,
+          isActive: newStatus
+        }),
       });
       
-      if (response.ok) {
-        queryClient.invalidateQueries({ queryKey: ["/api/bank-accounts"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/statistics"] });
-        toast({
-          title: newStatus ? "Conta reativada" : "Conta desativada",
-          description: newStatus 
-            ? "A conta foi reativada e voltará a contar no saldo total." 
-            : "A conta foi desativada e não contará mais no saldo total.",
-        });
-      }
+      queryClient.invalidateQueries({ queryKey: ["/api/bank-accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/statistics"] });
+      toast({
+        title: newStatus ? "Conta reativada" : "Conta desativada",
+        description: newStatus 
+          ? "A conta foi reativada e voltará a contar no saldo total." 
+          : "A conta foi desativada e não contará mais no saldo total.",
+      });
     } catch (error) {
       toast({
         title: "Erro ao alterar status da conta",

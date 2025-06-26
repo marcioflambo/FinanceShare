@@ -276,6 +276,8 @@ Preferred communication style: Simple, everyday language.
 - June 26, 2025. **DOCUMENTATION COMPLETED**: Created comprehensive migration guide and configuration documentation for future app recreations with external MySQL database
 - June 26, 2025. **DOCUMENTATION FINALIZED**: Corrected all PostgreSQL references in documentation to MySQL, ensuring complete accuracy for external Percona MySQL database configuration
 - June 26, 2025. **COMPLETE DATABASE CLEANUP**: Removed all PostgreSQL, SQLite and non-MySQL database references from code, dependencies, and configuration files
+- June 26, 2025. **FIXED ACCOUNT REACTIVATION**: Corrected bank account status toggle functionality using proper PUT method with complete field validation
+- June 26, 2025. **ECONOMICS CARD REFINEMENT**: Updated "Economia" statistics to show only savings account balances instead of calculated savings (total minus expenses)
 
 ## Key Features
 
