@@ -647,11 +647,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createBankAccount(insertAccount: InsertBankAccount): Promise<BankAccount> {
-    const [account] = await db
-      .insert(bankAccounts)
-      .values(insertAccount)
-      .returning();
-    return account;
+    try {
+      console.log('Creating bank account with data:', insertAccount);
+      const [account] = await db
+        .insert(bankAccounts)
+        .values(insertAccount)
+        .returning();
+      console.log('Created account:', account);
+      return account;
+    } catch (error) {
+      console.error('Database error creating bank account:', error);
+      throw error;
+    }
   }
 
   async getBankAccountById(id: number): Promise<BankAccount | undefined> {

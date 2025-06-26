@@ -49,6 +49,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const account = await storage.createBankAccount(accountData);
       res.json(account);
     } catch (error) {
+      console.error('Erro ao criar conta bancária:', error);
       if (error instanceof z.ZodError) {
         res.status(400).json({ message: "Dados inválidos", errors: error.errors });
       } else {
