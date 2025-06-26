@@ -191,22 +191,28 @@ export function BankAccounts({ onTransferClick, onAccountSelect, selectedAccount
   };
 
   const nextAccount = () => {
+    console.log('nextAccount clicked, currentIndex:', currentIndex, 'accounts.length:', accounts.length);
     if (currentIndex < accounts.length - 1) {
       const newIndex = currentIndex + 1;
+      console.log('Setting new index to:', newIndex);
       setCurrentIndex(newIndex);
       // Update the filter to the new account
       if (onAccountSelect && accounts[newIndex]) {
+        console.log('Calling onAccountSelect with:', accounts[newIndex].id);
         onAccountSelect(accounts[newIndex].id);
       }
     }
   };
 
   const prevAccount = () => {
+    console.log('prevAccount clicked, currentIndex:', currentIndex, 'accounts.length:', accounts.length);
     if (currentIndex > 0) {
       const newIndex = currentIndex - 1;
+      console.log('Setting new index to:', newIndex);
       setCurrentIndex(newIndex);
       // Update the filter to the new account
       if (onAccountSelect && accounts[newIndex]) {
+        console.log('Calling onAccountSelect with:', accounts[newIndex].id);
         onAccountSelect(accounts[newIndex].id);
       }
     }
