@@ -879,7 +879,14 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Always use DatabaseStorage (with SQLite fallback if no PostgreSQL)
-let storage: IStorage = new DatabaseStorage();
+// Use DatabaseStorage when database is available, MemStorage as fallback
+let storage: IStorage;
+if (isDatabaseAvailable && db) {
+  storage = new DatabaseStorage();
+  console.log("✅ Using PostgreSQL database for data storage");
+} else {
+  storage = new MemStorage();
+  console.log("⚠️  Using temporary in-memory storage. Configure DATABASE_URL for persistent data.");
+}
 
 export { storage };
