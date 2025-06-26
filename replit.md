@@ -100,6 +100,8 @@ Preferred communication style: Simple, everyday language.
 - June 25, 2025. Implementing user authentication system with email/password registration and Google OAuth support
 - June 25, 2025. Successfully migrated from in-memory storage to PostgreSQL database with all demo data persisted
 - June 25, 2025. Implemented active/inactive status for bank accounts - inactive accounts don't count in total balance but can still be used in financial goals
+- June 26, 2025. Redesigned bank accounts section with compact layout - horizontal navigation with arrows on desktop, swipe navigation on mobile
+- June 26, 2025. Added "Soma das Contas Ativas" statistics card showing real-time sum of active accounts only
 
 ## Key Features
 
