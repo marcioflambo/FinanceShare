@@ -1,12 +1,22 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon, Settings } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useMemo, useState } from "react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import type { Expense, Category, BankAccount } from "@shared/schema";
 
 export function ExpenseChart() {
   const [period, setPeriod] = useState("30");
+  const [customStartDate, setCustomStartDate] = useState<Date | undefined>();
+  const [customEndDate, setCustomEndDate] = useState<Date | undefined>();
+  const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
   
   const { data: expenses = [] } = useQuery<Expense[]>({
     queryKey: ["/api/expenses"],
@@ -29,14 +39,24 @@ export function ExpenseChart() {
       .map(account => account.id);
 
     // Filter expenses by period and active accounts
-    const now = new Date();
-    const periodDays = parseInt(period);
-    const startDate = new Date(now.getTime() - periodDays * 24 * 60 * 60 * 1000);
+    let startDate: Date;
+    let endDate: Date = new Date();
     
-    const filteredExpenses = expenses.filter(expense => 
-      new Date(expense.date) >= startDate && 
-      activeAccountIds.includes(expense.accountId)
-    );
+    if (period === "custom" && customStartDate && customEndDate) {
+      startDate = customStartDate;
+      endDate = customEndDate;
+    } else {
+      const now = new Date();
+      const periodDays = parseInt(period);
+      startDate = new Date(now.getTime() - periodDays * 24 * 60 * 60 * 1000);
+    }
+    
+    const filteredExpenses = expenses.filter(expense => {
+      const expenseDate = new Date(expense.date);
+      return expenseDate >= startDate && 
+             expenseDate <= endDate && 
+             activeAccountIds.includes(expense.accountId);
+    });
 
     // Group by category
     const categoryTotals = new Map<number, number>();
@@ -60,7 +80,20 @@ export function ExpenseChart() {
         };
       })
       .sort((a, b) => b.amount - a.amount);
-  }, [expenses, categories, accounts, period]);
+  }, [expenses, categories, accounts, period, customStartDate, customEndDate]);
+
+  const applyCustomFilter = () => {
+    if (customStartDate && customEndDate) {
+      setPeriod("custom");
+      setShowAdvancedFilter(false);
+    }
+  };
+
+  const resetFilter = () => {
+    setPeriod("30");
+    setCustomStartDate(undefined);
+    setCustomEndDate(undefined);
+  };
 
   const total = chartData.reduce((sum, item) => sum + item.amount, 0);
 
@@ -69,17 +102,102 @@ export function ExpenseChart() {
       <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle className="text-lg font-semibold">Despesas por Categoria</CardTitle>
-          <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="30">Últimos 30 dias</SelectItem>
-              <SelectItem value="90">Últimos 90 dias</SelectItem>
-              <SelectItem value="365">Este ano</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-2">
+            <Select value={period} onValueChange={setPeriod}>
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="30">Últimos 30 dias</SelectItem>
+                <SelectItem value="90">Últimos 90 dias</SelectItem>
+                <SelectItem value="365">Este ano</SelectItem>
+                {period === "custom" && (
+                  <SelectItem value="custom">
+                    Período personalizado
+                  </SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+            <Dialog open={showAdvancedFilter} onOpenChange={setShowAdvancedFilter}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <DialogTitle>Filtro Avançado - Período Personalizado</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Data de Início</label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start text-left font-normal"
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {customStartDate ? format(customStartDate, "dd/MM/yyyy", { locale: ptBR }) : "Selecionar data"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={customStartDate}
+                            onSelect={setCustomStartDate}
+                            locale={ptBR}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Data de Fim</label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start text-left font-normal"
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {customEndDate ? format(customEndDate, "dd/MM/yyyy", { locale: ptBR }) : "Selecionar data"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={customEndDate}
+                            onSelect={setCustomEndDate}
+                            locale={ptBR}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+                  <div className="flex justify-between pt-4">
+                    <Button variant="outline" onClick={resetFilter}>
+                      Limpar Filtros
+                    </Button>
+                    <Button 
+                      onClick={applyCustomFilter}
+                      disabled={!customStartDate || !customEndDate}
+                    >
+                      Aplicar Filtro
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
+        {period === "custom" && customStartDate && customEndDate && (
+          <p className="text-sm text-gray-600">
+            Período: {format(customStartDate, "dd/MM/yyyy", { locale: ptBR })} - {format(customEndDate, "dd/MM/yyyy", { locale: ptBR })}
+          </p>
+        )}
       </CardHeader>
       <CardContent>
         {/* Simple pie chart representation */}

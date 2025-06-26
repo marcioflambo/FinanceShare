@@ -278,6 +278,7 @@ Preferred communication style: Simple, everyday language.
 - June 26, 2025. **COMPLETE DATABASE CLEANUP**: Removed all PostgreSQL, SQLite and non-MySQL database references from code, dependencies, and configuration files
 - June 26, 2025. **FIXED ACCOUNT REACTIVATION**: Corrected bank account status toggle functionality using proper PUT method with complete field validation
 - June 26, 2025. **ECONOMICS CARD REFINEMENT**: Updated "Economia" statistics to show only savings account balances instead of calculated savings (total minus expenses)
+- June 26, 2025. **ENHANCED EXPENSE CHART FILTERING**: Implemented advanced filtering system for "Despesas por Categoria" with 30/90 day options plus custom date range selection using dual calendar interface
 
 ## Key Features
 
