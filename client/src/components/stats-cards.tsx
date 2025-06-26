@@ -44,22 +44,25 @@ export function StatsCards() {
 
   if (!stats) return null;
 
+  const activeAccountsCount = accounts.filter(acc => acc.isActive !== false).length;
+  const totalAccountsCount = accounts.length;
+
   const cards = [
     {
       title: "Soma das Contas Ativas",
       value: activeAccountsSum,
       icon: <Building className="w-4 h-4 text-blue-600" />,
       iconBg: "bg-blue-50",
-      change: `${accounts.filter(acc => acc.isActive !== false).length} ativas`,
+      change: `${activeAccountsCount} ativas`,
       changeColor: "text-blue-600 bg-blue-100",
     },
     {
-      title: "Saldo Total",
-      value: stats.totalBalance,
-      icon: <i className="fas fa-credit-card text-primary text-sm"></i>,
-      iconBg: "bg-primary/10",
-      change: "+12%",
-      changeColor: "text-green-600 bg-green-100",
+      title: "Contas Ativas",
+      value: activeAccountsCount,
+      icon: <i className="fas fa-credit-card text-emerald-600 text-sm"></i>,
+      iconBg: "bg-emerald-50",
+      change: `de ${totalAccountsCount} total`,
+      changeColor: "text-emerald-600 bg-emerald-100",
     },
     {
       title: "Gastos do Mês",
@@ -100,7 +103,7 @@ export function StatsCards() {
             </span>
           </div>
           <p className="text-lg md:text-2xl font-bold text-gray-900 mb-1">
-            {formatCurrencyDisplay(card.value)}
+            {card.title === "Contas Ativas" ? card.value : formatCurrencyDisplay(card.value)}
           </p>
           <p className="text-xs md:text-sm text-gray-600">{card.title}</p>
         </Card>

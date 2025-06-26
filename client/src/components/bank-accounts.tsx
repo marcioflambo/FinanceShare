@@ -210,11 +210,7 @@ export function BankAccounts() {
                           {formatCurrencyDisplay(account.balance)}
                         </p>
                       </div>
-                      {account.lastFourDigits && (
-                        <p className="text-xs text-gray-400 mt-2">
-                          **** {account.lastFourDigits}
-                        </p>
-                      )}
+
                     </CardContent>
                   </Card>
                 ))}
@@ -324,11 +320,7 @@ export function BankAccounts() {
                     </p>
                   </div>
                   
-                  {accounts[currentIndex].lastFourDigits && (
-                    <p className="text-sm opacity-75">
-                      **** **** **** {accounts[currentIndex].lastFourDigits}
-                    </p>
-                  )}
+
                 </CardContent>
               </Card>
               
