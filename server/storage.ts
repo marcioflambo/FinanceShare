@@ -568,7 +568,7 @@ export class MemStorage implements IStorage {
   }
 }
 
-import { db, isDatabaseAvailable } from "./db";
+import { db, isDatabaseAvailable, databaseInitialization } from "./db";
 import { eq, and, desc, gte, lte, sql } from "drizzle-orm";
 import { 
   users, categories, bankAccounts, expenses, billSplits, billSplitParticipants, 
@@ -879,14 +879,29 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Use DatabaseStorage when database is available, MemStorage as fallback
+// Initialize storage with MySQL database
 let storage: IStorage;
-if (isDatabaseAvailable && db) {
-  storage = new DatabaseStorage();
-  console.log("✅ Using PostgreSQL database for data storage");
-} else {
+
+const initializeStorage = async () => {
+  await databaseInitialization;
+  
+  if (db) {
+    try {
+      storage = new DatabaseStorage();
+      console.log("✅ Using MySQL external database for persistent data storage");
+      return true;
+    } catch (error) {
+      console.error("❌ Failed to initialize database storage:", error);
+    }
+  }
+  
   storage = new MemStorage();
-  console.log("⚠️  Using temporary in-memory storage. Configure DATABASE_URL for persistent data.");
-}
+  console.log("⚠️  Using temporary in-memory storage as fallback");
+  return false;
+};
+
+// Start with temporary storage, then switch to database when ready
+storage = new MemStorage();
+initializeStorage();
 
 export { storage };

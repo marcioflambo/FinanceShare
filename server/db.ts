@@ -1,28 +1,47 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
+import mysql from 'mysql2/promise';
+import { drizzle } from 'drizzle-orm/mysql2';
 import * as schema from "@shared/schema";
 
-neonConfig.webSocketConstructor = ws;
+// MySQL connection configuration
+const mysqlConfig = {
+  host: '186.202.152.149',
+  user: 'mlopes6',
+  password: 'G1ovann@040917',
+  database: 'mlopes6',
+  port: 3306,
+  connectTimeout: 10000,
+  acquireTimeout: 10000,
+  timeout: 10000
+};
 
-// Check if database is available
-const isDatabaseAvailable = !!process.env.DATABASE_URL;
+let db: any = null;
+let connection: any = null;
+let isDatabaseAvailable = false;
 
-let db: any;
-let pool: any;
+const initializeDatabase = async () => {
+  try {
+    console.log("🔄 Connecting to MySQL database...");
+    connection = await mysql.createConnection(mysqlConfig);
+    
+    // Test connection
+    await connection.ping();
+    console.log("✅ Successfully connected to MySQL database");
+    
+    db = drizzle(connection, { schema, mode: 'default' });
+    isDatabaseAvailable = true;
+    
+    return true;
+  } catch (error) {
+    console.error("❌ Failed to connect to MySQL database:", error);
+    console.log("⚠️  Using fallback storage. Check database configuration.");
+    db = null;
+    connection = null;
+    isDatabaseAvailable = false;
+    return false;
+  }
+};
 
-if (isDatabaseAvailable) {
-  pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  db = drizzle({ client: pool, schema });
-} else {
-  // Database not configured
-  console.log("⚠️  Database not configured. Please add DATABASE_URL to your environment variables.");
-  console.log("   1. Go to https://neon.tech and create a free account");
-  console.log("   2. Create a new project"); 
-  console.log("   3. Copy the connection string");
-  console.log("   4. Add it as DATABASE_URL in your Replit Secrets");
-  db = null;
-  pool = null;
-}
+// Initialize database connection and export the promise
+const databaseInitialization = initializeDatabase();
 
-export { db, pool, isDatabaseAvailable };
+export { db, connection, isDatabaseAvailable, databaseInitialization };

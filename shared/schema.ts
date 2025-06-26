@@ -1,96 +1,96 @@
-import { pgTable, text, serial, integer, boolean, decimal, timestamp, varchar, jsonb, index } from "drizzle-orm/pg-core";
+import { mysqlTable, text, serial, int, boolean, decimal, timestamp, varchar, json, index } from "drizzle-orm/mysql-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 // Session storage table for Replit Auth
-export const sessions = pgTable(
+export const sessions = mysqlTable(
   "sessions",
   {
-    sid: varchar("sid").primaryKey(),
-    sess: jsonb("sess").notNull(),
+    sid: varchar("sid", { length: 255 }).primaryKey(),
+    sess: json("sess").notNull(),
     expire: timestamp("expire").notNull(),
   },
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-export const users = pgTable("users", {
+export const users = mysqlTable("users", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  email: varchar("email").unique(),
+  email: varchar("email", { length: 255 }).unique(),
   password: text("password"), // For manual registration
-  authProvider: varchar("auth_provider").default("manual"), // 'google', 'manual'
-  profileImageUrl: varchar("profile_image_url"),
+  authProvider: varchar("auth_provider", { length: 50 }).default("manual"), // 'google', 'manual'
+  profileImageUrl: varchar("profile_image_url", { length: 500 }),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const categories = pgTable("categories", {
+export const categories = mysqlTable("categories", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   icon: text("icon").notNull(),
   color: text("color").notNull(),
-  userId: integer("user_id").notNull(),
+  userId: int("user_id").notNull(),
 });
 
-export const bankAccounts = pgTable("bank_accounts", {
+export const bankAccounts = mysqlTable("bank_accounts", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   type: text("type").notNull(), // 'checking', 'savings', 'credit'
   balance: decimal("balance", { precision: 10, scale: 2 }).notNull(),
   color: text("color").notNull(),
   lastFourDigits: text("last_four_digits"),
-  userId: integer("user_id").notNull(),
+  userId: int("user_id").notNull(),
   isActive: boolean("is_active").default(true),
-  sortOrder: integer("sort_order").default(0),
+  sortOrder: int("sort_order").default(0),
 });
 
-export const expenses = pgTable("expenses", {
+export const expenses = mysqlTable("expenses", {
   id: serial("id").primaryKey(),
   description: text("description").notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   date: timestamp("date").notNull(),
-  categoryId: integer("category_id").notNull(),
-  accountId: integer("account_id").notNull(),
-  userId: integer("user_id").notNull(),
+  categoryId: int("category_id").notNull(),
+  accountId: int("account_id").notNull(),
+  userId: int("user_id").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   // Recurring transaction fields
   isRecurring: boolean("is_recurring").default(false),
   recurringType: text("recurring_type"), // "none", "installment", "advanced"
   recurringFrequency: text("recurring_frequency"), // "daily", "weekly", "monthly", "yearly"
-  recurringInterval: integer("recurring_interval").default(1), // every X days/weeks/months/years
-  installmentTotal: integer("installment_total"), // total installments
-  installmentCurrent: integer("installment_current"), // current installment number
+  recurringInterval: int("recurring_interval").default(1), // every X days/weeks/months/years
+  installmentTotal: int("installment_total"), // total installments
+  installmentCurrent: int("installment_current"), // current installment number
   recurringEndDate: timestamp("recurring_end_date"),
-  parentExpenseId: integer("parent_expense_id"), // reference to original expense for installments
+  parentExpenseId: int("parent_expense_id"), // reference to original expense for installments
 });
 
-export const billSplits = pgTable("bill_splits", {
+export const billSplits = mysqlTable("bill_splits", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
   description: text("description"),
-  createdBy: integer("created_by").notNull(),
+  createdBy: int("created_by").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const billSplitParticipants = pgTable("bill_split_participants", {
+export const billSplitParticipants = mysqlTable("bill_split_participants", {
   id: serial("id").primaryKey(),
-  billSplitId: integer("bill_split_id").notNull(),
-  userId: integer("user_id").notNull(),
+  billSplitId: int("bill_split_id").notNull(),
+  userId: int("user_id").notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   isPaid: boolean("is_paid").default(false),
   paidAt: timestamp("paid_at"),
 });
 
-export const roommates = pgTable("roommates", {
+export const roommates = mysqlTable("roommates", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email"),
   phone: text("phone"),
-  userId: integer("user_id").notNull(),
+  userId: int("user_id").notNull(),
 });
 
-export const goals = pgTable("goals", {
+export const goals = mysqlTable("goals", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
@@ -100,24 +100,24 @@ export const goals = pgTable("goals", {
   isCompleted: boolean("is_completed").default(false),
   color: text("color").notNull(),
   icon: text("icon").notNull(),
-  userId: integer("user_id").notNull(),
+  userId: int("user_id").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const goalAccounts = pgTable("goal_accounts", {
+export const goalAccounts = mysqlTable("goal_accounts", {
   id: serial("id").primaryKey(),
-  goalId: integer("goal_id").notNull(),
-  accountId: integer("account_id").notNull(),
+  goalId: int("goal_id").notNull(),
+  accountId: int("account_id").notNull(),
 });
 
-export const transfers = pgTable("transfers", {
+export const transfers = mysqlTable("transfers", {
   id: serial("id").primaryKey(),
   description: text("description").notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   date: timestamp("date").notNull(),
-  fromAccountId: integer("from_account_id").notNull(),
-  toAccountId: integer("to_account_id").notNull(),
-  userId: integer("user_id").notNull(),
+  fromAccountId: int("from_account_id").notNull(),
+  toAccountId: int("to_account_id").notNull(),
+  userId: int("user_id").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
