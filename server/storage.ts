@@ -133,9 +133,11 @@ export class MemStorage implements IStorage {
       { id: 1, name: "Banco do Brasil", type: "checking", balance: "1245.30", color: "#1E3A8A", lastFourDigits: "1234", userId: 1, isActive: true, sortOrder: 1 },
       { id: 2, name: "Nubank", type: "checking", balance: "892.45", color: "#059669", lastFourDigits: "5678", userId: 1, isActive: true, sortOrder: 2 },
       { id: 3, name: "Poupança", type: "savings", balance: "2850.00", color: "#F59E0B", lastFourDigits: "9012", userId: 1, isActive: true, sortOrder: 3 },
+      { id: 4, name: "Conta Antiga", type: "checking", balance: "0.00", color: "#6B7280", lastFourDigits: "3456", userId: 1, isActive: false, sortOrder: 4 },
+      { id: 5, name: "Cartão Cancelado", type: "credit", balance: "0.00", color: "#EF4444", lastFourDigits: "7890", userId: 1, isActive: false, sortOrder: 5 },
     ];
     demoBankAccounts.forEach(acc => this.bankAccounts.set(acc.id, acc));
-    this.currentIds.bankAccounts = 4;
+    this.currentIds.bankAccounts = 6;
 
     // Create demo roommates
     const demoRoommates: Roommate[] = [

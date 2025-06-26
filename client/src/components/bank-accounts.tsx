@@ -76,6 +76,33 @@ export function BankAccounts() {
     },
   });
 
+  const toggleAccountStatus = async (account: BankAccount) => {
+    try {
+      const newStatus = !account.isActive;
+      const response = await apiRequest("PATCH", `/api/bank-accounts/${account.id}`, {
+        ...account,
+        isActive: newStatus
+      });
+      
+      if (response.ok) {
+        queryClient.invalidateQueries({ queryKey: ["/api/bank-accounts"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/statistics"] });
+        toast({
+          title: newStatus ? "Conta reativada" : "Conta desativada",
+          description: newStatus 
+            ? "A conta foi reativada e voltará a contar no saldo total." 
+            : "A conta foi desativada e não contará mais no saldo total.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro ao alterar status da conta",
+        description: "Ocorreu um erro ao alterar o status da conta.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getAccountIcon = (type: string) => {
     switch (type) {
       case 'checking':
@@ -217,6 +244,22 @@ export function BankAccounts() {
                   >
                     <Edit className="h-4 w-4 mr-2" />
                     Editar
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => toggleAccountStatus(accounts[validCurrentIndex])}
+                    className={accounts[validCurrentIndex]?.isActive === false ? "text-green-600" : "text-orange-600"}
+                  >
+                    {accounts[validCurrentIndex]?.isActive === false ? (
+                      <>
+                        <span className="h-4 w-4 mr-2">✓</span>
+                        Reativar
+                      </>
+                    ) : (
+                      <>
+                        <span className="h-4 w-4 mr-2">⏸</span>
+                        Desativar
+                      </>
+                    )}
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setAccountToDelete(accounts[validCurrentIndex])}
