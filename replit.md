@@ -53,17 +53,30 @@ The application follows a full-stack architecture with clear separation between 
 
 ## Database Architecture
 
+### External MySQL Database Configuration
+- **Production Database**: External Percona MySQL Server (Version 5.7.32-35-log)
+- **Connection Details**: 
+  - Host: 186.202.152.149
+  - Port: 3306 (TCP/IP)
+  - Database: mlopes6
+  - User: mlopes6
+  - Password: G1ovann@040917
+- **Driver**: mysql2 with promise support for Node.js
+- **ORM Integration**: Drizzle ORM configured for MySQL dialect
+
 ### Storage Implementation
-- **DatabaseStorage Only**: Application exclusively uses PostgreSQL database
+- **DatabaseStorage Only**: Application exclusively uses external MySQL database
 - **No In-Memory Fallbacks**: Removed MemStorage completely for production reliability
-- **Required Connection**: Application fails gracefully if DATABASE_URL is unavailable
-- **Direct ORM Operations**: All CRUD operations go through Drizzle ORM to PostgreSQL tables
+- **Required Connection**: Application fails gracefully if database connection is unavailable
+- **Direct ORM Operations**: All CRUD operations go through Drizzle ORM to MySQL tables
+- **Schema Migration**: Complete migration from PostgreSQL to MySQL format
 
 ### Data Integrity Guarantees
-- **Persistent Data**: All user data, transactions, and account information stored in database
-- **ACID Compliance**: PostgreSQL ensures data consistency and transaction safety
+- **Persistent Data**: All user data, transactions, and account information stored in external database
+- **ACID Compliance**: MySQL ensures data consistency and transaction safety
 - **Real-time Updates**: Database changes immediately reflect across all application components
 - **No Data Loss**: Application restart or server issues don't affect user data
+- **External Hosting**: Data persists independently of Replit environment
 
 ## External Dependencies
 
@@ -85,20 +98,149 @@ The application follows a full-stack architecture with clear separation between 
 - **tsx**: TypeScript execution for development
 - **esbuild**: Fast JavaScript bundler for production
 
-## Deployment Strategy
+## Migration and Deployment Guide
+
+### Database Migration Steps (For App Recreation)
+
+#### 1. Install MySQL Driver
+```bash
+npm install mysql2
+```
+
+#### 2. Configure Database Connection (server/db.ts)
+```javascript
+import mysql from 'mysql2/promise';
+import { drizzle } from 'drizzle-orm/mysql2';
+
+const mysqlConfig = {
+  host: '186.202.152.149',
+  user: 'mlopes6',
+  password: 'G1ovann@040917',
+  database: 'mlopes6',
+  port: 3306,
+  connectTimeout: 20000,
+  acquireTimeout: 10000,
+  timeout: 10000
+};
+
+const initializeDatabase = async () => {
+  try {
+    connection = await mysql.createConnection(mysqlConfig);
+    await connection.ping();
+    db = drizzle(connection, { schema, mode: 'default' });
+    isDatabaseAvailable = true;
+  } catch (error) {
+    console.error("Failed to connect to MySQL database:", error);
+    isDatabaseAvailable = false;
+  }
+};
+```
+
+#### 3. Convert Schema to MySQL (shared/schema.ts)
+- Replace all `pgTable` with `mysqlTable`
+- Replace `serial("id").primaryKey()` with `serial("id").primaryKey().autoIncrement()`
+- Replace `text("field")` with `varchar("field", { length: 255 })`
+- Replace `decimal("amount", { precision: 10, scale: 2 })` with `decimal("amount", { precision: 10, scale: 2 })`
+- Replace `timestamp("created_at").defaultNow()` with `timestamp("created_at").default(sql\`CURRENT_TIMESTAMP\`)`
+
+#### 4. Create Migration Script (migrate-mysql.ts)
+```javascript
+import { db } from "./server/db";
+import { users, categories, bankAccounts, expenses, /* other tables */ } from "./shared/schema";
+
+const migrate = async () => {
+  // Create tables and insert demo data
+  await db.insert(users).values([/* demo users */]);
+  await db.insert(categories).values([/* demo categories */]);
+  // ... other insertions
+};
+```
+
+#### 5. Run Migration
+```bash
+tsx migrate-mysql.ts
+```
+
+### Deployment Strategy
 
 The application is configured for deployment on Replit with the following setup:
 
 - **Development**: `npm run dev` - Runs both client and server in development mode
 - **Build**: `npm run build` - Creates production builds for both frontend and backend
 - **Production**: `npm run start` - Serves the production application
-- **Database**: PostgreSQL module configured in Replit environment
+- **Database**: External MySQL database (Percona Server) for persistent data
 - **Auto-scaling**: Configured for autoscale deployment target
 
 ### Environment Configuration
-- Database connection via `DATABASE_URL` environment variable
+- External MySQL database connection (credentials in server/db.ts)
 - Development mode detection for conditional features
 - Replit-specific integrations (cartographer, runtime error overlay)
+- No environment variables required (direct database configuration)
+
+### Critical Configuration Files
+
+#### package.json Dependencies
+Key MySQL-related dependencies:
+```json
+{
+  "mysql2": "^3.x.x",
+  "drizzle-orm": "^0.x.x",
+  "drizzle-kit": "^0.x.x"
+}
+```
+
+#### drizzle.config.ts
+```javascript
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  schema: "./shared/schema.ts",
+  dialect: "mysql",
+  out: "./migrations",
+  dbCredentials: {
+    host: "186.202.152.149",
+    user: "mlopes6",
+    password: "G1ovann@040917",
+    database: "mlopes6",
+    port: 3306
+  }
+});
+```
+
+#### server/storage.ts Configuration
+Storage initialization pattern:
+```javascript
+const initializeStorage = async () => {
+  await databaseInitialization;
+  
+  if (db) {
+    try {
+      storage = new DatabaseStorage();
+      console.log("✅ Using MySQL external database for persistent data storage");
+      return true;
+    } catch (error) {
+      console.error("❌ Failed to initialize database storage:", error);
+    }
+  }
+  
+  storage = new MemStorage();
+  console.log("⚠️  Using temporary in-memory storage as fallback");
+  return false;
+};
+```
+
+### Database Tables Created
+- users (authentication and profiles)
+- categories (expense categorization)
+- bank_accounts (financial accounts)
+- expenses (transaction records)
+- bill_splits (shared expense management)
+- bill_split_participants (split tracking)
+- roommates (user relationships)
+- goals (financial objectives)
+- goal_accounts (goal-account relationships)
+- transfers (account transfers)
+- sessions (user sessions)
 
 ## User Preferences
 
@@ -131,6 +273,7 @@ Preferred communication style: Simple, everyday language.
 - June 26, 2025. Fixed transaction icons in all-transactions page to use FontAwesome icons properly instead of emoji fallbacks
 - June 26, 2025. Improved monthly filter system - now shows only last 6 months with transactions instead of all historical periods
 - June 26, 2025. **IMPLEMENTED TRANSFERS SYSTEM**: Created complete bank account transfer functionality with real-time balance updates, validation, and preview system
+- June 26, 2025. **DOCUMENTATION COMPLETED**: Created comprehensive migration guide and configuration documentation for future app recreations with external MySQL database
 
 ## Key Features
 
