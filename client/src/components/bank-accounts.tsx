@@ -59,17 +59,7 @@ export function BankAccounts({ onTransferClick, onAccountSelect, selectedAccount
     }
   }, [accounts.length, currentIndex]);
 
-  // Sync currentIndex with selectedAccountId
-  useEffect(() => {
-    if (selectedAccountId && accounts.length > 0) {
-      const accountIndex = accounts.findIndex(account => account.id === selectedAccountId);
-      if (accountIndex !== -1 && accountIndex !== currentIndex) {
-        setCurrentIndex(accountIndex);
-      }
-    }
-  }, [selectedAccountId, accounts, currentIndex]);
-
-  // Initialize selection with first account when accounts load
+  // Initialize selection with first account when accounts load (only once)
   useEffect(() => {
     if (accounts.length > 0 && !selectedAccountId && onAccountSelect) {
       // Find first active account or just first account
@@ -78,7 +68,7 @@ export function BankAccounts({ onTransferClick, onAccountSelect, selectedAccount
         onAccountSelect(firstActiveAccount.id);
       }
     }
-  }, [accounts, selectedAccountId, onAccountSelect]);
+  }, [accounts.length]); // Only depend on accounts.length to avoid loops
 
   const deleteMutation = useMutation({
     mutationFn: async (accountId: number) => {
@@ -192,29 +182,33 @@ export function BankAccounts({ onTransferClick, onAccountSelect, selectedAccount
 
   const nextAccount = () => {
     console.log('nextAccount clicked, currentIndex:', currentIndex, 'accounts.length:', accounts.length);
-    if (currentIndex < accounts.length - 1) {
-      const newIndex = currentIndex + 1;
+    const newIndex = currentIndex + 1;
+    if (newIndex < accounts.length) {
       console.log('Setting new index to:', newIndex);
       setCurrentIndex(newIndex);
-      // Update the filter to the new account
-      if (onAccountSelect && accounts[newIndex]) {
-        console.log('Calling onAccountSelect with:', accounts[newIndex].id);
-        onAccountSelect(accounts[newIndex].id);
-      }
+      // Update the filter after state change
+      setTimeout(() => {
+        if (onAccountSelect && accounts[newIndex]) {
+          console.log('Calling onAccountSelect with:', accounts[newIndex].id);
+          onAccountSelect(accounts[newIndex].id);
+        }
+      }, 0);
     }
   };
 
   const prevAccount = () => {
     console.log('prevAccount clicked, currentIndex:', currentIndex, 'accounts.length:', accounts.length);
-    if (currentIndex > 0) {
-      const newIndex = currentIndex - 1;
+    const newIndex = currentIndex - 1;
+    if (newIndex >= 0) {
       console.log('Setting new index to:', newIndex);
       setCurrentIndex(newIndex);
-      // Update the filter to the new account
-      if (onAccountSelect && accounts[newIndex]) {
-        console.log('Calling onAccountSelect with:', accounts[newIndex].id);
-        onAccountSelect(accounts[newIndex].id);
-      }
+      // Update the filter after state change
+      setTimeout(() => {
+        if (onAccountSelect && accounts[newIndex]) {
+          console.log('Calling onAccountSelect with:', accounts[newIndex].id);
+          onAccountSelect(accounts[newIndex].id);
+        }
+      }, 0);
     }
   };
 
