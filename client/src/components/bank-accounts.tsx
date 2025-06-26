@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,9 +36,22 @@ export function BankAccounts() {
   const queryClient = useQueryClient();
   const startX = useRef<number>(0);
   
-  const { data: accounts = [] } = useQuery<BankAccount[]>({
+  const { data: allAccounts = [] } = useQuery<BankAccount[]>({
     queryKey: ["/api/bank-accounts"],
   });
+
+  // Filter to only show active accounts
+  const accounts = allAccounts.filter(account => account.isActive !== false);
+
+  // Ensure currentIndex is valid for active accounts
+  const validCurrentIndex = Math.min(currentIndex, Math.max(0, accounts.length - 1));
+
+  // Reset currentIndex when accounts change (e.g., when accounts become inactive)
+  useEffect(() => {
+    if (currentIndex >= accounts.length && accounts.length > 0) {
+      setCurrentIndex(0);
+    }
+  }, [accounts.length, currentIndex]);
 
   const deleteMutation = useMutation({
     mutationFn: async (accountId: number) => {
@@ -162,26 +175,21 @@ export function BankAccounts() {
         <Card
           className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow"
           style={{
-            background: `linear-gradient(135deg, ${accounts[currentIndex]?.color}15 0%, ${accounts[currentIndex]?.color}25 100%)`
+            background: `linear-gradient(135deg, ${accounts[validCurrentIndex]?.color}15 0%, ${accounts[validCurrentIndex]?.color}25 100%)`
           }}
         >
           <CardContent className="p-4">
             <div className="flex justify-between items-start mb-3">
               <div className="flex items-center gap-2">
-                {getAccountIcon(accounts[currentIndex]?.type)}
+                {getAccountIcon(accounts[validCurrentIndex]?.type)}
                 <div>
                   <span 
                     className="text-sm font-medium block"
-                    style={{ color: accounts[currentIndex]?.color }}
+                    style={{ color: accounts[validCurrentIndex]?.color }}
                   >
-                    {accounts[currentIndex]?.name}
+                    {accounts[validCurrentIndex]?.name}
                   </span>
-                  <p className="text-xs text-gray-500">{getAccountTypeLabel(accounts[currentIndex]?.type)}</p>
-                  {accounts[currentIndex]?.isActive === false && (
-                    <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full mt-1 inline-block">
-                      Inativa
-                    </span>
-                  )}
+                  <p className="text-xs text-gray-500">{getAccountTypeLabel(accounts[validCurrentIndex]?.type)}</p>
                 </div>
               </div>
               <DropdownMenu>
@@ -203,7 +211,7 @@ export function BankAccounts() {
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => {
-                      setEditingAccount(accounts[currentIndex]);
+                      setEditingAccount(accounts[validCurrentIndex]);
                       setIsModalOpen(true);
                     }}
                   >
@@ -211,7 +219,7 @@ export function BankAccounts() {
                     Editar
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => setAccountToDelete(accounts[currentIndex])}
+                    onClick={() => setAccountToDelete(accounts[validCurrentIndex])}
                     className="text-red-600"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
@@ -224,7 +232,7 @@ export function BankAccounts() {
             <div className="text-right mb-3">
               <p className="text-xs text-gray-500 mb-1">Saldo</p>
               <p className="text-lg font-bold text-gray-900">
-                {formatCurrencyDisplay(accounts[currentIndex]?.balance)}
+                {formatCurrencyDisplay(accounts[validCurrentIndex]?.balance)}
               </p>
             </div>
 
@@ -236,21 +244,21 @@ export function BankAccounts() {
                       variant="ghost"
                       size="sm"
                       onClick={prevAccount}
-                      disabled={currentIndex === 0}
+                      disabled={validCurrentIndex === 0}
                       className="h-6 w-6 p-0"
                     >
                       <ChevronLeft className="h-3 w-3" />
                     </Button>
                     
                     <span className="text-xs text-gray-500">
-                      {currentIndex + 1} de {accounts.length}
+                      {validCurrentIndex + 1} de {accounts.length}
                     </span>
                     
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={nextAccount}
-                      disabled={currentIndex === accounts.length - 1}
+                      disabled={validCurrentIndex === accounts.length - 1}
                       className="h-6 w-6 p-0"
                     >
                       <ChevronRight className="h-3 w-3" />
@@ -309,7 +317,7 @@ export function BankAccounts() {
       <BankAccountOrganizeModal
         open={isOrganizeModalOpen}
         onClose={() => setIsOrganizeModalOpen(false)}
-        accounts={accounts}
+        accounts={allAccounts}
       />
     </div>
   );

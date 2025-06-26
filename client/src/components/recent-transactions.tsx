@@ -19,7 +19,13 @@ export function RecentTransactions() {
   });
 
   const recentTransactions = useMemo(() => {
+    // Filter to only show transactions from active accounts
+    const activeAccountIds = accounts
+      .filter(account => account.isActive !== false)
+      .map(account => account.id);
+
     return expenses
+      .filter(expense => activeAccountIds.includes(expense.accountId))
       .slice()
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, 5)

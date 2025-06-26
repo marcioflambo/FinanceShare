@@ -235,11 +235,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return sum + parseFloat(account.balance);
         }, 0);
       
-      // Calculate monthly expenses (current month)
+      // Calculate monthly expenses (current month) - only from active accounts
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const activeAccountIds = bankAccounts
+        .filter(account => account.isActive !== false)
+        .map(account => account.id);
+      
       const monthlyExpenses = expenses
-        .filter(expense => new Date(expense.date) >= startOfMonth)
+        .filter(expense => 
+          new Date(expense.date) >= startOfMonth && 
+          activeAccountIds.includes(expense.accountId)
+        )
         .reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
       
       // Calculate pending bill splits (amounts owed to user)

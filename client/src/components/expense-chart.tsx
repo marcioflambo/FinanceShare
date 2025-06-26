@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatCurrency } from "@/lib/utils";
 import { useMemo, useState } from "react";
-import type { Expense, Category } from "@shared/schema";
+import type { Expense, Category, BankAccount } from "@shared/schema";
 
 export function ExpenseChart() {
   const [period, setPeriod] = useState("30");
@@ -16,16 +16,26 @@ export function ExpenseChart() {
     queryKey: ["/api/categories"],
   });
 
-  const chartData = useMemo(() => {
-    if (!expenses.length || !categories.length) return [];
+  const { data: accounts = [] } = useQuery<BankAccount[]>({
+    queryKey: ["/api/bank-accounts"],
+  });
 
-    // Filter expenses by period
+  const chartData = useMemo(() => {
+    if (!expenses.length || !categories.length || !accounts.length) return [];
+
+    // Filter to only show expenses from active accounts
+    const activeAccountIds = accounts
+      .filter(account => account.isActive !== false)
+      .map(account => account.id);
+
+    // Filter expenses by period and active accounts
     const now = new Date();
     const periodDays = parseInt(period);
     const startDate = new Date(now.getTime() - periodDays * 24 * 60 * 60 * 1000);
     
     const filteredExpenses = expenses.filter(expense => 
-      new Date(expense.date) >= startDate
+      new Date(expense.date) >= startDate && 
+      activeAccountIds.includes(expense.accountId)
     );
 
     // Group by category
@@ -50,7 +60,7 @@ export function ExpenseChart() {
         };
       })
       .sort((a, b) => b.amount - a.amount);
-  }, [expenses, categories, period]);
+  }, [expenses, categories, accounts, period]);
 
   const total = chartData.reduce((sum, item) => sum + item.amount, 0);
 
