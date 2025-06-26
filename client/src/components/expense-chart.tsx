@@ -110,7 +110,6 @@ export function ExpenseChart() {
               <SelectContent>
                 <SelectItem value="30">Últimos 30 dias</SelectItem>
                 <SelectItem value="90">Últimos 90 dias</SelectItem>
-                <SelectItem value="365">Este ano</SelectItem>
                 {period === "custom" && (
                   <SelectItem value="custom">
                     Período personalizado
@@ -124,10 +123,13 @@ export function ExpenseChart() {
                   <Settings className="h-4 w-4" />
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px]">
+              <DialogContent className="sm:max-w-[500px]" aria-describedby="dialog-description">
                 <DialogHeader>
                   <DialogTitle>Filtro Avançado - Período Personalizado</DialogTitle>
                 </DialogHeader>
+                <p id="dialog-description" className="text-sm text-gray-600 mb-4">
+                  Selecione as datas de início e fim para filtrar as despesas por um período específico.
+                </p>
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -149,6 +151,10 @@ export function ExpenseChart() {
                             onSelect={setCustomStartDate}
                             locale={ptBR}
                             initialFocus
+                            captionLayout="dropdown-buttons"
+                            fromYear={2020}
+                            toYear={2030}
+                            showOutsideDays={false}
                           />
                         </PopoverContent>
                       </Popover>
@@ -172,6 +178,10 @@ export function ExpenseChart() {
                             onSelect={setCustomEndDate}
                             locale={ptBR}
                             initialFocus
+                            captionLayout="dropdown-buttons"
+                            fromYear={2020}
+                            toYear={2030}
+                            showOutsideDays={false}
                           />
                         </PopoverContent>
                       </Popover>
