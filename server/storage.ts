@@ -952,12 +952,11 @@ const initializeStorage = async () => {
       return true;
     } catch (error) {
       console.error("❌ Failed to initialize database storage:", error);
+      throw new Error("Database connection required for application to function");
     }
   }
   
-  storage = new MemStorage();
-  console.log("⚠️  Using temporary in-memory storage as fallback");
-  return false;
+  throw new Error("MySQL database connection is required");
 };
 
 // Start with temporary storage, then switch to database when ready
