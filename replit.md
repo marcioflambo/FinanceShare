@@ -26,10 +26,11 @@ The application follows a full-stack architecture with clear separation between 
 
 ### Backend Architecture
 - **API Design**: RESTful endpoints following conventional patterns
-- **Database Layer**: Drizzle ORM with type-safe database operations
-- **Storage Pattern**: Interface-based storage abstraction for testability
+- **Database Layer**: Drizzle ORM with type-safe database operations - 100% PostgreSQL driven
+- **Storage Pattern**: Direct database storage only (DatabaseStorage) - no in-memory fallbacks
 - **Error Handling**: Centralized error handling middleware
 - **Development Setup**: Hot reload with Vite integration
+- **Data Persistence**: All data operations require active PostgreSQL connection
 
 ### Database Schema
 - **Users**: Basic user authentication and profile management
@@ -46,9 +47,23 @@ The application follows a full-stack architecture with clear separation between 
 1. **User Interactions**: UI components trigger actions through event handlers
 2. **Form Validation**: Client-side validation using Zod schemas
 3. **API Requests**: TanStack Query manages HTTP requests to Express endpoints
-4. **Database Operations**: Drizzle ORM handles PostgreSQL queries
+4. **Database Operations**: Drizzle ORM handles PostgreSQL queries directly (no fallbacks)
 5. **State Updates**: Query client invalidates and refetches affected data
 6. **UI Updates**: React components re-render with updated data
+
+## Database Architecture
+
+### Storage Implementation
+- **DatabaseStorage Only**: Application exclusively uses PostgreSQL database
+- **No In-Memory Fallbacks**: Removed MemStorage completely for production reliability
+- **Required Connection**: Application fails gracefully if DATABASE_URL is unavailable
+- **Direct ORM Operations**: All CRUD operations go through Drizzle ORM to PostgreSQL tables
+
+### Data Integrity Guarantees
+- **Persistent Data**: All user data, transactions, and account information stored in database
+- **ACID Compliance**: PostgreSQL ensures data consistency and transaction safety
+- **Real-time Updates**: Database changes immediately reflect across all application components
+- **No Data Loss**: Application restart or server issues don't affect user data
 
 ## External Dependencies
 
@@ -107,6 +122,10 @@ Preferred communication style: Simple, everyday language.
 - June 26, 2025. Implemented proper active/inactive account filtering: dashboard statistics only count active accounts while inactive accounts remain visible with status indicators for easy reactivation
 - June 26, 2025. Repositioned account status indicators to balance line to maintain consistent card height and prevent visual jumping between active/inactive accounts
 - June 26, 2025. Added advanced transaction search and filtering system: month/year dropdown selection and real-time text search by description, category, or account name with live result counting and filter clearing
+- June 26, 2025. Fixed application startup issues and server stability problems
+- June 26, 2025. Restored missing inactive bank accounts functionality with reactivation feature in dropdown menu
+- June 26, 2025. **COMPLETE DATABASE MIGRATION**: Removed all in-memory storage (MemStorage) and configured application to use 100% PostgreSQL database for all data operations
+- June 26, 2025. Enforced strict database-only data persistence - application now requires DATABASE_URL and fails gracefully if database is not available
 
 ## Key Features
 
@@ -118,10 +137,14 @@ Preferred communication style: Simple, everyday language.
 - **Visual Progress**: Color-coded progress bars and completion indicators
 
 ### Bank Account Management
-- **Active/Inactive Status**: Accounts can be marked as active or inactive
+- **Active/Inactive Status**: Accounts can be marked as active or inactive with toggle functionality
 - **Selective Balance Calculation**: Only active accounts contribute to total balance statistics
 - **Flexible Goal Integration**: Both active and inactive accounts can be linked to financial goals
 - **Visual Status Indicators**: Clear labeling of inactive accounts throughout the interface
+- **Account Reactivation**: Dropdown menu option to reactivate inactive accounts instantly
+- **Navigation**: Horizontal arrow navigation on desktop, swipe gestures on mobile
+- **Account Ordering**: Drag-and-drop organization with persistent sort order
+- **Complete CRUD Operations**: Create, edit, deactivate, reactivate, and delete accounts
 
 ### Expense Management
 - **Quick Expense Entry**: Floating action button and modal for rapid expense recording
