@@ -10,6 +10,7 @@ import { BankAccounts } from "@/components/bank-accounts";
 import { GoalsOverview } from "@/components/goals-overview";
 
 import { ExpenseModal } from "@/components/expense-modal";
+import { AdvancedExpenseModal } from "@/components/advanced-expense-modal";
 import { BillSplitModal } from "@/components/bill-split-modal";
 import { GoalModal } from "@/components/goal-modal";
 import { TransferModal } from "@/components/transfer-modal";
@@ -21,6 +22,7 @@ export type ActiveSection = 'dashboard' | 'expenses' | 'splits' | 'reports';
 
 export default function Dashboard() {
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
+  const [isAdvancedExpenseModalOpen, setIsAdvancedExpenseModalOpen] = useState(false);
   const [isBillSplitModalOpen, setIsBillSplitModalOpen] = useState(false);
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
@@ -133,7 +135,7 @@ export default function Dashboard() {
                     <StatsCards />
                   </div>
                   <div className="flex-shrink-0">
-                    <BankAccounts />
+                    <BankAccounts onTransferClick={() => setIsTransferModalOpen(true)} />
                   </div>
                 </div>
               </div>
@@ -152,6 +154,15 @@ export default function Dashboard() {
                         >
                           <i className="fas fa-plus"></i>
                           <span className="font-medium">Adicionar Despesa</span>
+                        </Button>
+                        
+                        <Button 
+                          onClick={() => setIsAdvancedExpenseModalOpen(true)}
+                          variant="outline"
+                          className="w-full flex items-center space-x-3 hover:scale-105 transition-transform"
+                        >
+                          <i className="fas fa-sync-alt"></i>
+                          <span className="font-medium">Despesa Recorrente</span>
                         </Button>
                         
                         <Button 
@@ -212,6 +223,11 @@ export default function Dashboard() {
       <ExpenseModal 
         open={isExpenseModalOpen}
         onClose={() => setIsExpenseModalOpen(false)}
+      />
+      
+      <AdvancedExpenseModal 
+        open={isAdvancedExpenseModalOpen}
+        onClose={() => setIsAdvancedExpenseModalOpen(false)}
       />
       
       <BillSplitModal 

@@ -53,6 +53,15 @@ export const expenses = pgTable("expenses", {
   accountId: integer("account_id").notNull(),
   userId: integer("user_id").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
+  // Recurring transaction fields
+  isRecurring: boolean("is_recurring").default(false),
+  recurringType: text("recurring_type"), // "none", "installment", "advanced"
+  recurringFrequency: text("recurring_frequency"), // "daily", "weekly", "monthly", "yearly"
+  recurringInterval: integer("recurring_interval").default(1), // every X days/weeks/months/years
+  installmentTotal: integer("installment_total"), // total installments
+  installmentCurrent: integer("installment_current"), // current installment number
+  recurringEndDate: timestamp("recurring_end_date"),
+  parentExpenseId: integer("parent_expense_id"), // reference to original expense for installments
 });
 
 export const billSplits = pgTable("bill_splits", {
@@ -261,6 +270,14 @@ export const insertExpenseSchema = createInsertSchema(expenses).pick({
   categoryId: true,
   accountId: true,
   userId: true,
+  isRecurring: true,
+  recurringType: true,
+  recurringFrequency: true,
+  recurringInterval: true,
+  installmentTotal: true,
+  installmentCurrent: true,
+  recurringEndDate: true,
+  parentExpenseId: true,
 });
 
 export const insertBillSplitSchema = createInsertSchema(billSplits).pick({

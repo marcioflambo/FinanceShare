@@ -26,7 +26,11 @@ import type { BankAccount } from "@shared/schema";
 import { BankAccountModal } from "./bank-account-modal";
 import { BankAccountOrganizeModal } from "./bank-account-organize-modal";
 
-export function BankAccounts() {
+interface BankAccountsProps {
+  onTransferClick?: () => void;
+}
+
+export function BankAccounts({ onTransferClick }: BankAccountsProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<BankAccount | null>(null);
   const [accountToDelete, setAccountToDelete] = useState<BankAccount | null>(null);
@@ -230,6 +234,12 @@ export function BankAccounts() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={() => onTransferClick?.()}
+                  >
+                    <ArrowRightLeft className="h-4 w-4 mr-2" />
+                    Transferir
+                  </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setIsOrganizeModalOpen(true)}
                   >

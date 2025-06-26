@@ -179,7 +179,7 @@ export class MemStorage implements IStorage {
     // Create comprehensive demo expenses
     const demoExpenses: Expense[] = [
       // Recent expenses (this month)
-      { id: 1, description: "Supermercado Extra", amount: "245.67", date: new Date("2025-06-25"), categoryId: 1, accountId: 1, userId: 1, createdAt: new Date("2025-06-25") },
+      { id: 1, description: "Supermercado Extra", amount: "245.67", date: new Date("2025-06-25"), categoryId: 1, accountId: 1, userId: 1, createdAt: new Date("2025-06-25"), isRecurring: false, recurringType: null, recurringFrequency: null, recurringInterval: null, installmentTotal: null, installmentCurrent: null, recurringEndDate: null, parentExpenseId: null },
       { id: 2, description: "Posto de Gasolina", amount: "89.50", date: new Date("2025-06-24"), categoryId: 2, accountId: 2, userId: 1, createdAt: new Date("2025-06-24") },
       { id: 3, description: "Farmácia Drogasil", amount: "45.20", date: new Date("2025-06-23"), categoryId: 3, accountId: 1, userId: 1, createdAt: new Date("2025-06-23") },
       { id: 4, description: "Netflix", amount: "39.90", date: new Date("2025-06-22"), categoryId: 4, accountId: 2, userId: 1, createdAt: new Date("2025-06-22") },
@@ -361,9 +361,50 @@ export class MemStorage implements IStorage {
     const expense: Expense = { 
       ...insertExpense, 
       id,
-      createdAt: new Date()
+      createdAt: new Date(),
+      isRecurring: insertExpense.isRecurring ?? false,
+      recurringType: insertExpense.recurringType ?? null,
+      recurringFrequency: insertExpense.recurringFrequency ?? null,
+      recurringInterval: insertExpense.recurringInterval ?? null,
+      installmentTotal: insertExpense.installmentTotal ?? null,
+      installmentCurrent: insertExpense.installmentCurrent ?? null,
+      recurringEndDate: insertExpense.recurringEndDate ?? null,
+      parentExpenseId: insertExpense.parentExpenseId ?? null,
     };
     this.expenses.set(id, expense);
+
+    // Handle installment creation
+    if (insertExpense.isRecurring && insertExpense.recurringType === "installment" && insertExpense.installmentTotal) {
+      const installmentAmount = (parseFloat(insertExpense.amount) / insertExpense.installmentTotal).toFixed(2);
+      
+      for (let i = 1; i < insertExpense.installmentTotal; i++) {
+        const installmentDate = new Date(insertExpense.date);
+        installmentDate.setMonth(installmentDate.getMonth() + i);
+        
+        const installmentId = this.currentIds.expenses++;
+        const installmentExpense: Expense = {
+          ...insertExpense,
+          id: installmentId,
+          amount: installmentAmount,
+          date: installmentDate,
+          createdAt: new Date(),
+          installmentCurrent: i + 1,
+          parentExpenseId: id,
+          isRecurring: true,
+          recurringType: "installment",
+          recurringFrequency: null,
+          recurringInterval: null,
+          recurringEndDate: null,
+        };
+        this.expenses.set(installmentId, installmentExpense);
+      }
+      
+      // Update original expense with installment details
+      expense.amount = installmentAmount;
+      expense.installmentCurrent = 1;
+      this.expenses.set(id, expense);
+    }
+
     return expense;
   }
 
