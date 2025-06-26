@@ -106,6 +106,7 @@ Preferred communication style: Simple, everyday language.
 - June 26, 2025. Created comprehensive fake data for testing: expenses across categories, bill splits with pending payments, roommates, and financial goals with account linking - dashboard metrics now update dynamically with real transaction data
 - June 26, 2025. Implemented proper active/inactive account filtering: dashboard statistics only count active accounts while inactive accounts remain visible with status indicators for easy reactivation
 - June 26, 2025. Repositioned account status indicators to balance line to maintain consistent card height and prevent visual jumping between active/inactive accounts
+- June 26, 2025. Added advanced transaction search and filtering system: month/year dropdown selection and real-time text search by description, category, or account name with live result counting and filter clearing
 
 ## Key Features
 
@@ -126,6 +127,11 @@ Preferred communication style: Simple, everyday language.
 - **Quick Expense Entry**: Floating action button and modal for rapid expense recording
 - **Category Management**: Icon and color-coded expense categories
 - **Transaction History**: Chronological listing of recent transactions with account details
+- **Advanced Search & Filtering**: 
+  - Month/year dropdown selection for period filtering
+  - Real-time text search across descriptions, categories, and account names
+  - Live result counting and filter status display
+  - One-click filter clearing functionality
 - **Visual Analytics**: Pie chart showing expense distribution by category
 
 ### Bill Splitting
