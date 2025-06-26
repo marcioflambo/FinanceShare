@@ -1,4 +1,4 @@
-import { User, InsertUser, Category, InsertCategory, BankAccount, InsertBankAccount, Expense, InsertExpense, BillSplit, InsertBillSplit, BillSplitParticipant, InsertBillSplitParticipant, Roommate, InsertRoommate, Goal, InsertGoal, GoalAccount, InsertGoalAccount } from "@shared/schema";
+import { User, InsertUser, Category, InsertCategory, BankAccount, InsertBankAccount, Expense, InsertExpense, BillSplit, InsertBillSplit, BillSplitParticipant, InsertBillSplitParticipant, Roommate, InsertRoommate, Goal, InsertGoal, GoalAccount, InsertGoalAccount, Transfer, InsertTransfer } from "@shared/schema";
 
 export interface IStorage {
   // Users
@@ -50,6 +50,11 @@ export interface IStorage {
   getGoalAccounts(goalId: number): Promise<GoalAccount[]>;
   addAccountToGoal(goalAccount: InsertGoalAccount): Promise<GoalAccount>;
   removeAccountFromGoal(goalId: number, accountId: number): Promise<void>;
+  
+  // Transfers
+  getTransfers(userId: number): Promise<Transfer[]>;
+  createTransfer(transfer: InsertTransfer): Promise<Transfer>;
+  getTransferById(id: number): Promise<Transfer | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -62,6 +67,7 @@ export class MemStorage implements IStorage {
   private roommates: Map<number, Roommate>;
   private goals: Map<number, Goal>;
   private goalAccounts: Map<number, GoalAccount>;
+  private transfers: Map<number, Transfer>;
 
   private currentIds: {
     users: number;
@@ -73,6 +79,7 @@ export class MemStorage implements IStorage {
     roommates: number;
     goals: number;
     goalAccounts: number;
+    transfers: number;
   };
 
   constructor() {
@@ -85,6 +92,7 @@ export class MemStorage implements IStorage {
     this.roommates = new Map();
     this.goals = new Map();
     this.goalAccounts = new Map();
+    this.transfers = new Map();
 
     this.currentIds = {
       users: 1,
@@ -96,6 +104,7 @@ export class MemStorage implements IStorage {
       roommates: 1,
       goals: 1,
       goalAccounts: 1,
+      transfers: 1,
     };
 
     // Initialize with demo data
@@ -484,13 +493,45 @@ export class MemStorage implements IStorage {
       this.goalAccounts.delete(goalAccount.id);
     }
   }
+
+  // Transfers
+  async getTransfers(userId: number): Promise<Transfer[]> {
+    return Array.from(this.transfers.values()).filter(t => t.userId === userId);
+  }
+
+  async createTransfer(insertTransfer: InsertTransfer): Promise<Transfer> {
+    const id = this.currentIds.transfers++;
+    const transfer: Transfer = { 
+      ...insertTransfer, 
+      id,
+      createdAt: new Date(),
+      date: new Date(insertTransfer.date)
+    };
+    this.transfers.set(id, transfer);
+    
+    // Update account balances
+    const fromAccount = this.bankAccounts.get(insertTransfer.fromAccountId);
+    const toAccount = this.bankAccounts.get(insertTransfer.toAccountId);
+    
+    if (fromAccount && toAccount) {
+      const amount = parseFloat(insertTransfer.amount);
+      fromAccount.balance = (parseFloat(fromAccount.balance) - amount).toFixed(2);
+      toAccount.balance = (parseFloat(toAccount.balance) + amount).toFixed(2);
+    }
+    
+    return transfer;
+  }
+
+  async getTransferById(id: number): Promise<Transfer | undefined> {
+    return this.transfers.get(id);
+  }
 }
 
 import { db, isDatabaseAvailable } from "./db";
 import { eq, and, desc, gte, lte, sql } from "drizzle-orm";
 import { 
   users, categories, bankAccounts, expenses, billSplits, billSplitParticipants, 
-  roommates, goals, goalAccounts 
+  roommates, goals, goalAccounts, transfers 
 } from "@shared/schema";
 import bcrypt from "bcrypt";
 
@@ -762,6 +803,38 @@ export class DatabaseStorage implements IStorage {
           eq(goalAccounts.accountId, accountId)
         )
       );
+  }
+
+  // Transfers
+  async getTransfers(userId: number): Promise<Transfer[]> {
+    return await db.select().from(transfers).where(eq(transfers.userId, userId)).orderBy(desc(transfers.date));
+  }
+
+  async createTransfer(insertTransfer: InsertTransfer): Promise<Transfer> {
+    const [transfer] = await db
+      .insert(transfers)
+      .values(insertTransfer)
+      .returning();
+    
+    // Update account balances
+    const amount = parseFloat(insertTransfer.amount);
+    
+    await db
+      .update(bankAccounts)
+      .set({ balance: sql`balance - ${amount}` })
+      .where(eq(bankAccounts.id, insertTransfer.fromAccountId));
+    
+    await db
+      .update(bankAccounts)
+      .set({ balance: sql`balance + ${amount}` })
+      .where(eq(bankAccounts.id, insertTransfer.toAccountId));
+    
+    return transfer;
+  }
+
+  async getTransferById(id: number): Promise<Transfer | undefined> {
+    const [transfer] = await db.select().from(transfers).where(eq(transfers.id, id));
+    return transfer || undefined;
   }
 }
 

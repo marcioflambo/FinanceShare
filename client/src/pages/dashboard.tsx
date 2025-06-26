@@ -12,6 +12,7 @@ import { GoalsOverview } from "@/components/goals-overview";
 import { ExpenseModal } from "@/components/expense-modal";
 import { BillSplitModal } from "@/components/bill-split-modal";
 import { GoalModal } from "@/components/goal-modal";
+import { TransferModal } from "@/components/transfer-modal";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Lightbulb, Download, Users, Target } from "lucide-react";
@@ -22,6 +23,7 @@ export default function Dashboard() {
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
   const [isBillSplitModalOpen, setIsBillSplitModalOpen] = useState(false);
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<ActiveSection>('dashboard');
   const [showAllTransactions, setShowAllTransactions] = useState(false);
 
@@ -220,6 +222,11 @@ export default function Dashboard() {
       <GoalModal 
         open={isGoalModalOpen}
         onClose={() => setIsGoalModalOpen(false)}
+      />
+
+      <TransferModal 
+        open={isTransferModalOpen}
+        onClose={() => setIsTransferModalOpen(false)}
       />
     </div>
   );

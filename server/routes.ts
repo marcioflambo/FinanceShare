@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertExpenseSchema, insertBillSplitSchema, insertBillSplitParticipantSchema, insertCategorySchema, insertBankAccountSchema, insertRoommateSchema, insertGoalSchema, insertGoalAccountSchema, bankAccounts } from "@shared/schema";
+import { insertExpenseSchema, insertBillSplitSchema, insertBillSplitParticipantSchema, insertCategorySchema, insertBankAccountSchema, insertRoommateSchema, insertGoalSchema, insertGoalAccountSchema, insertTransferSchema, bankAccounts } from "@shared/schema";
 import { z } from "zod";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
@@ -390,6 +390,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       res.status(500).json({ message: "Erro ao gerar dica" });
+    }
+  });
+
+  // Transfers
+  app.get("/api/transfers", async (req, res) => {
+    try {
+      const transfers = await storage.getTransfers(DEMO_USER_ID);
+      res.json(transfers);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao buscar transferências" });
+    }
+  });
+
+  app.post("/api/transfers", async (req, res) => {
+    try {
+      const transferData = insertTransferSchema.parse({ ...req.body, userId: DEMO_USER_ID });
+      const transfer = await storage.createTransfer(transferData);
+      res.json(transfer);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Dados inválidos", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Erro ao criar transferência" });
+      }
     }
   });
 

@@ -101,6 +101,17 @@ export const goalAccounts = pgTable("goal_accounts", {
   accountId: integer("account_id").notNull(),
 });
 
+export const transfers = pgTable("transfers", {
+  id: serial("id").primaryKey(),
+  description: text("description").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  date: timestamp("date").notNull(),
+  fromAccountId: integer("from_account_id").notNull(),
+  toAccountId: integer("to_account_id").notNull(),
+  userId: integer("user_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   categories: many(categories),
@@ -189,6 +200,21 @@ export const goalAccountsRelations = relations(goalAccounts, ({ one }) => ({
   }),
 }));
 
+export const transfersRelations = relations(transfers, ({ one }) => ({
+  user: one(users, {
+    fields: [transfers.userId],
+    references: [users.id],
+  }),
+  fromAccount: one(bankAccounts, {
+    fields: [transfers.fromAccountId],
+    references: [bankAccounts.id],
+  }),
+  toAccount: one(bankAccounts, {
+    fields: [transfers.toAccountId],
+    references: [bankAccounts.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   name: true,
@@ -273,6 +299,15 @@ export const insertGoalAccountSchema = createInsertSchema(goalAccounts).pick({
   accountId: true,
 });
 
+export const insertTransferSchema = createInsertSchema(transfers).pick({
+  description: true,
+  amount: true,
+  date: true,
+  fromAccountId: true,
+  toAccountId: true,
+  userId: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -300,3 +335,6 @@ export type InsertGoal = z.infer<typeof insertGoalSchema>;
 
 export type GoalAccount = typeof goalAccounts.$inferSelect;
 export type InsertGoalAccount = z.infer<typeof insertGoalAccountSchema>;
+
+export type Transfer = typeof transfers.$inferSelect;
+export type InsertTransfer = z.infer<typeof insertTransferSchema>;

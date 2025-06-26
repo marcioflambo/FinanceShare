@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { formatCurrencyDisplay } from "@/lib/currency";
-import { Plus, Building, PiggyBank, MoreVertical, Edit, Trash2, ChevronLeft, ChevronRight, ArrowUpDown } from "lucide-react";
+import { Plus, Building, PiggyBank, MoreVertical, Edit, Trash2, ChevronLeft, ChevronRight, ArrowUpDown, ArrowRightLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { BankAccount } from "@shared/schema";

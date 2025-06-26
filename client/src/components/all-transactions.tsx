@@ -51,10 +51,20 @@ export function AllTransactions({ onBack }: AllTransactionsProps) {
       })
       .sort((a, b) => b.date.getTime() - a.date.getTime());
 
-    // Get available months for dropdown
-    const months = Array.from(new Set(
-      enhancedTransactions.map(t => format(t.date, 'yyyy-MM'))
-    )).sort((a, b) => b.localeCompare(a));
+    // Get last 6 months only (not all periods)
+    const now = new Date();
+    const last6Months = [];
+    for (let i = 0; i < 6; i++) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthKey = format(date, "yyyy-MM");
+      // Only include months that have transactions
+      const hasTransactions = enhancedTransactions.some(t => 
+        format(t.date, "yyyy-MM") === monthKey
+      );
+      if (hasTransactions) {
+        last6Months.push(monthKey);
+      }
+    }
 
     // Filter by selected month/year
     let filtered = enhancedTransactions;
@@ -86,7 +96,7 @@ export function AllTransactions({ onBack }: AllTransactionsProps) {
 
     return { 
       transactionsByMonth: grouped, 
-      availableMonths: months,
+      availableMonths: last6Months,
       filteredTransactions: filtered
     };
   }, [expenses, categories, accounts, selectedMonthYear, searchTerm]);
@@ -232,9 +242,10 @@ export function AllTransactions({ onBack }: AllTransactionsProps) {
                           className="w-10 h-10 rounded-lg flex items-center justify-center text-lg"
                           style={{ backgroundColor: `${transaction.category?.color}20` }}
                         >
-                          <span style={{ color: transaction.category?.color }}>
-                            {transaction.category?.icon || '💰'}
-                          </span>
+                          <i 
+                            className={transaction.category?.icon || 'fas fa-wallet'} 
+                            style={{ color: transaction.category?.color }}
+                          ></i>
                         </div>
                         <div>
                           <p className="font-medium text-gray-900">{transaction.description}</p>
