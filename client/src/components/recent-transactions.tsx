@@ -7,9 +7,10 @@ import type { Expense, Category, BankAccount } from "@shared/schema";
 
 interface RecentTransactionsProps {
   onViewAll?: () => void;
+  selectedAccountId?: number | null;
 }
 
-export function RecentTransactions({ onViewAll }: RecentTransactionsProps) {
+export function RecentTransactions({ onViewAll, selectedAccountId }: RecentTransactionsProps) {
   const { data: expenses = [] } = useQuery<Expense[]>({
     queryKey: ["/api/expenses"],
   });
@@ -23,13 +24,20 @@ export function RecentTransactions({ onViewAll }: RecentTransactionsProps) {
   });
 
   const recentTransactions = useMemo(() => {
-    // Filter to only show transactions from active accounts
-    const activeAccountIds = accounts
-      .filter(account => account.isActive !== false)
-      .map(account => account.id);
+    // Filter accounts based on selection
+    let accountIds: number[];
+    if (selectedAccountId) {
+      // Show only selected account
+      accountIds = [selectedAccountId];
+    } else {
+      // Show all active accounts if no account is selected
+      accountIds = accounts
+        .filter(account => account.isActive !== false)
+        .map(account => account.id);
+    }
 
     return expenses
-      .filter(expense => activeAccountIds.includes(expense.accountId))
+      .filter(expense => accountIds.includes(expense.accountId))
       .slice()
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, 5)
@@ -48,7 +56,14 @@ export function RecentTransactions({ onViewAll }: RecentTransactionsProps) {
     <Card className="shadow-sm border-gray-100">
       <CardHeader>
         <div className="flex justify-between items-center">
-          <CardTitle className="text-lg font-semibold">Transações Recentes</CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-lg font-semibold">Transações Recentes</CardTitle>
+            {selectedAccountId && (
+              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                Conta selecionada
+              </span>
+            )}
+          </div>
           <Button 
             variant="ghost" 
             size="sm" 

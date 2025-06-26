@@ -28,6 +28,7 @@ export default function Dashboard() {
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<ActiveSection>('dashboard');
   const [showAllTransactions, setShowAllTransactions] = useState(false);
+  const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null);
 
   const { data: aiTip } = useQuery<{ tip: string }>({
     queryKey: ["/api/ai-tips"],
@@ -43,9 +44,9 @@ export default function Dashboard() {
         return (
           <div className="space-y-6">
             <div className="grid grid-cols-1 gap-6">
-              <ExpenseChart />
-              <RecentTransactions onViewAll={() => setShowAllTransactions(true)} />
-              <BankAccounts />
+              <ExpenseChart selectedAccountId={selectedAccountId} />
+              <RecentTransactions onViewAll={() => setShowAllTransactions(true)} selectedAccountId={selectedAccountId} />
+              <BankAccounts onAccountSelect={setSelectedAccountId} selectedAccountId={selectedAccountId} />
             </div>
           </div>
         );
@@ -67,11 +68,11 @@ export default function Dashboard() {
             <div className="mb-6">
               <StatsCards />
               <div className="mt-4">
-                <BankAccounts />
+                <BankAccounts onAccountSelect={setSelectedAccountId} selectedAccountId={selectedAccountId} />
               </div>
             </div>
             <div className="grid grid-cols-1 gap-6 mb-8">
-              <ExpenseChart />
+              <ExpenseChart selectedAccountId={selectedAccountId} />
               <Card className="shadow-sm border-gray-100">
                 <CardContent className="p-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Ações Rápidas</h3>
@@ -141,7 +142,7 @@ export default function Dashboard() {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                <ExpenseChart />
+                <ExpenseChart selectedAccountId={selectedAccountId} />
 
                 <div className="space-y-4">
                   <Card className="shadow-sm border-gray-100">
@@ -206,7 +207,7 @@ export default function Dashboard() {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                <RecentTransactions onViewAll={() => setShowAllTransactions(true)} />
+                <RecentTransactions onViewAll={() => setShowAllTransactions(true)} selectedAccountId={selectedAccountId} />
                 <BillSplits />
               </div>
 

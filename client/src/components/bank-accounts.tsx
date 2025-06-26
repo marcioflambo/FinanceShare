@@ -28,9 +28,11 @@ import { BankAccountOrganizeModal } from "./bank-account-organize-modal";
 
 interface BankAccountsProps {
   onTransferClick?: () => void;
+  onAccountSelect?: (accountId: number | null) => void;
+  selectedAccountId?: number | null;
 }
 
-export function BankAccounts({ onTransferClick }: BankAccountsProps) {
+export function BankAccounts({ onTransferClick, onAccountSelect, selectedAccountId }: BankAccountsProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<BankAccount | null>(null);
   const [accountToDelete, setAccountToDelete] = useState<BankAccount | null>(null);
@@ -213,9 +215,19 @@ export function BankAccounts({ onTransferClick }: BankAccountsProps) {
         onTouchEnd={handleTouchEnd}
       >
         <Card
-          className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow"
+          className={`relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-all cursor-pointer ${
+            selectedAccountId === accounts[validCurrentIndex]?.id 
+              ? 'ring-2 ring-blue-500 shadow-lg' 
+              : ''
+          }`}
           style={{
             background: `linear-gradient(135deg, ${accounts[validCurrentIndex]?.color}15 0%, ${accounts[validCurrentIndex]?.color}25 100%)`
+          }}
+          onClick={() => {
+            const accountId = accounts[validCurrentIndex]?.id;
+            if (onAccountSelect) {
+              onAccountSelect(selectedAccountId === accountId ? null : accountId);
+            }
           }}
         >
           <CardContent className="p-4">

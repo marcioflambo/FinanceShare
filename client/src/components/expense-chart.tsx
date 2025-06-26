@@ -12,7 +12,11 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { Expense, Category, BankAccount } from "@shared/schema";
 
-export function ExpenseChart() {
+interface ExpenseChartProps {
+  selectedAccountId?: number | null;
+}
+
+export function ExpenseChart({ selectedAccountId }: ExpenseChartProps) {
   const [period, setPeriod] = useState("30");
   const [customStartDate, setCustomStartDate] = useState<Date | undefined>();
   const [customEndDate, setCustomEndDate] = useState<Date | undefined>();
@@ -33,10 +37,17 @@ export function ExpenseChart() {
   const chartData = useMemo(() => {
     if (!expenses.length || !categories.length || !accounts.length) return [];
 
-    // Filter to only show expenses from active accounts
-    const activeAccountIds = accounts
-      .filter(account => account.isActive !== false)
-      .map(account => account.id);
+    // Filter accounts based on selection
+    let accountIds: number[];
+    if (selectedAccountId) {
+      // Show only selected account
+      accountIds = [selectedAccountId];
+    } else {
+      // Show all active accounts if no account is selected
+      accountIds = accounts
+        .filter(account => account.isActive !== false)
+        .map(account => account.id);
+    }
 
     // Filter expenses by period and active accounts
     let startDate: Date;
@@ -55,7 +66,7 @@ export function ExpenseChart() {
       const expenseDate = new Date(expense.date);
       return expenseDate >= startDate && 
              expenseDate <= endDate && 
-             activeAccountIds.includes(expense.accountId);
+             accountIds.includes(expense.accountId);
     });
 
     // Group by category
@@ -101,7 +112,14 @@ export function ExpenseChart() {
     <Card className="lg:col-span-2 shadow-sm border-gray-100">
       <CardHeader>
         <div className="flex justify-between items-center">
-          <CardTitle className="text-lg font-semibold">Despesas por Categoria</CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-lg font-semibold">Despesas por Categoria</CardTitle>
+            {selectedAccountId && (
+              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                Conta selecionada
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             <Select value={period} onValueChange={setPeriod}>
               <SelectTrigger className="w-40">
