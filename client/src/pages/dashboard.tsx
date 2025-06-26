@@ -110,7 +110,14 @@ export default function Dashboard() {
         
         {/* Desktop: Show all content */}
         <div className="hidden md:block">
-          <StatsCards />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div className="lg:col-span-2">
+              <StatsCards />
+            </div>
+            <div className="lg:col-span-1">
+              <BankAccounts />
+            </div>
+          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             <ExpenseChart />
@@ -176,8 +183,6 @@ export default function Dashboard() {
           <div className="mb-8">
             <GoalsOverview onCreateGoal={() => setIsGoalModalOpen(true)} />
           </div>
-
-          <BankAccounts />
         </div>
       </main>
 

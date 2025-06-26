@@ -49,8 +49,8 @@ export function BankAccounts() {
       queryClient.invalidateQueries({ queryKey: ["/api/bank-accounts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/statistics"] });
       toast({
-        title: "Conta excluída com sucesso!",
-        description: "A conta bancária foi removida.",
+        title: "Conta excluída",
+        description: "A conta foi excluída com sucesso.",
       });
       setAccountToDelete(null);
     },
@@ -66,11 +66,15 @@ export function BankAccounts() {
   const getAccountIcon = (type: string) => {
     switch (type) {
       case 'checking':
-        return <Building className="w-4 h-4 opacity-75" />;
+        return <Building className="w-4 h-4" style={{ color: '#3B82F6' }} />;
       case 'savings':
-        return <PiggyBank className="w-4 h-4 opacity-75" />;
+        return <PiggyBank className="w-4 h-4" style={{ color: '#10B981' }} />;
+      case 'credit':
+        return <i className="fas fa-credit-card text-sm" style={{ color: '#EF4444' }}></i>;
+      case 'investment':
+        return <i className="fas fa-chart-line text-sm" style={{ color: '#8B5CF6' }}></i>;
       default:
-        return <Smartphone className="w-4 h-4 opacity-75" />;
+        return <Building className="w-4 h-4 text-gray-400" />;
     }
   };
 
@@ -82,30 +86,37 @@ export function BankAccounts() {
         return 'Poupança';
       case 'credit':
         return 'Cartão de Crédito';
+      case 'investment':
+        return 'Investimentos';
       default:
-        return 'Conta Digital';
+        return 'Conta';
     }
   };
 
-  // Touch handlers for mobile swipe
+  const handleEdit = (account: BankAccount) => {
+    setEditingAccount(account);
+    setIsModalOpen(true);
+  };
+
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (!isMobile) return;
     startX.current = e.touches[0].clientX;
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!isMobile || accounts.length <= 1) return;
+    if (!startX.current) return;
     
     const endX = e.changedTouches[0].clientX;
-    const diff = startX.current - endX;
+    const diffX = startX.current - endX;
     
-    if (Math.abs(diff) > 50) {
-      if (diff > 0 && currentIndex < accounts.length - 1) {
+    if (Math.abs(diffX) > 50) {
+      if (diffX > 0 && currentIndex < accounts.length - 1) {
         setCurrentIndex(currentIndex + 1);
-      } else if (diff < 0 && currentIndex > 0) {
+      } else if (diffX < 0 && currentIndex > 0) {
         setCurrentIndex(currentIndex - 1);
       }
     }
+    
+    startX.current = 0;
   };
 
   const nextAccount = () => {
@@ -121,18 +132,18 @@ export function BankAccounts() {
   };
 
   return (
-    <div className="mb-6">
+    <div className="h-full">
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">Contas</h2>
+        <h2 className="text-base font-semibold text-gray-900">Minhas Contas</h2>
         <Button 
           variant="ghost" 
           size="sm" 
-          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 text-xs"
           onClick={() => setIsModalOpen(true)}
         >
-          <Plus className="w-4 h-4 mr-1" />
-          Nova Conta
+          <Plus className="w-3 h-3 mr-1" />
+          Adicionar
         </Button>
       </div>
 
@@ -143,36 +154,41 @@ export function BankAccounts() {
         </Card>
       ) : (
         <div className="relative">
-          {/* Desktop: Horizontal scroll with arrows */}
+          {/* Desktop: Vertical stack of compact cards */}
           <div className="hidden md:block">
-            <div className="relative">
-              <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                {accounts.map((account) => (
-                  <Card
-                    key={account.id}
-                    className="relative flex-shrink-0 w-64 overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                    style={{
-                      background: `linear-gradient(135deg, ${account.color}15 0%, ${account.color}25 100%)`
-                    }}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            {getAccountIcon(account.type)}
-                            <span 
-                              className="text-sm font-medium truncate"
-                              style={{ color: account.color }}
-                            >
-                              {account.name}
+            <div className="space-y-3 max-h-80 overflow-y-auto">
+              {accounts.map((account) => (
+                <Card
+                  key={account.id}
+                  className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                  style={{
+                    background: `linear-gradient(135deg, ${account.color}15 0%, ${account.color}25 100%)`
+                  }}
+                >
+                  <CardContent className="p-3">
+                    <div className="flex justify-between items-center">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          {getAccountIcon(account.type)}
+                          <span 
+                            className="text-sm font-medium truncate"
+                            style={{ color: account.color }}
+                          >
+                            {account.name}
+                          </span>
+                          {account.isActive === false && (
+                            <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">
+                              Inativa
                             </span>
-                            {account.isActive === false && (
-                              <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-                                Inativa
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-gray-500">{getAccountTypeLabel(account.type)}</p>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500">{getAccountTypeLabel(account.type)}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="text-right">
+                          <p className="text-sm font-bold text-gray-900">
+                            {formatCurrencyDisplay(account.balance)}
+                          </p>
                         </div>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -204,50 +220,10 @@ export function BankAccounts() {
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
-                      <div>
-                        <p className="text-xs text-gray-500 mb-1">Saldo</p>
-                        <p className="text-lg font-bold text-gray-900">
-                          {formatCurrencyDisplay(account.balance)}
-                        </p>
-                      </div>
-
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-              
-              {/* Navigation arrows for desktop */}
-              {accounts.length > 1 && (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      const container = document.querySelector('.overflow-x-auto');
-                      if (container) {
-                        container.scrollBy({ left: -270, behavior: 'smooth' });
-                      }
-                    }}
-                    className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-8 p-0 bg-white shadow-md hover:bg-gray-50 text-gray-600"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      const container = document.querySelector('.overflow-x-auto');
-                      if (container) {
-                        container.scrollBy({ left: 270, behavior: 'smooth' });
-                      }
-                    }}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8 p-0 bg-white shadow-md hover:bg-gray-50 text-gray-600"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </>
-              )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </div>
 
@@ -259,28 +235,32 @@ export function BankAccounts() {
               onTouchEnd={handleTouchEnd}
             >
               <Card
-                className="relative overflow-hidden border-0 shadow-md"
+                key={accounts[currentIndex]?.id}
+                className="relative overflow-hidden"
                 style={{
-                  background: `linear-gradient(135deg, ${accounts[currentIndex].color} 0%, ${accounts[currentIndex].color}DD 100%)`
+                  background: `linear-gradient(135deg, ${accounts[currentIndex]?.color}15 0%, ${accounts[currentIndex]?.color}25 100%)`
                 }}
               >
-                <CardContent className="p-6 text-white">
+                <CardContent className="p-6">
                   <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        {getAccountIcon(accounts[currentIndex].type)}
-                        <span className="text-lg font-medium">
-                          {accounts[currentIndex].name}
-                        </span>
-                        {accounts[currentIndex].isActive === false && (
-                          <span className="text-xs bg-black/20 px-2 py-1 rounded-full">
+                    <div className="flex items-center gap-2">
+                      {getAccountIcon(accounts[currentIndex]?.type)}
+                      <div>
+                        <p 
+                          className="font-semibold text-lg"
+                          style={{ color: accounts[currentIndex]?.color }}
+                        >
+                          {accounts[currentIndex]?.name}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          {getAccountTypeLabel(accounts[currentIndex]?.type)}
+                        </p>
+                        {accounts[currentIndex]?.isActive === false && (
+                          <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full mt-1 inline-block">
                             Inativa
                           </span>
                         )}
                       </div>
-                      <p className="text-sm opacity-75">
-                        {getAccountTypeLabel(accounts[currentIndex].type)}
-                      </p>
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -313,78 +293,75 @@ export function BankAccounts() {
                     </DropdownMenu>
                   </div>
                   
-                  <div className="mb-4">
-                    <p className="text-sm opacity-75 mb-1">Saldo Disponível</p>
-                    <p className="text-3xl font-bold">
-                      {formatCurrencyDisplay(accounts[currentIndex].balance)}
+                  <div className="text-right">
+                    <p className="text-sm text-gray-600 mb-1">Saldo</p>
+                    <p 
+                      className="text-2xl font-bold"
+                      style={{ color: accounts[currentIndex]?.color }}
+                    >
+                      {formatCurrencyDisplay(accounts[currentIndex]?.balance)}
                     </p>
                   </div>
                   
-
                 </CardContent>
               </Card>
               
               {/* Navigation indicators and arrows for mobile */}
               {accounts.length > 1 && (
-                <>
-                  {/* Navigation dots */}
-                  <div className="flex justify-center mt-3 gap-2">
-                    {accounts.map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setCurrentIndex(index)}
-                        className={`w-2 h-2 rounded-full transition-colors ${
-                          index === currentIndex 
-                            ? 'bg-gray-800' 
-                            : 'bg-gray-300'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  
-                  {/* Navigation arrows for mobile */}
+                <div className="flex justify-center items-center mt-4 space-x-4">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={prevAccount}
                     disabled={currentIndex === 0}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 bg-black/20 text-white hover:bg-black/30 disabled:opacity-50"
+                    className="h-8 w-8 p-0"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
+                  
+                  <div className="flex space-x-1">
+                    {accounts.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentIndex(index)}
+                        className={`w-2 h-2 rounded-full transition-colors ${
+                          index === currentIndex ? 'bg-blue-500' : 'bg-gray-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
                   
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={nextAccount}
                     disabled={currentIndex === accounts.length - 1}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 bg-black/20 text-white hover:bg-black/30 disabled:opacity-50"
+                    className="h-8 w-8 p-0"
                   >
                     <ChevronRight className="h-4 w-4" />
                   </Button>
-                </>
+                </div>
               )}
             </div>
           </div>
         </div>
       )}
-      
-      <BankAccountModal 
-        open={isModalOpen} 
+
+      <BankAccountModal
+        open={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
           setEditingAccount(null);
         }}
         editingAccount={editingAccount}
       />
-      
-      <AlertDialog open={!!accountToDelete} onOpenChange={() => setAccountToDelete(null)}>
+
+      <AlertDialog open={accountToDelete !== null} onOpenChange={() => setAccountToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+            <AlertDialogTitle>Excluir Conta</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir a conta "{accountToDelete?.name}"? 
-              Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir a conta "{accountToDelete?.name}"? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
