@@ -408,7 +408,7 @@ export class MemStorage implements IStorage {
 }
 
 import { db, isDatabaseAvailable } from "./db";
-import { eq, and, desc, gte, lte } from "drizzle-orm";
+import { eq, and, desc, gte, lte, sql } from "drizzle-orm";
 import { 
   users, categories, bankAccounts, expenses, billSplits, billSplitParticipants, 
   roommates, goals, goalAccounts 
@@ -468,9 +468,21 @@ export class DatabaseStorage implements IStorage {
 
   // Bank Accounts
   async getBankAccounts(userId: number): Promise<BankAccount[]> {
-    return await db.select().from(bankAccounts)
+    const accounts = await db.select().from(bankAccounts)
       .where(eq(bankAccounts.userId, userId))
       .orderBy(bankAccounts.sortOrder);
+    
+    // Sort: active accounts first (by sortOrder), then inactive accounts
+    return accounts.sort((a: BankAccount, b: BankAccount) => {
+      // If both accounts have the same active status, sort by sortOrder
+      if ((a.isActive !== false) === (b.isActive !== false)) {
+        return (a.sortOrder || 0) - (b.sortOrder || 0);
+      }
+      // Active accounts come before inactive accounts
+      if (a.isActive !== false && b.isActive === false) return -1;
+      if (a.isActive === false && b.isActive !== false) return 1;
+      return 0;
+    });
   }
 
   async createBankAccount(insertAccount: InsertBankAccount): Promise<BankAccount> {

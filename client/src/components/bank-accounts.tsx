@@ -40,7 +40,7 @@ export function BankAccounts() {
     queryKey: ["/api/bank-accounts"],
   });
 
-  // Show all accounts but mark inactive ones
+  // Database already sorts accounts: active first (by sortOrder), then inactive
   const accounts = allAccounts;
 
   // Ensure currentIndex is valid for active accounts
