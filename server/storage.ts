@@ -720,15 +720,36 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createExpense(insertExpense: InsertExpense): Promise<Expense> {
+    // Prepare data with default values for optional fields
+    const expenseData = {
+      ...insertExpense,
+      isRecurring: insertExpense.isRecurring || false,
+      recurringType: insertExpense.recurringType || null,
+      recurringFrequency: insertExpense.recurringFrequency || null,
+      recurringInterval: insertExpense.recurringInterval || null,
+      installmentTotal: insertExpense.installmentTotal || null,
+      installmentCurrent: insertExpense.installmentCurrent || null,
+      recurringEndDate: insertExpense.recurringEndDate || null,
+      parentExpenseId: insertExpense.parentExpenseId || null,
+    };
+
     const result = await db
       .insert(expenses)
-      .values(insertExpense);
+      .values(expenseData);
+    
+    if (!result.insertId) {
+      throw new Error("Falha ao criar despesa - ID não retornado");
+    }
     
     const [expense] = await db
       .select()
       .from(expenses)
-      .where(eq(expenses.id, result.insertId))
+      .where(eq(expenses.id, Number(result.insertId)))
       .limit(1);
+      
+    if (!expense) {
+      throw new Error("Falha ao buscar despesa criada");
+    }
       
     return expense;
   }

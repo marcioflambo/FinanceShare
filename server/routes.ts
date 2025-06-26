@@ -113,27 +113,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/expenses", async (req, res) => {
     try {
+      console.log('Dados recebidos para criação de despesa:', req.body);
       const expenseData = insertExpenseSchema.parse({ 
         ...req.body, 
         userId: DEMO_USER_ID,
         date: new Date(req.body.date)
       });
+      console.log('Dados validados:', expenseData);
       
       const expense = await storage.createExpense(expenseData);
+      console.log('Despesa criada:', expense);
       
       // Update bank account balance
+      // For expenses (negative impact) subtract from balance
+      // For income/receipts (positive impact) add to balance
+      if (!expense || !expense.accountId) {
+        throw new Error('Despesa criada mas dados inválidos retornados');
+      }
+      
       const account = await storage.getBankAccountById(expense.accountId);
       if (account) {
-        const newBalance = (parseFloat(account.balance) - parseFloat(expense.amount)).toFixed(2);
+        const expenseAmount = parseFloat(expense.amount);
+        const currentBalance = parseFloat(account.balance);
+        
+        // Determine if this is income based on description or amount context
+        const isIncome = expense.description.toLowerCase().includes('salário') || 
+                        expense.description.toLowerCase().includes('receita') ||
+                        expense.description.toLowerCase().includes('faturamento') ||
+                        expense.description.toLowerCase().includes('consultoria') ||
+                        expense.description.toLowerCase().includes('venda');
+        
+        const newBalance = isIncome ? 
+          (currentBalance + expenseAmount).toFixed(2) : 
+          (currentBalance - expenseAmount).toFixed(2);
+          
         await storage.updateBankAccountBalance(account.id, newBalance);
       }
       
       res.json(expense);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Erro detalhado ao criar despesa:', error);
       if (error instanceof z.ZodError) {
         res.status(400).json({ message: "Dados inválidos", errors: error.errors });
       } else {
-        res.status(500).json({ message: "Erro ao criar despesa" });
+        res.status(500).json({ message: "Erro ao criar despesa", details: error?.message || String(error) });
       }
     }
   });
