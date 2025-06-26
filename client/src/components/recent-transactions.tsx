@@ -5,7 +5,11 @@ import { formatCurrency, getRelativeTime } from "@/lib/utils";
 import { useMemo } from "react";
 import type { Expense, Category, BankAccount } from "@shared/schema";
 
-export function RecentTransactions() {
+interface RecentTransactionsProps {
+  onViewAll?: () => void;
+}
+
+export function RecentTransactions({ onViewAll }: RecentTransactionsProps) {
   const { data: expenses = [] } = useQuery<Expense[]>({
     queryKey: ["/api/expenses"],
   });
@@ -45,7 +49,12 @@ export function RecentTransactions() {
       <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle className="text-lg font-semibold">Transações Recentes</CardTitle>
-          <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-primary hover:text-primary/80"
+            onClick={onViewAll}
+          >
             Ver todas
           </Button>
         </div>
