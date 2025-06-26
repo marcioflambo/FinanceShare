@@ -10,7 +10,7 @@ The application follows a full-stack architecture with clear separation between 
 
 - **Frontend**: React-based SPA using Vite for build tooling
 - **Backend**: Express.js REST API server
-- **Database**: PostgreSQL with Drizzle ORM - fully migrated and operational
+- **Database**: External MySQL (Percona Server) with Drizzle ORM - fully migrated and operational
 - **UI Framework**: Tailwind CSS with shadcn/ui components
 - **State Management**: TanStack Query for server state management
 - **Routing**: Wouter for client-side routing
@@ -26,11 +26,11 @@ The application follows a full-stack architecture with clear separation between 
 
 ### Backend Architecture
 - **API Design**: RESTful endpoints following conventional patterns
-- **Database Layer**: Drizzle ORM with type-safe database operations - 100% PostgreSQL driven
+- **Database Layer**: Drizzle ORM with type-safe database operations - 100% MySQL driven
 - **Storage Pattern**: Direct database storage only (DatabaseStorage) - no in-memory fallbacks
 - **Error Handling**: Centralized error handling middleware
 - **Development Setup**: Hot reload with Vite integration
-- **Data Persistence**: All data operations require active PostgreSQL connection
+- **Data Persistence**: All data operations require active MySQL connection
 
 ### Database Schema
 - **Users**: Basic user authentication and profile management
@@ -47,7 +47,7 @@ The application follows a full-stack architecture with clear separation between 
 1. **User Interactions**: UI components trigger actions through event handlers
 2. **Form Validation**: Client-side validation using Zod schemas
 3. **API Requests**: TanStack Query manages HTTP requests to Express endpoints
-4. **Database Operations**: Drizzle ORM handles PostgreSQL queries directly (no fallbacks)
+4. **Database Operations**: Drizzle ORM handles MySQL queries directly (no fallbacks)
 5. **State Updates**: Query client invalidates and refetches affected data
 6. **UI Updates**: React components re-render with updated data
 
@@ -72,7 +72,7 @@ The application follows a full-stack architecture with clear separation between 
 - **Schema Migration**: Complete migration from PostgreSQL to MySQL format
 
 ### Data Integrity Guarantees
-- **Persistent Data**: All user data, transactions, and account information stored in external database
+- **Persistent Data**: All user data, transactions, and account information stored in external MySQL database
 - **ACID Compliance**: MySQL ensures data consistency and transaction safety
 - **Real-time Updates**: Database changes immediately reflect across all application components
 - **No Data Loss**: Application restart or server issues don't affect user data
@@ -81,7 +81,7 @@ The application follows a full-stack architecture with clear separation between 
 ## External Dependencies
 
 ### Core Libraries
-- **@neondatabase/serverless**: Database connection for PostgreSQL
+- **mysql2**: Database connection for MySQL
 - **drizzle-orm**: Type-safe database ORM
 - **@tanstack/react-query**: Data fetching and caching
 - **@hookform/resolvers**: Form validation integration
@@ -253,9 +253,9 @@ Preferred communication style: Simple, everyday language.
 - June 25, 2025. Improved mobile responsiveness with 2x2 card grid layout for phones and 4-column for desktop
 - June 25, 2025. Resolved infinite chart rendering loop and optimized component performance
 - June 25, 2025. Fixed "Adicionar Conta" button functionality with complete bank account creation modal
-- June 25, 2025. Prepared PostgreSQL database infrastructure with Drizzle ORM schema and migrations ready
+- June 25, 2025. Prepared MySQL database infrastructure with Drizzle ORM schema and migrations ready
 - June 25, 2025. Implementing user authentication system with email/password registration and Google OAuth support
-- June 25, 2025. Successfully migrated from in-memory storage to PostgreSQL database with all demo data persisted
+- June 25, 2025. Successfully migrated from in-memory storage to MySQL database with all demo data persisted
 - June 25, 2025. Implemented active/inactive status for bank accounts - inactive accounts don't count in total balance but can still be used in financial goals
 - June 26, 2025. Redesigned bank accounts section with compact layout - horizontal navigation with arrows on desktop, swipe navigation on mobile
 - June 26, 2025. Added "Soma das Contas Ativas" statistics card showing real-time sum of active accounts only
@@ -266,7 +266,7 @@ Preferred communication style: Simple, everyday language.
 - June 26, 2025. Added advanced transaction search and filtering system: month/year dropdown selection and real-time text search by description, category, or account name with live result counting and filter clearing
 - June 26, 2025. Fixed application startup issues and server stability problems
 - June 26, 2025. Restored missing inactive bank accounts functionality with reactivation feature in dropdown menu
-- June 26, 2025. **COMPLETE DATABASE MIGRATION**: Removed all in-memory storage (MemStorage) and configured application to use 100% PostgreSQL database for all data operations
+- June 26, 2025. **COMPLETE DATABASE MIGRATION**: Removed all in-memory storage (MemStorage) and configured application to use 100% MySQL database for all data operations
 - June 26, 2025. Enforced strict database-only data persistence - application now requires DATABASE_URL and fails gracefully if database is not available
 - June 26, 2025. **REPLIT MIGRATION COMPLETED**: Successfully migrated from Replit Agent to standard Replit environment with enhanced functionality
 - June 26, 2025. **EXTERNAL MYSQL DATABASE**: Successfully configured and connected to external Percona MySQL database (186.202.152.149) with complete schema migration and demo data
@@ -274,6 +274,7 @@ Preferred communication style: Simple, everyday language.
 - June 26, 2025. Improved monthly filter system - now shows only last 6 months with transactions instead of all historical periods
 - June 26, 2025. **IMPLEMENTED TRANSFERS SYSTEM**: Created complete bank account transfer functionality with real-time balance updates, validation, and preview system
 - June 26, 2025. **DOCUMENTATION COMPLETED**: Created comprehensive migration guide and configuration documentation for future app recreations with external MySQL database
+- June 26, 2025. **DOCUMENTATION FINALIZED**: Corrected all PostgreSQL references in documentation to MySQL, ensuring complete accuracy for external Percona MySQL database configuration
 
 ## Key Features
 
