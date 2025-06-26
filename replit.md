@@ -103,6 +103,7 @@ Preferred communication style: Simple, everyday language.
 - June 26, 2025. Redesigned bank accounts section with compact layout - horizontal navigation with arrows on desktop, swipe navigation on mobile
 - June 26, 2025. Added "Soma das Contas Ativas" statistics card showing real-time sum of active accounts only
 - June 26, 2025. Added "Contas Ativas" card, removed "Saldo Total" card, removed last 4 digits display from bank accounts for cleaner interface
+- June 26, 2025. Created comprehensive fake data for testing: expenses across categories, bill splits with pending payments, roommates, and financial goals with account linking - dashboard metrics now update dynamically with real transaction data
 
 ## Key Features
 
