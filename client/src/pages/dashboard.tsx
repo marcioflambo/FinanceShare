@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import type { BankAccount } from "@shared/schema";
 import { Navigation } from "@/components/navigation";
 import { StatsCards } from "@/components/stats-cards";
 import { ExpenseChart } from "@/components/expense-chart";
@@ -14,7 +15,7 @@ import { AdvancedExpenseModal } from "@/components/advanced-expense-modal";
 import { BillSplitModal } from "@/components/bill-split-modal";
 import { GoalModal } from "@/components/goal-modal";
 import { TransferModal } from "@/components/transfer-modal";
-import { AccountFilter } from "@/components/account-filter";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Lightbulb, Download, Users, Target } from "lucide-react";
@@ -35,6 +36,20 @@ export default function Dashboard() {
     queryKey: ["/api/ai-tips"],
   });
 
+  const { data: bankAccounts = [] } = useQuery<BankAccount[]>({
+    queryKey: ["/api/bank-accounts"],
+  });
+
+  // Initialize filter with the first active account when accounts are loaded
+  useEffect(() => {
+    if (bankAccounts.length > 0 && selectedAccountIds.length === 0) {
+      const firstActiveAccount = bankAccounts.find(account => account.isActive !== false);
+      if (firstActiveAccount) {
+        setSelectedAccountIds([firstActiveAccount.id]);
+      }
+    }
+  }, [bankAccounts, selectedAccountIds.length]);
+
   const renderMobileSection = () => {
     if (showAllTransactions) {
       return <AllTransactions onBack={() => setShowAllTransactions(false)} />;
@@ -45,7 +60,10 @@ export default function Dashboard() {
         return (
           <div className="space-y-6">
             <div className="grid grid-cols-1 gap-6">
-              <ExpenseChart selectedAccountIds={selectedAccountIds} />
+              <ExpenseChart 
+                selectedAccountIds={selectedAccountIds}
+                onAccountSelectionChange={setSelectedAccountIds}
+              />
               <RecentTransactions onViewAll={() => setShowAllTransactions(true)} selectedAccountIds={selectedAccountIds} />
               <BankAccounts />
             </div>
@@ -72,14 +90,11 @@ export default function Dashboard() {
                 <BankAccounts />
               </div>
             </div>
-            <div className="mb-4">
-              <AccountFilter 
-                selectedAccountIds={selectedAccountIds} 
-                onSelectionChange={setSelectedAccountIds} 
-              />
-            </div>
             <div className="grid grid-cols-1 gap-6 mb-8">
-              <ExpenseChart selectedAccountIds={selectedAccountIds} />
+              <ExpenseChart 
+                selectedAccountIds={selectedAccountIds}
+                onAccountSelectionChange={setSelectedAccountIds}
+              />
               <Card className="shadow-sm border-gray-100">
                 <CardContent className="p-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Ações Rápidas</h3>
@@ -143,20 +158,28 @@ export default function Dashboard() {
                     <StatsCards />
                   </div>
                   <div className="flex-shrink-0">
-                    <BankAccounts onTransferClick={() => setIsTransferModalOpen(true)} />
+                    <BankAccounts 
+                      onTransferClick={() => setIsTransferModalOpen(true)}
+                      onAccountSelect={(accountId) => {
+                        if (accountId) {
+                          setSelectedAccountIds([accountId]);
+                        } else {
+                          setSelectedAccountIds([]);
+                        }
+                      }}
+                      selectedAccountId={selectedAccountIds[0] || null}
+                    />
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
                 <div className="lg:col-span-2">
-                  <ExpenseChart selectedAccountIds={selectedAccountIds} />
+                  <ExpenseChart 
+                    selectedAccountIds={selectedAccountIds} 
+                    onAccountSelectionChange={setSelectedAccountIds}
+                  />
                 </div>
-                
-                <AccountFilter 
-                  selectedAccountIds={selectedAccountIds}
-                  onSelectionChange={setSelectedAccountIds}
-                />
 
                 <div className="space-y-4">
                   <Card className="shadow-sm border-gray-100">

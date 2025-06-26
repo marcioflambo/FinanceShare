@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Settings } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { CalendarIcon, Settings, Check, ChevronDown } from "lucide-react";
+import { formatCurrency, cn } from "@/lib/utils";
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -14,13 +15,15 @@ import type { Expense, Category, BankAccount } from "@shared/schema";
 
 interface ExpenseChartProps {
   selectedAccountIds?: number[];
+  onAccountSelectionChange?: (accountIds: number[]) => void;
 }
 
-export function ExpenseChart({ selectedAccountIds = [] }: ExpenseChartProps) {
+export function ExpenseChart({ selectedAccountIds = [], onAccountSelectionChange }: ExpenseChartProps) {
   const [period, setPeriod] = useState("30");
   const [customStartDate, setCustomStartDate] = useState<Date | undefined>();
   const [customEndDate, setCustomEndDate] = useState<Date | undefined>();
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
+  const [accountFilterOpen, setAccountFilterOpen] = useState(false);
   
   const { data: expenses = [] } = useQuery<Expense[]>({
     queryKey: ["/api/expenses"],
@@ -112,12 +115,73 @@ export function ExpenseChart({ selectedAccountIds = [] }: ExpenseChartProps) {
     <Card className="lg:col-span-2 shadow-sm border-gray-100">
       <CardHeader>
         <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <CardTitle className="text-lg font-semibold">Despesas por Categoria</CardTitle>
-            {selectedAccountIds.length > 0 && (
-              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                {selectedAccountIds.length === 1 ? "1 conta" : `${selectedAccountIds.length} contas`} selecionada{selectedAccountIds.length > 1 ? "s" : ""}
-              </span>
+            {onAccountSelectionChange && (
+              <Popover open={accountFilterOpen} onOpenChange={setAccountFilterOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    role="combobox"
+                    aria-expanded={accountFilterOpen}
+                    className="justify-between min-w-[160px]"
+                  >
+                    {selectedAccountIds.length === 0
+                      ? "Todas as contas"
+                      : selectedAccountIds.length === 1
+                      ? accounts.find(a => a.id === selectedAccountIds[0])?.name || "1 conta"
+                      : `${selectedAccountIds.length} contas`}
+                    <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[300px] p-0">
+                  <Command>
+                    <CommandInput placeholder="Buscar conta..." />
+                    <CommandEmpty>Nenhuma conta encontrada.</CommandEmpty>
+                    <CommandGroup>
+                      {accounts
+                        .filter(account => account.isActive !== false)
+                        .map((account) => (
+                        <CommandItem
+                          key={account.id}
+                          value={account.name}
+                          onSelect={() => {
+                            if (selectedAccountIds.includes(account.id)) {
+                              onAccountSelectionChange(selectedAccountIds.filter(id => id !== account.id));
+                            } else {
+                              onAccountSelectionChange([...selectedAccountIds, account.id]);
+                            }
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              selectedAccountIds.includes(account.id) ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          <div className="flex flex-col">
+                            <span className="font-medium">{account.name}</span>
+                            <span className="text-sm text-gray-500">{account.type}</span>
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                    {selectedAccountIds.length > 0 && (
+                      <div className="p-2 border-t">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onAccountSelectionChange([])}
+                          className="w-full text-gray-500 hover:text-gray-700"
+                        >
+                          Limpar seleção
+                        </Button>
+                      </div>
+                    )}
+                  </Command>
+                </PopoverContent>
+              </Popover>
             )}
           </div>
           <div className="flex items-center gap-2">
