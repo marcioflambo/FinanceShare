@@ -879,14 +879,7 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Use DatabaseStorage when available, MemStorage during migration
-let storage: IStorage;
-if (isDatabaseAvailable) {
-  storage = new DatabaseStorage();
-} else {
-  // Temporary fallback for migration - will be replaced with database
-  console.log("Using temporary in-memory storage during migration. Database will be configured.");
-  storage = new MemStorage();
-}
+// Always use DatabaseStorage (with SQLite fallback if no PostgreSQL)
+let storage: IStorage = new DatabaseStorage();
 
 export { storage };
