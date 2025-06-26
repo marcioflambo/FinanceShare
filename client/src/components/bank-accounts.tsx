@@ -190,11 +190,6 @@ export function BankAccounts() {
                     {accounts[validCurrentIndex]?.name}
                   </span>
                   <p className="text-xs text-gray-500">{getAccountTypeLabel(accounts[validCurrentIndex]?.type)}</p>
-                  {accounts[validCurrentIndex]?.isActive === false && (
-                    <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full mt-1 inline-block">
-                      Inativa
-                    </span>
-                  )}
                 </div>
               </div>
               <DropdownMenu>
@@ -234,11 +229,22 @@ export function BankAccounts() {
               </DropdownMenu>
             </div>
             
-            <div className="text-right mb-3">
-              <p className="text-xs text-gray-500 mb-1">Saldo</p>
-              <p className="text-lg font-bold text-gray-900">
-                {formatCurrencyDisplay(accounts[validCurrentIndex]?.balance)}
-              </p>
+            <div className="flex justify-between items-end mb-3">
+              <div className="flex items-center">
+                <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                  accounts[validCurrentIndex]?.isActive === false 
+                    ? 'bg-gray-100 text-gray-600' 
+                    : 'bg-green-100 text-green-700'
+                }`}>
+                  {accounts[validCurrentIndex]?.isActive === false ? 'Inativa' : 'Ativa'}
+                </span>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-gray-500 mb-1">Saldo</p>
+                <p className="text-lg font-bold text-gray-900">
+                  {formatCurrencyDisplay(accounts[validCurrentIndex]?.balance)}
+                </p>
+              </div>
             </div>
 
             <div className="flex justify-between items-center">
