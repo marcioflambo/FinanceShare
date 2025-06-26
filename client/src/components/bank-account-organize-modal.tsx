@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -28,9 +29,11 @@ export function BankAccountOrganizeModal({ open, onClose, accounts }: BankAccoun
 
   const saveMutation = useMutation({
     mutationFn: async (accountsOrder: BankAccount[]) => {
-      // For now, we'll just update the order in the frontend
-      // In a real app, you'd send this to the backend
-      return accountsOrder;
+      const accountIds = accountsOrder.map(account => account.id);
+      const response = await apiRequest("PATCH", "/api/bank-accounts/order", {
+        accountIds
+      });
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/bank-accounts"] });
@@ -126,6 +129,9 @@ export function BankAccountOrganizeModal({ open, onClose, accounts }: BankAccoun
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Organizar Contas</DialogTitle>
+          <DialogDescription>
+            Arraste as contas para cima ou para baixo para organizá-las na ordem desejada. Use os botões de seta ou arraste diretamente os itens.
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-3 max-h-96 overflow-y-auto">

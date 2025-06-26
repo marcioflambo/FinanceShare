@@ -41,6 +41,7 @@ export const bankAccounts = pgTable("bank_accounts", {
   lastFourDigits: text("last_four_digits"),
   userId: integer("user_id").notNull(),
   isActive: boolean("is_active").default(true),
+  sortOrder: integer("sort_order").default(0),
 });
 
 export const expenses = pgTable("expenses", {

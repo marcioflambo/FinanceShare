@@ -1,8 +1,10 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertExpenseSchema, insertBillSplitSchema, insertBillSplitParticipantSchema, insertCategorySchema, insertBankAccountSchema, insertRoommateSchema, insertGoalSchema, insertGoalAccountSchema } from "@shared/schema";
+import { insertExpenseSchema, insertBillSplitSchema, insertBillSplitParticipantSchema, insertCategorySchema, insertBankAccountSchema, insertRoommateSchema, insertGoalSchema, insertGoalAccountSchema, bankAccounts } from "@shared/schema";
 import { z } from "zod";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const DEMO_USER_ID = 1; // For demo purposes, use fixed user ID
@@ -77,6 +79,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Conta bancária excluída com sucesso" });
     } catch (error) {
       res.status(500).json({ message: "Erro ao excluir conta bancária" });
+    }
+  });
+
+  app.patch("/api/bank-accounts/order", async (req, res) => {
+    try {
+      const { accountIds } = req.body;
+      
+      if (!Array.isArray(accountIds)) {
+        return res.status(400).json({ message: "accountIds deve ser um array" });
+      }
+
+      // Update accounts order using storage interface
+      await storage.updateBankAccountsOrder(accountIds);
+
+      res.json({ message: "Ordem das contas atualizada com sucesso" });
+    } catch (error) {
+      console.error('Erro ao atualizar ordem das contas:', error);
+      res.status(500).json({ message: "Erro ao atualizar ordem das contas" });
     }
   });
 

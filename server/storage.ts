@@ -18,6 +18,7 @@ export interface IStorage {
   getBankAccountById(id: number): Promise<BankAccount | undefined>;
   updateBankAccount(id: number, account: InsertBankAccount): Promise<BankAccount>;
   updateBankAccountBalance(id: number, balance: string): Promise<void>;
+  updateBankAccountsOrder(accountIds: number[]): Promise<void>;
   deleteBankAccount(id: number): Promise<void>;
 
   // Expenses
@@ -213,7 +214,8 @@ export class MemStorage implements IStorage {
 
   // Bank Accounts
   async getBankAccounts(userId: number): Promise<BankAccount[]> {
-    return Array.from(this.bankAccounts.values()).filter(acc => acc.userId === userId);
+    const accounts = Array.from(this.bankAccounts.values()).filter(acc => acc.userId === userId);
+    return accounts.sort((a, b) => ((a as any).sortOrder || 0) - ((b as any).sortOrder || 0));
   }
 
   async createBankAccount(insertAccount: InsertBankAccount): Promise<BankAccount> {
@@ -248,6 +250,17 @@ export class MemStorage implements IStorage {
       account.balance = balance;
       this.bankAccounts.set(id, account);
     }
+  }
+
+  async updateBankAccountsOrder(accountIds: number[]): Promise<void> {
+    // In memory storage - just update the order in memory
+    const accounts = Array.from(this.bankAccounts.values());
+    accountIds.forEach((id, index) => {
+      const account = this.bankAccounts.get(id);
+      if (account) {
+        (account as any).sortOrder = index;
+      }
+    });
   }
 
   async deleteBankAccount(id: number): Promise<void> {
@@ -455,7 +468,9 @@ export class DatabaseStorage implements IStorage {
 
   // Bank Accounts
   async getBankAccounts(userId: number): Promise<BankAccount[]> {
-    return await db.select().from(bankAccounts).where(eq(bankAccounts.userId, userId));
+    return await db.select().from(bankAccounts)
+      .where(eq(bankAccounts.userId, userId))
+      .orderBy(bankAccounts.sortOrder);
   }
 
   async createBankAccount(insertAccount: InsertBankAccount): Promise<BankAccount> {
@@ -485,6 +500,16 @@ export class DatabaseStorage implements IStorage {
       .update(bankAccounts)
       .set({ balance })
       .where(eq(bankAccounts.id, id));
+  }
+
+  async updateBankAccountsOrder(accountIds: number[]): Promise<void> {
+    // Update each account's sort order
+    for (let i = 0; i < accountIds.length; i++) {
+      await db
+        .update(bankAccounts)
+        .set({ sortOrder: i })
+        .where(eq(bankAccounts.id, accountIds[i]));
+    }
   }
 
   async deleteBankAccount(id: number): Promise<void> {
