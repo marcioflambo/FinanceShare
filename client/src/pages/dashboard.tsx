@@ -7,7 +7,7 @@ import { RecentTransactions } from "@/components/recent-transactions";
 import { BillSplits } from "@/components/bill-splits";
 import { BankAccounts } from "@/components/bank-accounts";
 import { GoalsOverview } from "@/components/goals-overview";
-import { FloatingActionButton } from "@/components/floating-action-button";
+
 import { ExpenseModal } from "@/components/expense-modal";
 import { BillSplitModal } from "@/components/bill-split-modal";
 import { GoalModal } from "@/components/goal-modal";
@@ -116,9 +116,13 @@ export default function Dashboard() {
         {/* Desktop: Show all content */}
         <div className="hidden md:block">
           <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <StatsCards />
-              <BankAccounts />
+            <div className="flex items-start gap-6 mb-4">
+              <div className="flex-1">
+                <StatsCards />
+              </div>
+              <div className="flex-shrink-0">
+                <BankAccounts />
+              </div>
             </div>
           </div>
 
@@ -189,7 +193,7 @@ export default function Dashboard() {
         </div>
       </main>
 
-      <FloatingActionButton onClick={() => setIsExpenseModalOpen(true)} />
+
       
       <ExpenseModal 
         open={isExpenseModalOpen}

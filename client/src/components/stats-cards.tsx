@@ -49,7 +49,7 @@ export function StatsCards() {
 
   const cards = [
     {
-      title: "Soma das Contas Ativas",
+      title: "Saldo",
       value: activeAccountsSum,
       icon: <Building className="w-4 h-4 text-blue-600" />,
       iconBg: "bg-blue-50",
@@ -83,7 +83,7 @@ export function StatsCards() {
   ];
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4 mb-8">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
       {cards.map((card, index) => (
         <Card key={index} className="p-3 md:p-4 shadow-sm border-gray-100">
           <div className="flex items-center justify-between mb-2">

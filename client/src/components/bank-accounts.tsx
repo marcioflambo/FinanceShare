@@ -19,16 +19,18 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { formatCurrencyDisplay } from "@/lib/currency";
-import { Plus, Building, PiggyBank, MoreVertical, Edit, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Building, PiggyBank, MoreVertical, Edit, Trash2, ChevronLeft, ChevronRight, ArrowUpDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { BankAccount } from "@shared/schema";
 import { BankAccountModal } from "./bank-account-modal";
+import { BankAccountOrganizeModal } from "./bank-account-organize-modal";
 
 export function BankAccounts() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<BankAccount | null>(null);
   const [accountToDelete, setAccountToDelete] = useState<BankAccount | null>(null);
+  const [isOrganizeModalOpen, setIsOrganizeModalOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -194,6 +196,12 @@ export function BankAccounts() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem
+                    onClick={() => setIsOrganizeModalOpen(true)}
+                  >
+                    <ArrowUpDown className="h-4 w-4 mr-2" />
+                    Organizar
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
                     onClick={() => {
                       setEditingAccount(accounts[currentIndex]);
                       setIsModalOpen(true);
@@ -297,6 +305,12 @@ export function BankAccounts() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <BankAccountOrganizeModal
+        open={isOrganizeModalOpen}
+        onClose={() => setIsOrganizeModalOpen(false)}
+        accounts={accounts}
+      />
     </div>
   );
 }
