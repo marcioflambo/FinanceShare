@@ -178,7 +178,7 @@ export function StatsCards({ selectedAccountIds = [] }: StatsCardsProps) {
       iconBg: "bg-red-50",
       change: getExpenseLabel(),
       changeColor: "text-red-600 bg-red-100",
-      description: "Gastos do mês",
+      description: "Gastos do Mês",
       subtitle: new Date().toLocaleDateString('pt-BR', { month: 'long' }),
     },
     {
