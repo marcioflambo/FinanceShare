@@ -174,13 +174,13 @@ export default function Dashboard() {
             />
           ) : (
             <>
-              <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-4">
-                <div className="lg:col-span-3 space-y-4">
+              <div className="flex gap-6 mb-4">
+                <div className="flex-1 space-y-4">
                   <StatsCards />
                   <RecentTransactions onViewAll={() => setShowAllTransactions(true)} selectedAccountIds={selectedAccountIds} />
                 </div>
 
-                <div className="space-y-4">
+                <div className="w-80 space-y-4">
                   <BankAccounts 
                     onTransferClick={() => setIsTransferModalOpen(true)}
                     onAccountSelect={(accountId) => {
@@ -193,7 +193,7 @@ export default function Dashboard() {
                     selectedAccountId={selectedAccountIds[0] || null}
                   />
 
-                  <Card className="shadow-sm border-gray-100">
+                  <Card className="shadow-sm border-gray-100 w-80">
                     <CardContent className="p-4">
                       <h3 className="text-base font-semibold text-gray-900 mb-3">Ações Rápidas</h3>
                       <div className="space-y-2">
@@ -240,7 +240,7 @@ export default function Dashboard() {
                   </Card>
 
                   {aiTip && (
-                    <Card className="shadow-sm border-amber-200 bg-gradient-to-br from-amber-50 to-amber-25">
+                    <Card className="shadow-sm border-amber-200 bg-gradient-to-br from-amber-50 to-amber-25 w-80">
                       <CardContent className="p-4">
                         <div className="flex items-center space-x-2 mb-2">
                           <Lightbulb className="w-4 h-4 text-amber-600" />
