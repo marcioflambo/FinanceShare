@@ -162,6 +162,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const expenseData = insertExpenseSchema.parse({ 
         ...req.body, 
         userId: DEMO_USER_ID,
+        amount: String(req.body.amount), // Convert number to string for decimal field
         date: new Date(req.body.date),
         transactionType: req.body.transactionType || "debit",
         recurringType: req.body.isRecurring ? (req.body.installments ? "installment" : "advanced") : null,
@@ -180,8 +181,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update bank account balance
       // For expenses (negative impact) subtract from balance
       // For income/receipts (positive impact) add to balance
-      if (!expense || !expense.accountId) {
-        throw new Error('Despesa criada mas dados inválidos retornados');
+      if (!expense) {
+        throw new Error('Falha ao criar despesa');
       }
       
       const account = await storage.getBankAccountById(expense.accountId);
