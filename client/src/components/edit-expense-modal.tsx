@@ -168,12 +168,21 @@ export function EditExpenseModal({ open, onClose, expense }: EditExpenseModalPro
         isInstallment: data.isInstallment,
       };
 
-      return await apiRequest("PUT", `/api/expenses/${expense.id}`, payload);
+      const response = await apiRequest("PUT", `/api/expenses/${expense.id}`, payload);
+      return await response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/expenses"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/bank-accounts"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/statistics"] });
+    onSuccess: async () => {
+      // Invalidate all related queries
+      await queryClient.invalidateQueries({ queryKey: ["/api/expenses"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/bank-accounts"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/statistics"] });
+      
+      // Force refetch to ensure UI updates
+      await queryClient.refetchQueries({ queryKey: ["/api/expenses"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/statistics"] });
+      
+      // Clear any cached data
+      queryClient.removeQueries({ queryKey: ["/api/expenses"] });
       
       toast({
         title: "Despesa atualizada!",
