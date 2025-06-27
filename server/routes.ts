@@ -118,6 +118,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body, 
         userId: DEMO_USER_ID,
         date: new Date(req.body.date),
+        transactionType: req.body.transactionType || "debit",
         recurringType: req.body.isRecurring ? (req.body.installments ? "installment" : "advanced") : null,
         recurringFrequency: req.body.isRecurring ? req.body.recurrenceType : null,
         recurringInterval: req.body.isRecurring ? 1 : null,
@@ -143,12 +144,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const expenseAmount = parseFloat(expense.amount);
         const currentBalance = parseFloat(account.balance);
         
-        // Determine if this is income based on description or amount context
-        const isIncome = expense.description.toLowerCase().includes('salário') || 
-                        expense.description.toLowerCase().includes('receita') ||
-                        expense.description.toLowerCase().includes('faturamento') ||
-                        expense.description.toLowerCase().includes('consultoria') ||
-                        expense.description.toLowerCase().includes('venda');
+        // Determine if this is income based on transaction type
+        const isIncome = expense.transactionType === 'credit';
         
         const newBalance = isIncome ? 
           (currentBalance + expenseAmount).toFixed(2) : 
@@ -177,6 +174,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: DEMO_USER_ID,
         amount: String(req.body.amount),
         date: new Date(req.body.date),
+        transactionType: req.body.transactionType || "debit",
         recurringType: req.body.isRecurring ? (req.body.installments ? "installment" : "advanced") : null,
         recurringFrequency: req.body.isRecurring ? req.body.recurrenceType : null,
         recurringInterval: req.body.isRecurring ? 1 : null,

@@ -52,6 +52,7 @@ export const expenses = mysqlTable("expenses", {
   categoryId: int("category_id").notNull(),
   accountId: int("account_id").notNull(),
   userId: int("user_id").notNull(),
+  transactionType: text("transaction_type").default("debit"), // "debit", "credit", "transfer"
   createdAt: timestamp("created_at").defaultNow(),
   // Recurring transaction fields
   isRecurring: boolean("is_recurring").default(false),
@@ -271,6 +272,7 @@ export const insertExpenseSchema = createInsertSchema(expenses).pick({
   categoryId: true,
   accountId: true,
   userId: true,
+  transactionType: true,
   isRecurring: true,
   recurringType: true,
   recurringFrequency: true,
