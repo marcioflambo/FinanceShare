@@ -52,7 +52,7 @@ export const expenses = mysqlTable("expenses", {
   categoryId: int("category_id").notNull(),
   accountId: int("account_id").notNull(),
   userId: int("user_id").notNull(),
-  transactionType: text("transaction_type").default("debit"), // "debit", "credit", "transfer"
+  transactionType: text("transaction_type").default("debit"), // "debit", "credit", "transfer_in", "transfer_out"
   createdAt: timestamp("created_at").defaultNow(),
   // Recurring transaction fields
   isRecurring: boolean("is_recurring").default(false),

@@ -559,7 +559,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/transfers", async (req, res) => {
     try {
-      const transferData = insertTransferSchema.parse({ ...req.body, userId: DEMO_USER_ID });
+      const transferData = insertTransferSchema.parse({ 
+        ...req.body, 
+        userId: DEMO_USER_ID,
+        date: new Date(req.body.date),
+        amount: String(req.body.amount) // Convert to string for decimal field
+      });
       const transfer = await storage.createTransfer(transferData);
       res.json(transfer);
     } catch (error) {

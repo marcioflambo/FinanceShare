@@ -135,10 +135,14 @@ export function AllTransactions({ onBack, selectedAccountIds = [] }: AllTransact
       const amount = parseFloat(t.amount);
       if (t.transactionType === 'credit') {
         return total + amount; // Crédito soma
+      } else if (t.transactionType === 'transfer_in') {
+        return total + amount; // Entrada de transferência soma
       } else if (t.transactionType === 'debit') {
         return total - amount; // Débito subtrai
+      } else if (t.transactionType === 'transfer_out') {
+        return total - amount; // Saída de transferência subtrai
       } else {
-        return total; // Transferência não afeta o total
+        return total; // Transferência genérica não afeta o total
       }
     }, 0);
   };
@@ -291,12 +295,20 @@ export function AllTransactions({ onBack, selectedAccountIds = [] }: AllTransact
                         <span className={`font-semibold ${
                           transaction.transactionType === 'credit' 
                             ? 'text-green-600' 
+                            : transaction.transactionType === 'transfer_in'
+                            ? 'text-blue-600'
+                            : transaction.transactionType === 'transfer_out'
+                            ? 'text-orange-600'
                             : transaction.transactionType === 'transfer'
                             ? 'text-blue-600'
                             : 'text-red-600'
                         }`}>
                           {transaction.transactionType === 'credit' 
                             ? '+' 
+                            : transaction.transactionType === 'transfer_in'
+                            ? '+'
+                            : transaction.transactionType === 'transfer_out'
+                            ? '-'
                             : transaction.transactionType === 'transfer'
                             ? ''
                             : '-'

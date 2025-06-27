@@ -319,6 +319,49 @@ export class DatabaseStorage implements IStorage {
 
   async createTransfer(insertTransfer: InsertTransfer): Promise<Transfer> {
     const result = await db.insert(transfers).values(insertTransfer);
+    const transferId = result[0].insertId;
+    
+    // Criar transação de débito na conta de origem (saída de dinheiro)
+    const debitExpense = {
+      description: `Transferência para conta destino - ${insertTransfer.description}`,
+      amount: insertTransfer.amount,
+      date: insertTransfer.date,
+      categoryId: 5, // Categoria de Transferências
+      accountId: insertTransfer.fromAccountId,
+      userId: insertTransfer.userId,
+      transactionType: "transfer_out" as const,
+      isRecurring: false,
+      recurringType: null,
+      recurringFrequency: null,
+      recurringInterval: null,
+      installmentTotal: null,
+      installmentCurrent: null,
+      recurringEndDate: null,
+      parentExpenseId: transferId // Vincula à transferência
+    };
+    
+    // Criar transação de crédito na conta de destino (entrada de dinheiro)
+    const creditExpense = {
+      description: `Transferência da conta origem - ${insertTransfer.description}`,
+      amount: insertTransfer.amount,
+      date: insertTransfer.date,
+      categoryId: 5, // Categoria de Transferências
+      accountId: insertTransfer.toAccountId,
+      userId: insertTransfer.userId,
+      transactionType: "transfer_in" as const,
+      isRecurring: false,
+      recurringType: null,
+      recurringFrequency: null,
+      recurringInterval: null,
+      installmentTotal: null,
+      installmentCurrent: null,
+      recurringEndDate: null,
+      parentExpenseId: transferId // Vincula à transferência
+    };
+    
+    // Inserir ambas as transações
+    await db.insert(expenses).values(debitExpense);
+    await db.insert(expenses).values(creditExpense);
     
     // Update account balances - não tocar nos saldos iniciais
     const amount = parseFloat(insertTransfer.amount);
@@ -337,7 +380,7 @@ export class DatabaseStorage implements IStorage {
     await this.recalculateAccountBalance(insertTransfer.userId, insertTransfer.fromAccountId);
     await this.recalculateAccountBalance(insertTransfer.userId, insertTransfer.toAccountId);
     
-    const [transfer] = await db.select().from(transfers).where(eq(transfers.id, result[0].insertId));
+    const [transfer] = await db.select().from(transfers).where(eq(transfers.id, transferId));
     return transfer;
   }
 
