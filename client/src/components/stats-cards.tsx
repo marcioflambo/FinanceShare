@@ -212,11 +212,11 @@ export function StatsCards({ selectedAccountIds = [] }: StatsCardsProps) {
               {card.icon}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-gray-900 truncate">{card.title}</p>
+              <p className="text-xs md:text-sm font-medium text-gray-900 truncate">{card.title}</p>
               <p className="text-xs text-gray-500 truncate">{card.description}</p>
             </div>
           </div>
-          <p className="text-base md:text-lg font-bold text-gray-900">
+          <p className="text-lg md:text-xl font-bold text-gray-900">
             {formatCurrencyDisplay(card.value)}
           </p>
         </Card>

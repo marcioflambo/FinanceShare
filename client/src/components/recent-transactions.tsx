@@ -108,14 +108,14 @@ export function RecentTransactions({ onViewAll, selectedAccountIds = [], onAccou
                     ></i>
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900 text-sm">{transaction.description}</p>
-                    <p className="text-xs text-gray-600">
+                    <p className="font-medium text-gray-900 text-sm md:text-base">{transaction.description}</p>
+                    <p className="text-xs md:text-sm text-gray-600">
                       {getRelativeTime(transaction.date)}
                       {transaction.account && ` • ${transaction.account.name}`}
                     </p>
                   </div>
                 </div>
-                <span className="font-semibold text-red-600 text-sm">
+                <span className="font-semibold text-red-600 text-sm md:text-base">
                   -{formatCurrency(transaction.amount)}
                 </span>
               </div>
