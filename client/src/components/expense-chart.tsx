@@ -218,8 +218,8 @@ export function ExpenseChart({ selectedAccountIds = [], onAccountSelectionChange
                     startDate={customStartDate || undefined}
                     endDate={customEndDate || undefined}
                     onDateRangeChange={(start, end) => {
-                      setCustomStartDate(start);
-                      setCustomEndDate(end);
+                      setCustomStartDate(start ?? undefined);
+                      setCustomEndDate(end ?? undefined);
                     }}
                   />
                   <div className="flex justify-between pt-4">

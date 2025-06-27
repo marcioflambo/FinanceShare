@@ -183,15 +183,12 @@ export function BankAccounts({ onTransferClick, onAccountSelect, selectedAccount
   const nextAccount = () => {
     if (currentIndex >= accounts.length - 1) return; // Prevent click when at last account
     
-    console.log('nextAccount clicked, currentIndex:', currentIndex, 'accounts.length:', accounts.length);
     const newIndex = currentIndex + 1;
-    console.log('Setting new index to:', newIndex);
     setCurrentIndex(newIndex);
     
     // Update the filter after state change
     setTimeout(() => {
       if (onAccountSelect && accounts[newIndex]) {
-        console.log('Calling onAccountSelect with:', accounts[newIndex].id);
         onAccountSelect(accounts[newIndex].id);
       }
     }, 0);
@@ -200,15 +197,12 @@ export function BankAccounts({ onTransferClick, onAccountSelect, selectedAccount
   const prevAccount = () => {
     if (currentIndex <= 0) return; // Prevent click when at first account
     
-    console.log('prevAccount clicked, currentIndex:', currentIndex, 'accounts.length:', accounts.length);
     const newIndex = currentIndex - 1;
-    console.log('Setting new index to:', newIndex);
     setCurrentIndex(newIndex);
     
     // Update the filter after state change
     setTimeout(() => {
       if (onAccountSelect && accounts[newIndex]) {
-        console.log('Calling onAccountSelect with:', accounts[newIndex].id);
         onAccountSelect(accounts[newIndex].id);
       }
     }, 0);
