@@ -109,23 +109,47 @@ export default function Dashboard() {
                       <Users className="w-4 h-4" />
                       <span className="font-medium">Dividir</span>
                     </Button>
+                    <Button 
+                      onClick={() => setIsAdvancedExpenseModalOpen(true)}
+                      variant="outline"
+                      className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
+                    >
+                      <i className="fas fa-sync-alt"></i>
+                      <span className="font-medium">Recorrente</span>
+                    </Button>
+                    <Button 
+                      onClick={() => setIsGoalModalOpen(true)}
+                      variant="outline"
+                      className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
+                    >
+                      <Target className="w-4 h-4" />
+                      <span className="font-medium">Meta</span>
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
-              {aiTip && (
-                <Card className="shadow-sm border-amber-200 bg-gradient-to-br from-amber-50 to-amber-25">
-                  <CardContent className="p-4">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <Lightbulb className="w-4 h-4 text-amber-600" />
-                      <h3 className="font-semibold text-gray-900 text-sm">Dica de IA</h3>
-                    </div>
-                    <p className="text-sm text-gray-700">
-                      {aiTip.tip}
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
             </div>
+            <div className="grid grid-cols-1 gap-6 mb-8">
+              <RecentTransactions onViewAll={() => setShowAllTransactions(true)} selectedAccountIds={selectedAccountIds} />
+              <BillSplits />
+              <GoalsOverview onCreateGoal={() => setIsGoalModalOpen(true)} />
+            </div>
+            {aiTip && (
+              <Card className="shadow-sm border-amber-200 bg-gradient-to-br from-amber-50 to-amber-25">
+                <CardContent className="p-6">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <Lightbulb className="w-5 h-5 text-amber-600" />
+                    <h3 className="font-semibold text-gray-900">Dica de IA</h3>
+                  </div>
+                  <p className="text-sm text-gray-700 mb-3">
+                    {aiTip.tip}
+                  </p>
+                  <Button variant="ghost" size="sm" className="text-amber-600 hover:text-amber-700 p-0">
+                    Ver mais dicas →
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </>
         );
     }
@@ -150,33 +174,25 @@ export default function Dashboard() {
             />
           ) : (
             <>
-              <div className="mb-8">
-                <div className="flex items-start gap-6 mb-4">
-                  <div className="flex-1">
-                    <StatsCards />
-                  </div>
-                  <div className="flex-shrink-0">
-                    <BankAccounts 
-                      onTransferClick={() => setIsTransferModalOpen(true)}
-                      onAccountSelect={(accountId) => {
-                        if (accountId) {
-                          setSelectedAccountIds([accountId]);
-                        } else {
-                          setSelectedAccountIds([]);
-                        }
-                      }}
-                      selectedAccountId={selectedAccountIds[0] || null}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                <div className="lg:col-span-2">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-4">
+                <div className="lg:col-span-2 space-y-4">
+                  <StatsCards />
                   <RecentTransactions onViewAll={() => setShowAllTransactions(true)} selectedAccountIds={selectedAccountIds} />
                 </div>
 
                 <div className="space-y-4">
+                  <BankAccounts 
+                    onTransferClick={() => setIsTransferModalOpen(true)}
+                    onAccountSelect={(accountId) => {
+                      if (accountId) {
+                        setSelectedAccountIds([accountId]);
+                      } else {
+                        setSelectedAccountIds([]);
+                      }
+                    }}
+                    selectedAccountId={selectedAccountIds[0] || null}
+                  />
+
                   <Card className="shadow-sm border-gray-100">
                     <CardContent className="p-6">
                       <h3 className="text-lg font-semibold text-gray-900 mb-4">Ações Rápidas</h3>
@@ -247,8 +263,6 @@ export default function Dashboard() {
         </div>
       </main>
 
-
-      
       <ExpenseModal 
         open={isExpenseModalOpen}
         onClose={() => setIsExpenseModalOpen(false)}
