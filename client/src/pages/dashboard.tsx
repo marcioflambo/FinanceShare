@@ -173,7 +173,7 @@ export default function Dashboard() {
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
                 <div className="lg:col-span-2">
-                  <RecentTransactions onViewAll={() => setShowAllTransactions(true)} selectedAccountIds={selectedAccountIds} />
+                  <GoalsOverview onCreateGoal={() => setIsGoalModalOpen(true)} />
                 </div>
 
                 <div className="space-y-4">
@@ -241,10 +241,6 @@ export default function Dashboard() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                 <RecentTransactions onViewAll={() => setShowAllTransactions(true)} selectedAccountIds={selectedAccountIds} />
                 <BillSplits />
-              </div>
-
-              <div className="mb-8">
-                <GoalsOverview onCreateGoal={() => setIsGoalModalOpen(true)} />
               </div>
             </>
           )}
