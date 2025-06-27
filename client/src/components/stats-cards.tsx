@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { formatCurrencyDisplay } from "@/lib/currency";
 import { TrendingUp, TrendingDown, Users, PiggyBank, Target, Building } from "lucide-react";
-import type { BankAccount } from "@shared/schema";
+import type { BankAccount, Expense } from "@shared/schema";
 
 interface StatisticsData {
   totalBalance: number;
@@ -11,7 +11,11 @@ interface StatisticsData {
   savings: number;
 }
 
-export function StatsCards() {
+interface StatsCardsProps {
+  selectedAccountIds?: number[];
+}
+
+export function StatsCards({ selectedAccountIds = [] }: StatsCardsProps) {
   const { data: stats, isLoading } = useQuery<StatisticsData>({
     queryKey: ["/api/statistics"],
   });
@@ -20,10 +24,33 @@ export function StatsCards() {
     queryKey: ["/api/bank-accounts"],
   });
 
-  // Calculate sum of active accounts
-  const activeAccountsSum = accounts
-    .filter(account => account.isActive !== false)
+  const { data: expenses = [] } = useQuery<Expense[]>({
+    queryKey: ["/api/expenses"],
+  });
+
+  // Filter accounts based on selection or default to active accounts
+  const filteredAccounts = selectedAccountIds.length > 0 
+    ? accounts.filter(account => selectedAccountIds.includes(account.id))
+    : accounts.filter(account => account.isActive !== false);
+
+  // Calculate sum of filtered accounts
+  const filteredAccountsSum = filteredAccounts
     .reduce((sum, account) => sum + parseFloat(account.balance), 0);
+
+  // Calculate monthly expenses for filtered accounts
+  const currentMonth = new Date();
+  const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+  
+  const monthlyExpensesForAccounts = expenses
+    .filter(expense => {
+      const expenseDate = new Date(expense.date);
+      const isCurrentMonth = expenseDate >= firstDayOfMonth && expenseDate <= currentMonth;
+      const isFromSelectedAccount = selectedAccountIds.length > 0 
+        ? selectedAccountIds.includes(expense.accountId)
+        : accounts.find(acc => acc.id === expense.accountId)?.isActive !== false;
+      return isCurrentMonth && isFromSelectedAccount;
+    })
+    .reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
 
   if (isLoading) {
     return (
@@ -44,24 +71,25 @@ export function StatsCards() {
 
   if (!stats) return null;
 
-  const activeAccountsCount = accounts.filter(acc => acc.isActive !== false).length;
-  const totalAccountsCount = accounts.length;
+  const filteredAccountsCount = filteredAccounts.length;
+  const savingsAccounts = filteredAccounts.filter(acc => acc.type === 'savings');
+  const savingsSum = savingsAccounts.reduce((sum, account) => sum + parseFloat(account.balance), 0);
 
   const cards = [
     {
       title: "Saldo",
-      value: activeAccountsSum,
+      value: filteredAccountsSum,
       icon: <Building className="w-4 h-4 text-blue-600" />,
       iconBg: "bg-blue-50",
-      change: `${activeAccountsCount} ativas`,
+      change: selectedAccountIds.length > 0 ? `${filteredAccountsCount} selecionadas` : `${filteredAccountsCount} ativas`,
       changeColor: "text-blue-600 bg-blue-100",
     },
     {
       title: "Gastos do Mês",
-      value: stats.monthlyExpenses,
+      value: monthlyExpensesForAccounts,
       icon: <TrendingDown className="w-4 h-4 text-red-500" />,
       iconBg: "bg-red-50",
-      change: "-8%",
+      change: selectedAccountIds.length > 0 ? "Contas selecionadas" : "Contas ativas",
       changeColor: "text-red-600 bg-red-100",
     },
     {
@@ -74,10 +102,10 @@ export function StatsCards() {
     },
     {
       title: "Economia",
-      value: stats.savings,
+      value: savingsSum,
       icon: <PiggyBank className="w-4 h-4 text-green-600" />,
       iconBg: "bg-green-50",
-      change: "Meta 85%",
+      change: selectedAccountIds.length > 0 ? "Poupanças selecionadas" : "Contas poupança",
       changeColor: "text-green-600 bg-green-100",
     },
   ];
@@ -95,7 +123,7 @@ export function StatsCards() {
             </span>
           </div>
           <p className="text-lg md:text-2xl font-bold text-gray-900 mb-1">
-            {card.title === "Contas Ativas" ? card.value : formatCurrencyDisplay(card.value)}
+            {formatCurrencyDisplay(card.value)}
           </p>
           <p className="text-xs md:text-sm text-gray-600">{card.title}</p>
         </Card>

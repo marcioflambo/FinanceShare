@@ -127,7 +127,7 @@ export default function Dashboard() {
             <div className="mb-6">
               <BankAccounts />
               <div className="mt-4">
-                <StatsCards />
+                <StatsCards selectedAccountIds={selectedAccountIds} />
               </div>
             </div>
             <div className="grid grid-cols-1 gap-6 mb-8">
@@ -205,7 +205,7 @@ export default function Dashboard() {
             <>
               <div className="flex gap-6 mb-4">
                 <div className="flex-1 space-y-4">
-                  <StatsCards />
+                  <StatsCards selectedAccountIds={selectedAccountIds} />
                   <RecentTransactions 
                     onViewAll={() => setShowAllTransactions(true)} 
                     selectedAccountIds={selectedAccountIds}
