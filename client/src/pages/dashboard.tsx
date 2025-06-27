@@ -65,36 +65,6 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 gap-6">
               <BankAccounts />
               <RecentTransactions onViewAll={() => setShowAllTransactions(true)} selectedAccountIds={selectedAccountIds} />
-              <Card className="shadow-sm border-gray-100">
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Ações de Despesas</h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Button 
-                      onClick={() => setIsExpenseModalOpen(true)}
-                      className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
-                    >
-                      <i className="fas fa-plus"></i>
-                      <span className="font-medium">Nova Despesa</span>
-                    </Button>
-                    <Button 
-                      onClick={() => setIsAdvancedExpenseModalOpen(true)}
-                      variant="outline"
-                      className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
-                    >
-                      <i className="fas fa-sync-alt"></i>
-                      <span className="font-medium">Recorrente</span>
-                    </Button>
-                    <Button 
-                      onClick={() => setIsTransferModalOpen(true)}
-                      variant="secondary"
-                      className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform col-span-2"
-                    >
-                      <i className="fas fa-exchange-alt"></i>
-                      <span className="font-medium">Transferir entre Contas</span>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
           </div>
         );
@@ -153,6 +123,38 @@ export default function Dashboard() {
               <div className="mt-4">
                 <BankAccounts />
               </div>
+            </div>
+            <div className="grid grid-cols-1 gap-6 mb-8">
+              <Card className="shadow-sm border-gray-100">
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Ações de Despesas</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button 
+                      onClick={() => setIsExpenseModalOpen(true)}
+                      className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
+                    >
+                      <i className="fas fa-plus"></i>
+                      <span className="font-medium">Nova Despesa</span>
+                    </Button>
+                    <Button 
+                      onClick={() => setIsAdvancedExpenseModalOpen(true)}
+                      variant="outline"
+                      className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
+                    >
+                      <i className="fas fa-sync-alt"></i>
+                      <span className="font-medium">Recorrente</span>
+                    </Button>
+                    <Button 
+                      onClick={() => setIsTransferModalOpen(true)}
+                      variant="secondary"
+                      className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform col-span-2"
+                    >
+                      <i className="fas fa-exchange-alt"></i>
+                      <span className="font-medium">Transferir entre Contas</span>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
             {aiTip && (

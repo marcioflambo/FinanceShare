@@ -285,6 +285,7 @@ Preferred communication style: Simple, everyday language.
 - June 27, 2025. **ACCOUNT SELECTOR IMPLEMENTATION**: Created harmonious multi-account selector for Recent Transactions with dropdown interface, multi-selection capabilities, color-coded badges, and responsive design for both web and mobile
 - June 27, 2025. **INACTIVE ACCOUNT SELECTION**: Enhanced account selector to include inactive accounts with organized sections, visual hierarchy, and clear status indicators
 - June 27, 2025. **SECTION SEPARATION**: Reorganized dashboard to remove components that belong to other navigation sections - expenses, splits, and reports now have dedicated sections with proper functionality separation
+- June 27, 2025. **DASHBOARD EXPENSE ACTIONS**: Moved "Ações de Despesas" box to dashboard for quick access to Nova Despesa, Recorrente, and Transferir functions from main screen
 
 ## Key Features
 
