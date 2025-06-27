@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { BankAccount } from "@shared/schema";
 import { Navigation } from "@/components/navigation";
 import { StatsCards } from "@/components/stats-cards";
-import { ExpenseChart } from "@/components/expense-chart";
+
 import { RecentTransactions } from "@/components/recent-transactions";
 import { AllTransactions } from "@/components/all-transactions";
 import { BillSplits } from "@/components/bill-splits";
@@ -63,10 +63,6 @@ export default function Dashboard() {
         return (
           <div className="space-y-6">
             <div className="grid grid-cols-1 gap-6">
-              <ExpenseChart 
-                selectedAccountIds={selectedAccountIds}
-                onAccountSelectionChange={setSelectedAccountIds}
-              />
               <RecentTransactions onViewAll={() => setShowAllTransactions(true)} selectedAccountIds={selectedAccountIds} />
               <BankAccounts />
             </div>
@@ -94,10 +90,6 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="grid grid-cols-1 gap-6 mb-8">
-              <ExpenseChart 
-                selectedAccountIds={selectedAccountIds}
-                onAccountSelectionChange={setSelectedAccountIds}
-              />
               <Card className="shadow-sm border-gray-100">
                 <CardContent className="p-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Ações Rápidas</h3>
@@ -181,10 +173,7 @@ export default function Dashboard() {
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
                 <div className="lg:col-span-2">
-                  <ExpenseChart 
-                    selectedAccountIds={selectedAccountIds} 
-                    onAccountSelectionChange={setSelectedAccountIds}
-                  />
+                  <RecentTransactions onViewAll={() => setShowAllTransactions(true)} selectedAccountIds={selectedAccountIds} />
                 </div>
 
                 <div className="space-y-4">
