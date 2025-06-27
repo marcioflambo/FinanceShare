@@ -102,15 +102,22 @@ export function BankAccountModal({ open, onClose, editingAccount }: BankAccountM
       const payload = { 
         ...data, 
         color: selectedColor,
-        balance: parseCurrencyInput(data.balance)
+        balance: parseCurrencyInput(data.balance),
+        lastFourDigits: "", // Optional field, can be empty
+        sortOrder: 0 // Default sort order
       };
       
-      if (isEditing && editingAccount) {
-        const response = await apiRequest(`/api/bank-accounts/${editingAccount.id}`, "PUT", payload);
-        return response.json();
-      } else {
-        const response = await apiRequest("/api/bank-accounts", "POST", payload);
-        return response.json();
+      try {
+        if (isEditing && editingAccount) {
+          const response = await apiRequest(`/api/bank-accounts/${editingAccount.id}`, "PUT", payload);
+          return await response.json();
+        } else {
+          const response = await apiRequest("/api/bank-accounts", "POST", payload);
+          return await response.json();
+        }
+      } catch (error) {
+        console.error('Error in bank account mutation:', error);
+        throw error;
       }
     },
     onSuccess: () => {
