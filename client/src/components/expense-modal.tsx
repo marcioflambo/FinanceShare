@@ -26,16 +26,23 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Category, BankAccount } from "@shared/schema";
 
 const formSchema = z.object({
   description: z.string().min(1, "Descrição é obrigatória"),
-  amount: z.string().min(1, "Valor é obrigatório").refine((val) => !isNaN(Number(val)) && Number(val) > 0, "Valor deve ser maior que zero"),
+  amount: z.string().min(1, "Valor é obrigatório").refine((val) => {
+    const numVal = parseFloat(val.replace(/[^\d.,]/g, '').replace(',', '.'));
+    return !isNaN(numVal) && numVal > 0;
+  }, "Valor deve ser maior que zero"),
   categoryId: z.string().min(1, "Categoria é obrigatória"),
   accountId: z.string().min(1, "Conta é obrigatória"),
   date: z.string().min(1, "Data é obrigatória"),
+  isRecurring: z.boolean().default(false),
+  recurrenceType: z.enum(["daily", "weekly", "monthly", "yearly"]).optional(),
+  installments: z.string().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -57,6 +64,8 @@ export function ExpenseModal({ open, onClose }: ExpenseModalProps) {
     queryKey: ["/api/bank-accounts"],
   });
 
+  const [amountValue, setAmountValue] = useState("");
+
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -65,18 +74,45 @@ export function ExpenseModal({ open, onClose }: ExpenseModalProps) {
       categoryId: "",
       accountId: "",
       date: new Date().toISOString().split('T')[0],
+      isRecurring: false,
+      recurrenceType: undefined,
+      installments: "",
     },
   });
 
+  const isRecurring = form.watch("isRecurring");
+
+  const formatCurrency = (value: string) => {
+    const numValue = value.replace(/[^\d]/g, '');
+    if (!numValue) return '';
+    const formatted = (parseInt(numValue) / 100).toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    return formatted;
+  };
+
+  const handleAmountChange = (value: string) => {
+    const formatted = formatCurrency(value);
+    setAmountValue(formatted);
+    const numericValue = value.replace(/[^\d]/g, '');
+    const decimalValue = numericValue ? (parseInt(numericValue) / 100).toString() : '';
+    form.setValue('amount', decimalValue);
+  };
+
   const createExpenseMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      await apiRequest("POST", "/api/expenses", {
+      const payload = {
         description: data.description,
         amount: parseFloat(data.amount),
         categoryId: parseInt(data.categoryId),
         accountId: parseInt(data.accountId),
         date: data.date,
-      });
+        isRecurring: data.isRecurring,
+        recurrenceType: data.recurrenceType,
+        installments: data.installments ? parseInt(data.installments) : undefined,
+      };
+      await apiRequest("POST", "/api/expenses", payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/expenses"] });
@@ -87,6 +123,7 @@ export function ExpenseModal({ open, onClose }: ExpenseModalProps) {
         description: "Sua despesa foi registrada com sucesso!",
       });
       form.reset();
+      setAmountValue("");
       onClose();
     },
     onError: () => {
@@ -135,11 +172,10 @@ export function ExpenseModal({ open, onClose }: ExpenseModalProps) {
                     <div className="relative">
                       <span className="absolute left-3 top-2 text-gray-500">R$</span>
                       <Input 
-                        type="number" 
-                        step="0.01" 
                         placeholder="0,00" 
                         className="pl-8"
-                        {...field} 
+                        value={amountValue}
+                        onChange={(e) => handleAmountChange(e.target.value)}
                       />
                     </div>
                   </FormControl>
@@ -215,6 +251,75 @@ export function ExpenseModal({ open, onClose }: ExpenseModalProps) {
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="isRecurring"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>
+                      Despesa Recorrente
+                    </FormLabel>
+                    <p className="text-sm text-muted-foreground">
+                      Esta despesa se repete automaticamente
+                    </p>
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            {isRecurring && (
+              <>
+                <FormField
+                  control={form.control}
+                  name="recurrenceType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Frequência</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a frequência" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="daily">Diário</SelectItem>
+                          <SelectItem value="weekly">Semanal</SelectItem>
+                          <SelectItem value="monthly">Mensal</SelectItem>
+                          <SelectItem value="yearly">Anual</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="installments"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Número de Repetições (opcional)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          placeholder="Deixe vazio para repetir indefinidamente"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
 
             <div className="flex space-x-3 pt-4">
               <Button 
