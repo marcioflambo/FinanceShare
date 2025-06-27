@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,9 +24,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Check, ChevronsUpDown, Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Category, BankAccount } from "@shared/schema";
@@ -37,7 +52,7 @@ const formSchema = z.object({
     const numVal = parseFloat(val.replace(/[^\d.,]/g, '').replace(',', '.'));
     return !isNaN(numVal) && numVal > 0;
   }, "Valor deve ser maior que zero"),
-  categoryId: z.string().min(1, "Categoria é obrigatória"),
+  categoryName: z.string().min(1, "Categoria é obrigatória"),
   accountId: z.string().min(1, "Conta é obrigatória"),
   date: z.string().min(1, "Data é obrigatória"),
   isRecurring: z.boolean().default(false),
@@ -65,13 +80,14 @@ export function ExpenseModal({ open, onClose }: ExpenseModalProps) {
   });
 
   const [amountValue, setAmountValue] = useState("");
+  const [categoryOpen, setCategoryOpen] = useState(false);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       description: "",
       amount: "",
-      categoryId: "",
+      categoryName: "",
       accountId: "",
       date: new Date().toISOString().split('T')[0],
       isRecurring: false,
@@ -100,12 +116,36 @@ export function ExpenseModal({ open, onClose }: ExpenseModalProps) {
     form.setValue('amount', decimalValue);
   };
 
+  // Get top 3 most used categories
+  const topCategories = useMemo(() => {
+    if (!categories || categories.length === 0) return [];
+    return categories.slice(0, 3);
+  }, [categories]);
+
   const createExpenseMutation = useMutation({
     mutationFn: async (data: FormData) => {
+      // First, find or create the category
+      let categoryId = null;
+      const existingCategory = categories.find(cat => 
+        cat.name.toLowerCase() === data.categoryName.toLowerCase()
+      );
+      
+      if (existingCategory) {
+        categoryId = existingCategory.id;
+      } else {
+        // Create new category
+        const newCategoryResponse = await apiRequest("POST", "/api/categories", {
+          name: data.categoryName,
+          icon: "fas fa-circle",
+          color: "#6B7280",
+        }) as any;
+        categoryId = newCategoryResponse.id;
+      }
+
       const payload = {
         description: data.description,
         amount: parseFloat(data.amount),
-        categoryId: parseInt(data.categoryId),
+        categoryId: categoryId,
         accountId: parseInt(data.accountId),
         date: data.date,
         isRecurring: data.isRecurring,
@@ -118,12 +158,14 @@ export function ExpenseModal({ open, onClose }: ExpenseModalProps) {
       queryClient.invalidateQueries({ queryKey: ["/api/expenses"] });
       queryClient.invalidateQueries({ queryKey: ["/api/statistics"] });
       queryClient.invalidateQueries({ queryKey: ["/api/bank-accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
       toast({
         title: "Despesa adicionada",
         description: "Sua despesa foi registrada com sucesso!",
       });
       form.reset();
       setAmountValue("");
+      setCategoryOpen(false);
       onClose();
     },
     onError: () => {
@@ -186,27 +228,68 @@ export function ExpenseModal({ open, onClose }: ExpenseModalProps) {
 
             <FormField
               control={form.control}
-              name="categoryId"
+              name="categoryName"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col">
                   <FormLabel>Categoria</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione uma categoria" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id.toString()}>
-                          <div className="flex items-center space-x-2">
-                            <i className={`${category.icon} text-sm`} style={{ color: category.color }}></i>
-                            <span>{category.name}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={categoryOpen}
+                          className={cn(
+                            "justify-between",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value || "Digite ou selecione uma categoria"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="p-0">
+                      <Command>
+                        <CommandInput 
+                          placeholder="Digite uma categoria..." 
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        />
+                        <CommandList>
+                          <CommandEmpty>
+                            <div className="flex items-center space-x-2 p-2">
+                              <Plus className="h-4 w-4" />
+                              <span>Criar "{field.value}"</span>
+                            </div>
+                          </CommandEmpty>
+                          <CommandGroup heading="Mais usadas">
+                            {topCategories.map((category) => (
+                              <CommandItem
+                                key={category.id}
+                                value={category.name}
+                                onSelect={() => {
+                                  field.onChange(category.name);
+                                  setCategoryOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    field.value === category.name ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <div className="flex items-center space-x-2">
+                                  <i className={`${category.icon} text-sm`} style={{ color: category.color }}></i>
+                                  <span>{category.name}</span>
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}
