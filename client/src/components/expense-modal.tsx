@@ -47,18 +47,16 @@ import { useToast } from "@/hooks/use-toast";
 import type { Category, BankAccount } from "@shared/schema";
 
 const formSchema = z.object({
-  description: z.string().min(1, "Descrição é obrigatória"),
-  amount: z.string().min(1, "Valor é obrigatório").refine((val) => {
-    const numVal = parseFloat(val.replace(/[^\d.,]/g, '').replace(',', '.'));
-    return !isNaN(numVal) && numVal > 0;
-  }, "Valor deve ser maior que zero"),
-  categoryName: z.string().min(1, "Categoria é obrigatória"),
-  accountId: z.string().min(1, "Conta é obrigatória"),
-  date: z.string().min(1, "Data é obrigatória"),
+  description: z.string().min(1, "Descrição é obrigatória"),  
+  amount: z.string().min(1, "Valor é obrigatório"),
+  categoryId: z.number().min(1, "Categoria é obrigatória"),
+  accountId: z.number().min(1, "Conta é obrigatória"),
   transactionType: z.enum(["debit", "credit"]).default("debit"),
+  date: z.date().default(() => new Date()),
   isRecurring: z.boolean().default(false),
-  recurrenceType: z.enum(["daily", "weekly", "monthly", "yearly"]).optional(),
-  installments: z.string().optional(),
+  recurringFrequency: z.enum(["weekly", "monthly", "yearly"]).default("monthly"),
+  installmentCount: z.number().min(1).default(1),
+  isInstallment: z.boolean().default(false),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -66,12 +64,30 @@ type FormData = z.infer<typeof formSchema>;
 interface ExpenseModalProps {
   open: boolean;
   onClose: () => void;
-  preselectedAccountId?: number | null;
+  preselectedAccountId?: number;
 }
 
 export function ExpenseModal({ open, onClose, preselectedAccountId }: ExpenseModalProps) {
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [categorySearch, setCategorySearch] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      description: "",
+      amount: "",
+      categoryId: 0,
+      accountId: preselectedAccountId || 0,
+      transactionType: "debit",
+      date: new Date(),
+      isRecurring: false,
+      recurringFrequency: "monthly",
+      installmentCount: 1,
+      isInstallment: false,
+    },
+  });
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
@@ -81,111 +97,58 @@ export function ExpenseModal({ open, onClose, preselectedAccountId }: ExpenseMod
     queryKey: ["/api/bank-accounts"],
   });
 
-  const [amountValue, setAmountValue] = useState("");
-  const [categoryOpen, setCategoryOpen] = useState(false);
-
-  const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      description: "",
-      amount: "",
-      categoryName: "",
-      accountId: "",
-      date: new Date().toISOString().split('T')[0],
-      transactionType: "debit",
-      isRecurring: false,
-      recurrenceType: undefined,
-      installments: "",
-    },
-  });
-
-  // Pre-select account when modal opens or preselectedAccountId changes
-  useEffect(() => {
-    if (open && preselectedAccountId) {
-      form.setValue('accountId', preselectedAccountId.toString());
-    }
-  }, [open, preselectedAccountId, form]);
-
+  const transactionType = form.watch("transactionType");
   const isRecurring = form.watch("isRecurring");
+  const isInstallment = form.watch("isInstallment");
 
-  const formatCurrency = (value: string) => {
-    const numValue = value.replace(/[^\d]/g, '');
-    if (!numValue) return '';
-    const formatted = (parseInt(numValue) / 100).toLocaleString('pt-BR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-    return formatted;
-  };
+  // Filter and sort categories based on usage
+  const { filteredCategories, topCategories } = useMemo(() => {
+    const filtered = categories.filter((category) =>
+      category.name.toLowerCase().includes(categorySearch.toLowerCase())
+    );
 
-  const handleAmountChange = (value: string) => {
-    const formatted = formatCurrency(value);
-    setAmountValue(formatted);
-    const numericValue = value.replace(/[^\d]/g, '');
-    const decimalValue = numericValue ? (parseInt(numericValue) / 100).toString() : '';
-    form.setValue('amount', decimalValue);
-  };
+    // Get top 3 most used categories (by ID for now - would be better to track usage)
+    const top = categories.slice(0, 3);
 
-  // Get top 3 most used categories
-  const topCategories = useMemo(() => {
-    if (!categories || categories.length === 0) return [];
-    return categories.slice(0, 3);
-  }, [categories]);
+    return { filteredCategories: filtered, topCategories: top };
+  }, [categories, categorySearch]);
 
   const createExpenseMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      // First, find or create the category
-      let categoryId = null;
-      const existingCategory = categories.find(cat => 
-        cat.name.toLowerCase() === data.categoryName.toLowerCase()
-      );
-      
-      if (existingCategory) {
-        categoryId = existingCategory.id;
-      } else {
-        // Create new category
-        const newCategoryResponse = await apiRequest("POST", "/api/categories", {
-          name: data.categoryName,
-          icon: "fas fa-circle",
-          color: "#6B7280",
-        }) as any;
-        categoryId = newCategoryResponse.id;
-      }
-
-      // Adjust amount based on transaction type
-      const baseAmount = parseFloat(data.amount);
-      const adjustedAmount = data.transactionType === "credit" ? baseAmount : -baseAmount;
-
       const payload = {
         description: data.description,
-        amount: adjustedAmount,
-        categoryId: categoryId,
-        accountId: parseInt(data.accountId),
+        amount: parseFloat(data.amount),
+        categoryId: data.categoryId,
+        accountId: data.accountId,
         date: data.date,
         isRecurring: data.isRecurring,
-        recurrenceType: data.recurrenceType,
-        installments: data.installments ? parseInt(data.installments) : undefined,
+        recurringFrequency: data.recurringFrequency,
+        installmentCount: data.installmentCount,
+        isInstallment: data.isInstallment,
       };
-      await apiRequest("POST", "/api/expenses", payload);
+
+      // Create expense or income based on transaction type
+      if (data.transactionType === "credit") {
+        return await apiRequest("/api/income", "POST", payload);
+      } else {
+        return await apiRequest("/api/expenses", "POST", payload);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/expenses"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/statistics"] });
       queryClient.invalidateQueries({ queryKey: ["/api/bank-accounts"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/statistics"] });
       toast({
-        title: "Despesa adicionada",
-        description: "Sua despesa foi registrada com sucesso!",
+        title: transactionType === "credit" ? "Receita adicionada!" : "Despesa adicionada!",
+        description: "A transação foi registrada com sucesso.",
       });
       form.reset();
-      setAmountValue("");
-      setCategoryOpen(false);
       onClose();
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
-        title: "Erro",
-        description: "Não foi possível adicionar a despesa. Tente novamente.",
+        title: "Erro ao adicionar transação",
+        description: error.message,
         variant: "destructive",
       });
     },
@@ -195,51 +158,30 @@ export function ExpenseModal({ open, onClose, preselectedAccountId }: ExpenseMod
     createExpenseMutation.mutate(data);
   };
 
+  const handleAddCategory = async (name: string) => {
+    try {
+      const newCategory = await apiRequest("/api/categories", "POST", { name });
+      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      form.setValue("categoryId", newCategory.id);
+      setCategoryOpen(false);
+      setCategorySearch("");
+    } catch (error) {
+      toast({
+        title: "Erro ao criar categoria",
+        description: "Não foi possível criar a nova categoria.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Adicionar Transação</DialogTitle>
+          <DialogTitle>Nova Transação</DialogTitle>
         </DialogHeader>
-        
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Descrição</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: Almoço no restaurante" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="amount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Valor</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <span className="absolute left-3 top-2 text-gray-500">R$</span>
-                      <Input 
-                        placeholder="0,00" 
-                        className="pl-8"
-                        value={amountValue}
-                        onChange={(e) => handleAmountChange(e.target.value)}
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <FormField
               control={form.control}
               name="transactionType"
@@ -272,9 +214,44 @@ export function ExpenseModal({ open, onClose, preselectedAccountId }: ExpenseMod
               )}
             />
 
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Descrição</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ex: Supermercado" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Valor</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="0,00"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <FormField
               control={form.control}
-              name="categoryName"
+              name="categoryId"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
                   <FormLabel>Categoria</FormLabel>
@@ -284,51 +261,101 @@ export function ExpenseModal({ open, onClose, preselectedAccountId }: ExpenseMod
                         <Button
                           variant="outline"
                           role="combobox"
-                          aria-expanded={categoryOpen}
                           className={cn(
                             "justify-between",
                             !field.value && "text-muted-foreground"
                           )}
                         >
-                          {field.value || "Digite ou selecione uma categoria"}
+                          {field.value
+                            ? categories.find((category) => category.id === field.value)?.name
+                            : "Selecionar categoria"}
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent className="p-0">
+                    <PopoverContent className="w-full p-0">
                       <Command>
-                        <CommandInput 
-                          placeholder="Digite uma categoria..." 
-                          value={field.value}
-                          onValueChange={field.onChange}
+                        <CommandInput
+                          placeholder="Buscar categoria..."
+                          value={categorySearch}
+                          onValueChange={setCategorySearch}
                         />
                         <CommandList>
                           <CommandEmpty>
-                            <div className="flex items-center space-x-2 p-2">
-                              <Plus className="h-4 w-4" />
-                              <span>Criar "{field.value}"</span>
+                            <div className="text-center py-2">
+                              <p className="text-sm text-muted-foreground mb-2">
+                                Categoria não encontrada
+                              </p>
+                              {categorySearch && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleAddCategory(categorySearch)}
+                                  className="text-xs"
+                                >
+                                  <Plus className="h-3 w-3 mr-1" />
+                                  Criar "{categorySearch}"
+                                </Button>
+                              )}
                             </div>
                           </CommandEmpty>
-                          <CommandGroup heading="Mais usadas">
-                            {topCategories.map((category) => (
+                          
+                          {topCategories.length > 0 && !categorySearch && (
+                            <CommandGroup heading="Mais usadas">
+                              {topCategories.map((category) => (
+                                <CommandItem
+                                  value={category.name}
+                                  key={category.id}
+                                  onSelect={() => {
+                                    form.setValue("categoryId", category.id);
+                                    setCategoryOpen(false);
+                                  }}
+                                >
+                                  <div className="flex items-center space-x-2">
+                                    <i
+                                      className={category.icon}
+                                      style={{ color: category.color }}
+                                    ></i>
+                                    <span>{category.name}</span>
+                                  </div>
+                                  <Check
+                                    className={cn(
+                                      "ml-auto h-4 w-4",
+                                      category.id === field.value
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                  />
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          )}
+
+                          <CommandGroup heading={categorySearch ? "Resultados" : "Todas as categorias"}>
+                            {filteredCategories.map((category) => (
                               <CommandItem
-                                key={category.id}
                                 value={category.name}
+                                key={category.id}
                                 onSelect={() => {
-                                  field.onChange(category.name);
+                                  form.setValue("categoryId", category.id);
                                   setCategoryOpen(false);
                                 }}
                               >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    field.value === category.name ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
                                 <div className="flex items-center space-x-2">
-                                  <i className={`${category.icon} text-sm`} style={{ color: category.color }}></i>
+                                  <i
+                                    className={category.icon}
+                                    style={{ color: category.color }}
+                                  ></i>
                                   <span>{category.name}</span>
                                 </div>
+                                <Check
+                                  className={cn(
+                                    "ml-auto h-4 w-4",
+                                    category.id === field.value
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  )}
+                                />
                               </CommandItem>
                             ))}
                           </CommandGroup>
@@ -347,17 +374,22 @@ export function ExpenseModal({ open, onClose, preselectedAccountId }: ExpenseMod
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Conta</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione uma conta" />
+                        <SelectValue placeholder="Selecionar conta" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       {accounts.map((account) => (
                         <SelectItem key={account.id} value={account.id.toString()}>
-                          {account.name} - {account.type === 'checking' ? 'Corrente' : 
-                                           account.type === 'savings' ? 'Poupança' : 'Digital'}
+                          <div className="flex items-center space-x-2">
+                            <i className="fas fa-university text-blue-500"></i>
+                            <span>{account.name}</span>
+                            {account.isActive === false && (
+                              <span className="text-xs text-gray-500">(Inativa)</span>
+                            )}
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -367,59 +399,32 @@ export function ExpenseModal({ open, onClose, preselectedAccountId }: ExpenseMod
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Data</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="recurring"
+                  checked={isRecurring}
+                  onCheckedChange={(checked: boolean) => form.setValue("isRecurring", checked)}
+                />
+                <label htmlFor="recurring" className="text-sm font-medium">
+                  Transação recorrente
+                </label>
+              </div>
 
-            <FormField
-              control={form.control}
-              name="isRecurring"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>
-                      Despesa Recorrente
-                    </FormLabel>
-                    <p className="text-sm text-muted-foreground">
-                      Esta despesa se repete automaticamente
-                    </p>
-                  </div>
-                </FormItem>
-              )}
-            />
-
-            {isRecurring && (
-              <>
+              {isRecurring && (
                 <FormField
                   control={form.control}
-                  name="recurrenceType"
+                  name="recurringFrequency"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Frequência</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecione a frequência" />
+                            <SelectValue placeholder="Selecionar frequência" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="daily">Diário</SelectItem>
                           <SelectItem value="weekly">Semanal</SelectItem>
                           <SelectItem value="monthly">Mensal</SelectItem>
                           <SelectItem value="yearly">Anual</SelectItem>
@@ -429,42 +434,48 @@ export function ExpenseModal({ open, onClose, preselectedAccountId }: ExpenseMod
                     </FormItem>
                   )}
                 />
+              )}
 
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="installment"
+                  checked={isInstallment}
+                  onCheckedChange={(checked: boolean) => form.setValue("isInstallment", checked)}
+                />
+                <label htmlFor="installment" className="text-sm font-medium">
+                  Parcelamento
+                </label>
+              </div>
+
+              {isInstallment && (
                 <FormField
                   control={form.control}
-                  name="installments"
+                  name="installmentCount"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Número de Repetições (opcional)</FormLabel>
+                      <FormLabel>Número de parcelas</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="number" 
-                          placeholder="Deixe vazio para repetir indefinidamente"
-                          {...field} 
+                        <Input
+                          type="number"
+                          min="1"
+                          max="120"
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value))}
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              </>
-            )}
+              )}
+            </div>
 
-            <div className="flex space-x-3 pt-4">
-              <Button 
-                type="button" 
-                variant="outline" 
-                className="flex-1"
-                onClick={onClose}
-              >
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button variant="outline" onClick={onClose} type="button">
                 Cancelar
               </Button>
-              <Button 
-                type="submit" 
-                className="flex-1"
-                disabled={createExpenseMutation.isPending}
-              >
-                {createExpenseMutation.isPending ? "Salvando..." : "Salvar Despesa"}
+              <Button type="submit" disabled={createExpenseMutation.isPending}>
+                {createExpenseMutation.isPending ? "Salvando..." : "Salvar"}
               </Button>
             </div>
           </form>

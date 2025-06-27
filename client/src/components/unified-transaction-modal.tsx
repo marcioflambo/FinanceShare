@@ -173,7 +173,7 @@ export function UnifiedTransactionModal({ open, onClose, preselectedAccountId }:
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 text-lg">
             {getTransactionIcon()}
             Adicionar Transação
           </DialogTitle>
@@ -210,7 +210,7 @@ export function UnifiedTransactionModal({ open, onClose, preselectedAccountId }:
                         }}
                       >
                         <CardHeader className="pb-3">
-                          <CardTitle className="flex items-center gap-3">
+                          <CardTitle className="flex items-center gap-3 text-base">
                             <div className={cn("p-2 rounded-full text-white", type.color)}>
                               <Icon className="h-4 w-4" />
                             </div>

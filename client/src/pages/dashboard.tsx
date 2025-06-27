@@ -10,7 +10,7 @@ import { BillSplits } from "@/components/bill-splits";
 import { BankAccounts } from "@/components/bank-accounts";
 import { GoalsOverview } from "@/components/goals-overview";
 
-import { UnifiedTransactionModal } from "@/components/unified-transaction-modal";
+import { ExpenseModal } from "@/components/expense-modal";
 import { BillSplitModal } from "@/components/bill-split-modal";
 import { GoalModal } from "@/components/goal-modal";
 
@@ -276,7 +276,7 @@ export default function Dashboard() {
         </div>
       </main>
 
-      <UnifiedTransactionModal 
+      <ExpenseModal 
         open={isTransactionModalOpen}
         onClose={() => setIsTransactionModalOpen(false)}
         preselectedAccountId={selectedAccountIds[0] || undefined}
