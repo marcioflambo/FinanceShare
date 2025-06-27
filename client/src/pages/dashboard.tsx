@@ -194,42 +194,46 @@ export default function Dashboard() {
                   />
 
                   <Card className="shadow-sm border-gray-100">
-                    <CardContent className="p-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Ações Rápidas</h3>
-                      <div className="space-y-3">
+                    <CardContent className="p-4">
+                      <h3 className="text-base font-semibold text-gray-900 mb-3">Ações Rápidas</h3>
+                      <div className="space-y-2">
                         <Button 
                           onClick={() => setIsExpenseModalOpen(true)}
-                          className="w-full flex items-center space-x-3 hover:scale-105 transition-transform"
+                          size="sm"
+                          className="w-full flex items-center space-x-2 hover:scale-105 transition-transform"
                         >
-                          <i className="fas fa-plus"></i>
-                          <span className="font-medium">Adicionar Despesa</span>
+                          <i className="fas fa-plus text-sm"></i>
+                          <span className="text-sm font-medium">Adicionar Despesa</span>
                         </Button>
                         
                         <Button 
                           onClick={() => setIsAdvancedExpenseModalOpen(true)}
                           variant="outline"
-                          className="w-full flex items-center space-x-3 hover:scale-105 transition-transform"
+                          size="sm"
+                          className="w-full flex items-center space-x-2 hover:scale-105 transition-transform"
                         >
-                          <i className="fas fa-sync-alt"></i>
-                          <span className="font-medium">Despesa Recorrente</span>
+                          <i className="fas fa-sync-alt text-sm"></i>
+                          <span className="text-sm font-medium">Despesa Recorrente</span>
                         </Button>
                         
                         <Button 
                           onClick={() => setIsBillSplitModalOpen(true)}
                           variant="secondary"
-                          className="w-full flex items-center space-x-3 hover:scale-105 transition-transform"
+                          size="sm"
+                          className="w-full flex items-center space-x-2 hover:scale-105 transition-transform"
                         >
-                          <Users className="w-4 h-4" />
-                          <span className="font-medium">Dividir Conta</span>
+                          <Users className="w-3 h-3" />
+                          <span className="text-sm font-medium">Dividir Conta</span>
                         </Button>
                         
                         <Button 
                           onClick={() => setIsGoalModalOpen(true)}
                           variant="outline"
-                          className="w-full flex items-center space-x-3 hover:scale-105 transition-transform"
+                          size="sm"
+                          className="w-full flex items-center space-x-2 hover:scale-105 transition-transform"
                         >
-                          <Target className="w-4 h-4" />
-                          <span className="font-medium">Nova Meta</span>
+                          <Target className="w-3 h-3" />
+                          <span className="text-sm font-medium">Nova Meta</span>
                         </Button>
                       </div>
                     </CardContent>
@@ -237,15 +241,15 @@ export default function Dashboard() {
 
                   {aiTip && (
                     <Card className="shadow-sm border-amber-200 bg-gradient-to-br from-amber-50 to-amber-25">
-                      <CardContent className="p-6">
-                        <div className="flex items-center space-x-2 mb-3">
-                          <Lightbulb className="w-5 h-5 text-amber-600" />
-                          <h3 className="font-semibold text-gray-900">Dica de IA</h3>
+                      <CardContent className="p-4">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <Lightbulb className="w-4 h-4 text-amber-600" />
+                          <h3 className="text-base font-semibold text-gray-900">Dica de IA</h3>
                         </div>
-                        <p className="text-sm text-gray-700 mb-3">
+                        <p className="text-xs text-gray-700 mb-2 leading-relaxed">
                           {aiTip.tip}
                         </p>
-                        <Button variant="ghost" size="sm" className="text-amber-600 hover:text-amber-700 p-0">
+                        <Button variant="ghost" size="sm" className="text-amber-600 hover:text-amber-700 p-0 text-xs">
                           Ver mais dicas →
                         </Button>
                       </CardContent>
