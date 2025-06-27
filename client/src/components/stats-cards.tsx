@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { formatCurrencyDisplay } from "@/lib/currency";
 import { TrendingUp, TrendingDown, Users, PiggyBank, Target, Building } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { BankAccount, Expense } from "@shared/schema";
 
 interface StatisticsData {
@@ -16,6 +17,7 @@ interface StatsCardsProps {
 }
 
 export function StatsCards({ selectedAccountIds = [] }: StatsCardsProps) {
+  const isMobile = useIsMobile();
   const { data: stats, isLoading } = useQuery<StatisticsData>({
     queryKey: ["/api/statistics"],
   });
@@ -28,9 +30,17 @@ export function StatsCards({ selectedAccountIds = [] }: StatsCardsProps) {
     queryKey: ["/api/expenses"],
   });
 
-  // Filter accounts based on selection or default to active accounts
+  // Filter accounts based on selection and device type
   const filteredAccounts = selectedAccountIds.length > 0 
-    ? accounts.filter(account => selectedAccountIds.includes(account.id))
+    ? accounts.filter(account => {
+        if (isMobile) {
+          // On mobile, show only the first selected account
+          return account.id === selectedAccountIds[0];
+        } else {
+          // On desktop, show all selected accounts
+          return selectedAccountIds.includes(account.id);
+        }
+      })
     : accounts.filter(account => account.isActive !== false);
 
   // Calculate sum of filtered accounts
@@ -45,9 +55,21 @@ export function StatsCards({ selectedAccountIds = [] }: StatsCardsProps) {
     .filter(expense => {
       const expenseDate = new Date(expense.date);
       const isCurrentMonth = expenseDate >= firstDayOfMonth && expenseDate <= currentMonth;
-      const isFromSelectedAccount = selectedAccountIds.length > 0 
-        ? selectedAccountIds.includes(expense.accountId)
-        : accounts.find(acc => acc.id === expense.accountId)?.isActive !== false;
+      
+      let isFromSelectedAccount: boolean;
+      if (selectedAccountIds.length > 0) {
+        if (isMobile) {
+          // On mobile, only consider the first selected account
+          isFromSelectedAccount = expense.accountId === selectedAccountIds[0];
+        } else {
+          // On desktop, consider all selected accounts
+          isFromSelectedAccount = selectedAccountIds.includes(expense.accountId);
+        }
+      } else {
+        // Default to active accounts only
+        isFromSelectedAccount = accounts.find(acc => acc.id === expense.accountId)?.isActive !== false;
+      }
+      
       return isCurrentMonth && isFromSelectedAccount;
     })
     .reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
@@ -75,13 +97,48 @@ export function StatsCards({ selectedAccountIds = [] }: StatsCardsProps) {
   const savingsAccounts = filteredAccounts.filter(acc => acc.type === 'savings');
   const savingsSum = savingsAccounts.reduce((sum, account) => sum + parseFloat(account.balance), 0);
 
+  const getAccountLabel = () => {
+    if (selectedAccountIds.length > 0) {
+      if (isMobile) {
+        const selectedAccount = accounts.find(acc => acc.id === selectedAccountIds[0]);
+        return selectedAccount ? selectedAccount.name : "Conta selecionada";
+      } else {
+        return `${filteredAccountsCount} selecionadas`;
+      }
+    }
+    return `${filteredAccountsCount} ativas`;
+  };
+
+  const getExpenseLabel = () => {
+    if (selectedAccountIds.length > 0) {
+      if (isMobile) {
+        const selectedAccount = accounts.find(acc => acc.id === selectedAccountIds[0]);
+        return selectedAccount ? selectedAccount.name : "Conta selecionada";
+      } else {
+        return "Contas selecionadas";
+      }
+    }
+    return "Contas ativas";
+  };
+
+  const getSavingsLabel = () => {
+    if (selectedAccountIds.length > 0) {
+      if (isMobile) {
+        return "Conta selecionada";
+      } else {
+        return "Poupanças selecionadas";
+      }
+    }
+    return "Contas poupança";
+  };
+
   const cards = [
     {
       title: "Saldo",
       value: filteredAccountsSum,
       icon: <Building className="w-4 h-4 text-blue-600" />,
       iconBg: "bg-blue-50",
-      change: selectedAccountIds.length > 0 ? `${filteredAccountsCount} selecionadas` : `${filteredAccountsCount} ativas`,
+      change: getAccountLabel(),
       changeColor: "text-blue-600 bg-blue-100",
     },
     {
@@ -89,7 +146,7 @@ export function StatsCards({ selectedAccountIds = [] }: StatsCardsProps) {
       value: monthlyExpensesForAccounts,
       icon: <TrendingDown className="w-4 h-4 text-red-500" />,
       iconBg: "bg-red-50",
-      change: selectedAccountIds.length > 0 ? "Contas selecionadas" : "Contas ativas",
+      change: getExpenseLabel(),
       changeColor: "text-red-600 bg-red-100",
     },
     {
@@ -105,7 +162,7 @@ export function StatsCards({ selectedAccountIds = [] }: StatsCardsProps) {
       value: savingsSum,
       icon: <PiggyBank className="w-4 h-4 text-green-600" />,
       iconBg: "bg-green-50",
-      change: selectedAccountIds.length > 0 ? "Poupanças selecionadas" : "Contas poupança",
+      change: getSavingsLabel(),
       changeColor: "text-green-600 bg-green-100",
     },
   ];

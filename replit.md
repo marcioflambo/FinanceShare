@@ -288,6 +288,7 @@ Preferred communication style: Simple, everyday language.
 - June 27, 2025. **DASHBOARD EXPENSE ACTIONS**: Moved "Ações de Despesas" box to dashboard for quick access to Nova Despesa, Recorrente, and Transferir functions from main screen
 - June 27, 2025. **CONSISTENT BANK ACCOUNTS POSITIONING**: Ensured bank accounts appear at the top of all sections (dashboard, expenses, splits, reports) for consistent user experience
 - June 27, 2025. **ACCOUNT-FILTERED STATISTICS**: Updated statistics cards to show "A Receber" and "Gastos do Mês" data filtered by selected accounts instead of all accounts
+- June 27, 2025. **MOBILE SINGLE-ACCOUNT FILTERING**: Implemented mobile-specific behavior where statistics and transactions show data only from the first selected account, since multi-account selection doesn't work on mobile app
 
 ## Key Features
 

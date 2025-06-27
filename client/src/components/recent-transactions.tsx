@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { formatCurrency, getRelativeTime } from "@/lib/utils";
 import { useMemo } from "react";
 import { AccountSelector } from "./account-selector";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { Expense, Category, BankAccount } from "@shared/schema";
 
 interface RecentTransactionsProps {
@@ -13,6 +14,7 @@ interface RecentTransactionsProps {
 }
 
 export function RecentTransactions({ onViewAll, selectedAccountIds = [], onAccountSelectionChange }: RecentTransactionsProps) {
+  const isMobile = useIsMobile();
   const { data: expenses = [] } = useQuery<Expense[]>({
     queryKey: ["/api/expenses"],
   });
@@ -26,11 +28,16 @@ export function RecentTransactions({ onViewAll, selectedAccountIds = [], onAccou
   });
 
   const recentTransactions = useMemo(() => {
-    // Filter accounts based on selection
+    // Filter accounts based on selection and device type
     let accountIds: number[];
     if (selectedAccountIds.length > 0) {
-      // Show only selected accounts
-      accountIds = selectedAccountIds;
+      if (isMobile) {
+        // On mobile, show only the first selected account since multi-select doesn't work
+        accountIds = [selectedAccountIds[0]];
+      } else {
+        // On desktop, show all selected accounts
+        accountIds = selectedAccountIds;
+      }
     } else {
       // Show all active accounts if no accounts are selected
       accountIds = accounts
