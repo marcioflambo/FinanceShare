@@ -46,8 +46,34 @@ export function BankAccounts({ onTransferClick, onAccountSelect, selectedAccount
     queryKey: ["/api/bank-accounts"],
   });
 
-  // Database already sorts accounts: active first (by sortOrder), then inactive
-  const accounts = allAccounts;
+  const { data: expenses = [] } = useQuery<any[]>({
+    queryKey: ["/api/expenses"],
+  });
+
+  // Calculate real balance for each account: initial balance + credits - debits
+  const accounts = allAccounts.map(account => {
+    const initialBalance = parseFloat(account.balance); // Saldo inicial definido pelo usuário
+    
+    // Buscar todas as movimentações desta conta
+    const accountExpenses = expenses.filter((exp: any) => exp.accountId === account.id);
+    
+    // Separar débitos (despesas) e créditos (receitas)
+    const debits = accountExpenses
+      .filter((exp: any) => exp.transactionType === 'debit' || !exp.transactionType) // Despesas normais
+      .reduce((sum: number, exp: any) => sum + parseFloat(exp.amount), 0);
+      
+    const credits = accountExpenses
+      .filter((exp: any) => exp.transactionType === 'credit') // Receitas/entradas
+      .reduce((sum: number, exp: any) => sum + parseFloat(exp.amount), 0);
+    
+    // Saldo calculado = Saldo inicial + créditos - débitos
+    const calculatedBalance = initialBalance + credits - debits;
+    
+    return {
+      ...account,
+      calculatedBalance: calculatedBalance.toFixed(2)
+    };
+  });
 
   // Ensure currentIndex is valid for active accounts
   const validCurrentIndex = Math.min(currentIndex, Math.max(0, accounts.length - 1));
@@ -341,7 +367,7 @@ export function BankAccounts({ onTransferClick, onAccountSelect, selectedAccount
               <div className="text-right">
                 <p className="text-xs text-gray-500 mb-1">Saldo</p>
                 <p className="text-lg font-bold text-gray-900">
-                  {formatCurrencyDisplay(accounts[validCurrentIndex]?.balance)}
+                  {formatCurrencyDisplay(accounts[validCurrentIndex]?.calculatedBalance || accounts[validCurrentIndex]?.balance)}
                 </p>
               </div>
             </div>

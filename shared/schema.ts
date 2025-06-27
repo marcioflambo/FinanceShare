@@ -122,6 +122,15 @@ export const transfers = mysqlTable("transfers", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Tabela de controle de saldos calculados por usuário/conta
+export const accountBalances = mysqlTable("account_balances", {
+  id: serial("id").primaryKey(),
+  userId: int("user_id").notNull(),
+  accountId: int("account_id").notNull(),
+  calculatedBalance: decimal("calculated_balance", { precision: 10, scale: 2 }).notNull().default('0.00'),
+  lastUpdated: timestamp("last_updated").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   categories: many(categories),
@@ -221,6 +230,17 @@ export const transfersRelations = relations(transfers, ({ one }) => ({
   }),
   toAccount: one(bankAccounts, {
     fields: [transfers.toAccountId],
+    references: [bankAccounts.id],
+  }),
+}));
+
+export const accountBalancesRelations = relations(accountBalances, ({ one }) => ({
+  user: one(users, {
+    fields: [accountBalances.userId],
+    references: [users.id],
+  }),
+  account: one(bankAccounts, {
+    fields: [accountBalances.accountId],
     references: [bankAccounts.id],
   }),
 }));
@@ -328,6 +348,12 @@ export const insertTransferSchema = createInsertSchema(transfers).pick({
   userId: true,
 });
 
+export const insertAccountBalanceSchema = createInsertSchema(accountBalances).pick({
+  userId: true,
+  accountId: true,
+  calculatedBalance: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -358,3 +384,6 @@ export type InsertGoalAccount = z.infer<typeof insertGoalAccountSchema>;
 
 export type Transfer = typeof transfers.$inferSelect;
 export type InsertTransfer = z.infer<typeof insertTransferSchema>;
+
+export type AccountBalance = typeof accountBalances.$inferSelect;
+export type InsertAccountBalance = z.infer<typeof insertAccountBalanceSchema>;

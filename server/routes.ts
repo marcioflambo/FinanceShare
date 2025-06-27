@@ -101,6 +101,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Calculate real account balances: initial balance + credits - debits
+  app.get("/api/bank-accounts-calculated", async (req, res) => {
+    try {
+      const bankAccounts = await storage.getBankAccounts(DEMO_USER_ID);
+      const expenses = await storage.getExpenses(DEMO_USER_ID);
+      
+      const accountsWithCalculatedBalance = await Promise.all(
+        bankAccounts.map(async (account) => {
+          const initialBalance = parseFloat(account.balance); // Saldo inicial definido pelo usuário
+          
+          // Buscar todas as movimentações desta conta
+          const accountExpenses = expenses.filter(exp => exp.accountId === account.id);
+          
+          // Separar débitos (despesas) e créditos (receitas)
+          const debits = accountExpenses
+            .filter(exp => exp.transactionType === 'debit' || !exp.transactionType) // Despesas normais
+            .reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
+            
+          const credits = accountExpenses
+            .filter(exp => exp.transactionType === 'credit') // Receitas/entradas
+            .reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
+          
+          // Saldo calculado = Saldo inicial + créditos - débitos
+          const calculatedBalance = initialBalance + credits - debits;
+          
+          return {
+            ...account,
+            calculatedBalance: calculatedBalance.toFixed(2)
+          };
+        })
+      );
+      
+      res.json(accountsWithCalculatedBalance);
+    } catch (error) {
+      console.error('Erro ao calcular saldos das contas:', error);
+      res.status(500).json({ message: "Erro ao calcular saldos das contas" });
+    }
+  });
+
   // Expenses
   app.get("/api/expenses", async (req, res) => {
     try {

@@ -1,4 +1,4 @@
-import { User, InsertUser, Category, InsertCategory, BankAccount, InsertBankAccount, Expense, InsertExpense, BillSplit, InsertBillSplit, BillSplitParticipant, InsertBillSplitParticipant, Roommate, InsertRoommate, Goal, InsertGoal, GoalAccount, InsertGoalAccount, Transfer, InsertTransfer } from "@shared/schema";
+import { User, InsertUser, Category, InsertCategory, BankAccount, InsertBankAccount, Expense, InsertExpense, BillSplit, InsertBillSplit, BillSplitParticipant, InsertBillSplitParticipant, Roommate, InsertRoommate, Goal, InsertGoal, GoalAccount, InsertGoalAccount, Transfer, InsertTransfer, AccountBalance, InsertAccountBalance } from "@shared/schema";
 
 export interface IStorage {
   // Users
@@ -57,6 +57,12 @@ export interface IStorage {
   getTransfers(userId: number): Promise<Transfer[]>;
   createTransfer(transfer: InsertTransfer): Promise<Transfer>;
   getTransferById(id: number): Promise<Transfer | undefined>;
+  
+  // Account Balances (controle de saldos calculados)
+  getAccountBalance(userId: number, accountId: number): Promise<AccountBalance | undefined>;
+  updateAccountBalance(userId: number, accountId: number, newBalance: string): Promise<void>;
+  initializeAccountBalance(userId: number, accountId: number): Promise<void>;
+  calculateAccountBalance(userId: number, accountId: number): Promise<string>;
 }
 
 export class MemStorage implements IStorage {
@@ -768,14 +774,17 @@ export class DatabaseStorage implements IStorage {
       .insert(expenses)
       .values(expenseData);
     
-    if (!result.insertId) {
+    // MySQL com Drizzle retorna insertId no formato diferente
+    const insertId = result[0]?.insertId || result.insertId;
+    
+    if (!insertId) {
       throw new Error("Falha ao criar despesa - ID não retornado");
     }
     
     const [expense] = await db
       .select()
       .from(expenses)
-      .where(eq(expenses.id, Number(result.insertId)))
+      .where(eq(expenses.id, Number(insertId)))
       .limit(1);
       
     if (!expense) {

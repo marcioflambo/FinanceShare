@@ -47,9 +47,28 @@ export function StatsCards({ selectedAccountIds = [] }: StatsCardsProps) {
       })
     : accounts.filter(account => account.isActive !== false);
 
-  // Calculate sum of filtered accounts
+  // Calculate sum of filtered accounts using calculated balance
   const filteredAccountsSum = filteredAccounts
-    .reduce((sum, account) => sum + parseFloat(account.balance), 0);
+    .reduce((sum, account) => {
+      const initialBalance = parseFloat(account.balance); // Saldo inicial
+      
+      // Buscar movimentações desta conta
+      const accountExpenses = expenses.filter((exp: any) => exp.accountId === account.id);
+      
+      // Separar débitos e créditos
+      const debits = accountExpenses
+        .filter((exp: any) => exp.transactionType === 'debit' || !exp.transactionType)
+        .reduce((sum: number, exp: any) => sum + parseFloat(exp.amount), 0);
+        
+      const credits = accountExpenses
+        .filter((exp: any) => exp.transactionType === 'credit')
+        .reduce((sum: number, exp: any) => sum + parseFloat(exp.amount), 0);
+      
+      // Saldo calculado = Saldo inicial + créditos - débitos
+      const calculatedBalance = initialBalance + credits - debits;
+      
+      return sum + calculatedBalance;
+    }, 0);
 
   // Calculate recent expenses for filtered accounts (last 30 days to show data)
   const currentDate = new Date();
