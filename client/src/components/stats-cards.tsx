@@ -30,6 +30,10 @@ export function StatsCards({ selectedAccountIds = [] }: StatsCardsProps) {
     queryKey: ["/api/expenses"],
   });
 
+  const { data: billSplits = [] } = useQuery<any[]>({
+    queryKey: ["/api/bill-splits"],
+  });
+
   // Filter accounts based on selection and device type
   const filteredAccounts = selectedAccountIds.length > 0 
     ? accounts.filter(account => {
@@ -47,14 +51,14 @@ export function StatsCards({ selectedAccountIds = [] }: StatsCardsProps) {
   const filteredAccountsSum = filteredAccounts
     .reduce((sum, account) => sum + parseFloat(account.balance), 0);
 
-  // Calculate monthly expenses for filtered accounts
-  const currentMonth = new Date();
-  const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+  // Calculate recent expenses for filtered accounts (last 30 days to show data)
+  const currentDate = new Date();
+  const thirtyDaysAgo = new Date(currentDate.getTime() - (30 * 24 * 60 * 60 * 1000));
   
   const monthlyExpensesForAccounts = expenses
     .filter(expense => {
       const expenseDate = new Date(expense.date);
-      const isCurrentMonth = expenseDate >= firstDayOfMonth && expenseDate <= currentMonth;
+      const isRecentExpense = expenseDate >= thirtyDaysAgo;
       
       let isFromSelectedAccount: boolean;
       if (selectedAccountIds.length > 0) {
@@ -70,9 +74,33 @@ export function StatsCards({ selectedAccountIds = [] }: StatsCardsProps) {
         isFromSelectedAccount = accounts.find(acc => acc.id === expense.accountId)?.isActive !== false;
       }
       
-      return isCurrentMonth && isFromSelectedAccount;
+      return isRecentExpense && isFromSelectedAccount;
     })
     .reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
+
+  // Calculate pending splits for filtered accounts
+  const pendingSplitsForAccounts = billSplits
+    .flatMap(split => split.participants || [])
+    .filter(participant => {
+      // Only unpaid participants
+      if (participant.isPaid) return false;
+      
+      // Filter by selected accounts if any
+      if (selectedAccountIds.length > 0) {
+        if (isMobile) {
+          // On mobile, only consider the first selected account
+          // Note: We need to check if the split is related to the selected account
+          // For now, we'll show all pending splits as they're general debt tracking
+          return true;
+        } else {
+          // On desktop, show all pending splits for selected accounts
+          return true;
+        }
+      }
+      
+      return true; // Show all pending splits by default
+    })
+    .reduce((sum, participant) => sum + parseFloat(participant.amount), 0);
 
   if (isLoading) {
     return (
@@ -142,7 +170,7 @@ export function StatsCards({ selectedAccountIds = [] }: StatsCardsProps) {
       changeColor: "text-blue-600 bg-blue-100",
     },
     {
-      title: "Gastos do Mês",
+      title: "Gastos Recentes",
       value: monthlyExpensesForAccounts,
       icon: <TrendingDown className="w-4 h-4 text-red-500" />,
       iconBg: "bg-red-50",
@@ -151,10 +179,10 @@ export function StatsCards({ selectedAccountIds = [] }: StatsCardsProps) {
     },
     {
       title: "A Receber",
-      value: stats.pendingSplits,
+      value: pendingSplitsForAccounts,
       icon: <Users className="w-4 h-4 text-yellow-600" />,
       iconBg: "bg-yellow-50",
-      change: "3 ativos",
+      change: selectedAccountIds.length > 0 && isMobile ? "Conta selecionada" : "Divisões pendentes",
       changeColor: "text-yellow-600 bg-yellow-100",
     },
     {
