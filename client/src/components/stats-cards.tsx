@@ -168,14 +168,18 @@ export function StatsCards({ selectedAccountIds = [] }: StatsCardsProps) {
       iconBg: "bg-blue-50",
       change: getAccountLabel(),
       changeColor: "text-blue-600 bg-blue-100",
+      description: "Total disponível",
+      subtitle: filteredAccountsCount > 1 ? `${filteredAccountsCount} contas` : "Conta atual",
     },
     {
-      title: "Gastos Recentes",
+      title: "Gastos do Mês",
       value: monthlyExpensesForAccounts,
       icon: <TrendingDown className="w-4 h-4 text-red-500" />,
       iconBg: "bg-red-50",
       change: getExpenseLabel(),
       changeColor: "text-red-600 bg-red-100",
+      description: "Despesas de",
+      subtitle: new Date().toLocaleDateString('pt-BR', { month: 'long' }),
     },
     {
       title: "A Receber",
@@ -184,6 +188,8 @@ export function StatsCards({ selectedAccountIds = [] }: StatsCardsProps) {
       iconBg: "bg-yellow-50",
       change: selectedAccountIds.length > 0 && isMobile ? "Conta selecionada" : "Divisões pendentes",
       changeColor: "text-yellow-600 bg-yellow-100",
+      description: "Valor pendente",
+      subtitle: "Contas divididas",
     },
     {
       title: "Economia",
@@ -192,6 +198,8 @@ export function StatsCards({ selectedAccountIds = [] }: StatsCardsProps) {
       iconBg: "bg-green-50",
       change: getSavingsLabel(),
       changeColor: "text-green-600 bg-green-100",
+      description: "Poupanças",
+      subtitle: savingsAccounts.length > 0 ? `${savingsAccounts.length} conta${savingsAccounts.length > 1 ? 's' : ''}` : "Sem poupanças",
     },
   ];
 
@@ -199,18 +207,24 @@ export function StatsCards({ selectedAccountIds = [] }: StatsCardsProps) {
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
       {cards.map((card, index) => (
         <Card key={index} className="p-3 md:p-4 shadow-sm border-gray-100">
-          <div className="flex items-center justify-between mb-2">
-            <div className={`w-7 h-7 md:w-8 md:h-8 ${card.iconBg} rounded-lg flex items-center justify-center`}>
+          <div className="flex items-start gap-3 mb-3">
+            <div className={`w-8 h-8 md:w-10 md:h-10 ${card.iconBg} rounded-lg flex items-center justify-center flex-shrink-0`}>
               {card.icon}
             </div>
-            <span className={`text-xs px-1.5 md:px-2 py-1 rounded-full ${card.changeColor}`}>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs md:text-sm font-medium text-gray-900 truncate">{card.title}</p>
+              <p className="text-xs text-gray-500 truncate">{card.description}</p>
+              <p className="text-xs text-gray-400 truncate">{card.subtitle}</p>
+            </div>
+          </div>
+          <div className="flex items-end justify-between">
+            <p className="text-lg md:text-xl font-bold text-gray-900">
+              {formatCurrencyDisplay(card.value)}
+            </p>
+            <span className={`text-xs px-2 py-1 rounded-full ${card.changeColor}`}>
               {card.change}
             </span>
           </div>
-          <p className="text-lg md:text-2xl font-bold text-gray-900 mb-1">
-            {formatCurrencyDisplay(card.value)}
-          </p>
-          <p className="text-xs md:text-sm text-gray-600">{card.title}</p>
         </Card>
       ))}
     </div>
