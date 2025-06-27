@@ -299,6 +299,8 @@ Preferred communication style: Simple, everyday language.
 - June 27, 2025. **TRANSACTION TYPE SYSTEM IMPLEMENTED**: Added transactionType field to expenses table supporting debit (expenses), credit (income), and transfer operations with proper balance calculations and edit modal functionality
 - June 27, 2025. **CALCULATED BALANCE SYSTEM IMPLEMENTED**: Fixed critical balance architecture - saldo inicial (user-defined) preserved separately from calculated movements (receitas - despesas), preventing data loss when users delete transactions
 - June 27, 2025. **DATABASE CLEANUP COMPLETED**: Cleared all user data tables while preserving users and categories for fresh start with new balance calculation system
+- June 27, 2025. **ACCOUNT BALANCES TABLE IMPLEMENTED**: Created `account_balances` table for optimized balance caching with calculated balance system - separates initial balance (user-defined, never modified) from calculated balance (computed from transactions) for performance optimization and data integrity
+- June 27, 2025. **OPTIMIZED BALANCE SYSTEM COMPLETED**: Successfully implemented account_balances caching system with automatic recalculation on expense creation/modification - initial balance preserved at R$ 1,000.00, calculated balance correctly shows R$ 900.00 after R$ 100.00 in expenses, providing performance optimization and data integrity
 
 ## Key Features
 

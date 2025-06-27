@@ -510,6 +510,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Account Balances
+  app.get("/api/account-balances/:accountId", async (req, res) => {
+    try {
+      const accountId = parseInt(req.params.accountId);
+      const balance = await storage.getAccountBalance(DEMO_USER_ID, accountId);
+      
+      if (!balance) {
+        // Inicializar se não existir
+        await storage.initializeAccountBalance(DEMO_USER_ID, accountId);
+        const newBalance = await storage.getAccountBalance(DEMO_USER_ID, accountId);
+        res.json(newBalance);
+      } else {
+        res.json(balance);
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao buscar saldo calculado" });
+    }
+  });
+
+  app.post("/api/account-balances/recalculate", async (req, res) => {
+    try {
+      const { accountId } = req.body;
+      await storage.recalculateAccountBalance(DEMO_USER_ID, accountId);
+      const balance = await storage.getAccountBalance(DEMO_USER_ID, accountId);
+      res.json(balance);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao recalcular saldo" });
+    }
+  });
+
   // Transfers
   app.get("/api/transfers", async (req, res) => {
     try {
