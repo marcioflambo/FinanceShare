@@ -297,6 +297,8 @@ Preferred communication style: Simple, everyday language.
 - June 27, 2025. **REPLIT MIGRATION COMPLETED**: Successfully migrated FinanceShare from Replit Agent to standard Replit environment with improved security, stability, and functionality
 - June 27, 2025. **API OPERATIONS VERIFIED**: Fixed and validated all CRUD operations (create, update, delete) for expenses with proper date and amount handling, ensuring seamless data management
 - June 27, 2025. **TRANSACTION TYPE SYSTEM IMPLEMENTED**: Added transactionType field to expenses table supporting debit (expenses), credit (income), and transfer operations with proper balance calculations and edit modal functionality
+- June 27, 2025. **CALCULATED BALANCE SYSTEM IMPLEMENTED**: Fixed critical balance architecture - saldo inicial (user-defined) preserved separately from calculated movements (receitas - despesas), preventing data loss when users delete transactions
+- June 27, 2025. **DATABASE CLEANUP COMPLETED**: Cleared all user data tables while preserving users and categories for fresh start with new balance calculation system
 
 ## Key Features
 
