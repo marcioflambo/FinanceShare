@@ -55,6 +55,7 @@ const formSchema = z.object({
   categoryName: z.string().min(1, "Categoria é obrigatória"),
   accountId: z.string().min(1, "Conta é obrigatória"),
   date: z.string().min(1, "Data é obrigatória"),
+  transactionType: z.enum(["debit", "credit"]).default("debit"),
   isRecurring: z.boolean().default(false),
   recurrenceType: z.enum(["daily", "weekly", "monthly", "yearly"]).optional(),
   installments: z.string().optional(),
@@ -91,6 +92,7 @@ export function ExpenseModal({ open, onClose, preselectedAccountId }: ExpenseMod
       categoryName: "",
       accountId: "",
       date: new Date().toISOString().split('T')[0],
+      transactionType: "debit",
       isRecurring: false,
       recurrenceType: undefined,
       installments: "",
@@ -150,9 +152,13 @@ export function ExpenseModal({ open, onClose, preselectedAccountId }: ExpenseMod
         categoryId = newCategoryResponse.id;
       }
 
+      // Adjust amount based on transaction type
+      const baseAmount = parseFloat(data.amount);
+      const adjustedAmount = data.transactionType === "credit" ? baseAmount : -baseAmount;
+
       const payload = {
         description: data.description,
-        amount: parseFloat(data.amount),
+        amount: adjustedAmount,
         categoryId: categoryId,
         accountId: parseInt(data.accountId),
         date: data.date,
@@ -193,7 +199,7 @@ export function ExpenseModal({ open, onClose, preselectedAccountId }: ExpenseMod
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Adicionar Despesa</DialogTitle>
+          <DialogTitle>Adicionar Transação</DialogTitle>
         </DialogHeader>
         
         <Form {...form}>
@@ -229,6 +235,38 @@ export function ExpenseModal({ open, onClose, preselectedAccountId }: ExpenseMod
                       />
                     </div>
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="transactionType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tipo de Transação</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o tipo" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="debit">
+                        <div className="flex items-center space-x-2">
+                          <i className="fas fa-minus-circle text-red-500"></i>
+                          <span>Débito (Despesa)</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="credit">
+                        <div className="flex items-center space-x-2">
+                          <i className="fas fa-plus-circle text-green-500"></i>
+                          <span>Crédito (Receita)</span>
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

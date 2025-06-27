@@ -228,14 +228,14 @@ export default function Dashboard() {
 
                   <Card className="shadow-sm border-gray-100 w-80">
                     <CardContent className="p-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Ações de Despesas</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Movimentações</h3>
                       <div className="grid grid-cols-1 gap-3">
                         <Button 
                           onClick={() => setIsExpenseModalOpen(true)}
                           className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
                         >
                           <i className="fas fa-plus"></i>
-                          <span className="font-medium">Nova Despesa</span>
+                          <span className="font-medium">Adicionar Transação</span>
                         </Button>
                         <Button 
                           onClick={() => setIsAdvancedExpenseModalOpen(true)}
