@@ -227,37 +227,31 @@ export default function Dashboard() {
                   />
 
                   <Card className="shadow-sm border-gray-100 w-80">
-                    <CardContent className="p-4">
-                      <h3 className="text-base font-semibold text-gray-900 mb-3">Navegação Rápida</h3>
-                      <div className="space-y-2">
+                    <CardContent className="p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Ações de Despesas</h3>
+                      <div className="grid grid-cols-1 gap-3">
                         <Button 
-                          onClick={() => setActiveSection('expenses')}
-                          size="sm"
-                          variant="outline"
-                          className="w-full flex items-center space-x-2 hover:scale-105 transition-transform"
+                          onClick={() => setIsExpenseModalOpen(true)}
+                          className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
                         >
-                          <i className="fas fa-receipt text-sm"></i>
-                          <span className="text-sm font-medium">Gerenciar Despesas</span>
+                          <i className="fas fa-plus"></i>
+                          <span className="font-medium">Nova Despesa</span>
                         </Button>
-                        
                         <Button 
-                          onClick={() => setActiveSection('splits')}
+                          onClick={() => setIsAdvancedExpenseModalOpen(true)}
                           variant="outline"
-                          size="sm"
-                          className="w-full flex items-center space-x-2 hover:scale-105 transition-transform"
+                          className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
                         >
-                          <Users className="w-3 h-3" />
-                          <span className="text-sm font-medium">Divisão de Contas</span>
+                          <i className="fas fa-sync-alt"></i>
+                          <span className="font-medium">Recorrente</span>
                         </Button>
-                        
                         <Button 
-                          onClick={() => setActiveSection('reports')}
-                          variant="outline"
-                          size="sm"
-                          className="w-full flex items-center space-x-2 hover:scale-105 transition-transform"
+                          onClick={() => setIsTransferModalOpen(true)}
+                          variant="secondary"
+                          className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
                         >
-                          <Target className="w-3 h-3" />
-                          <span className="text-sm font-medium">Metas e Relatórios</span>
+                          <i className="fas fa-exchange-alt"></i>
+                          <span className="font-medium">Transferir</span>
                         </Button>
                       </div>
                     </CardContent>
@@ -280,31 +274,6 @@ export default function Dashboard() {
                     </Card>
                   )}
                 </div>
-              </div>
-
-              <div className="mt-6">
-                <Card className="shadow-sm border-gray-100">
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Visão Geral</h3>
-                    <div className="grid grid-cols-3 gap-6 text-center">
-                      <div className="p-4 bg-blue-50 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors" onClick={() => setActiveSection('expenses')}>
-                        <i className="fas fa-receipt text-blue-600 text-2xl mb-2"></i>
-                        <p className="text-sm font-medium text-gray-900">Despesas</p>
-                        <p className="text-xs text-gray-600">Gerencie suas transações</p>
-                      </div>
-                      <div className="p-4 bg-green-50 rounded-lg cursor-pointer hover:bg-green-100 transition-colors" onClick={() => setActiveSection('splits')}>
-                        <i className="fas fa-users text-green-600 text-2xl mb-2"></i>
-                        <p className="text-sm font-medium text-gray-900">Divisões</p>
-                        <p className="text-xs text-gray-600">Divida contas com colegas</p>
-                      </div>
-                      <div className="p-4 bg-purple-50 rounded-lg cursor-pointer hover:bg-purple-100 transition-colors" onClick={() => setActiveSection('reports')}>
-                        <i className="fas fa-chart-line text-purple-600 text-2xl mb-2"></i>
-                        <p className="text-sm font-medium text-gray-900">Relatórios</p>
-                        <p className="text-xs text-gray-600">Metas e análises</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
               </div>
             </>
           )}
