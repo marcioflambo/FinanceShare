@@ -181,9 +181,8 @@ export function BankAccounts({ onTransferClick, onAccountSelect, selectedAccount
   };
 
   const nextAccount = () => {
-    if (currentIndex >= accounts.length - 1) return; // Prevent click when at last account
-    
-    const newIndex = currentIndex + 1;
+    // Circular navigation: if at last account, go to first
+    const newIndex = currentIndex >= accounts.length - 1 ? 0 : currentIndex + 1;
     setCurrentIndex(newIndex);
     
     // Update the filter after state change
@@ -195,9 +194,8 @@ export function BankAccounts({ onTransferClick, onAccountSelect, selectedAccount
   };
 
   const prevAccount = () => {
-    if (currentIndex <= 0) return; // Prevent click when at first account
-    
-    const newIndex = currentIndex - 1;
+    // Circular navigation: if at first account, go to last
+    const newIndex = currentIndex <= 0 ? accounts.length - 1 : currentIndex - 1;
     setCurrentIndex(newIndex);
     
     // Update the filter after state change
@@ -356,7 +354,6 @@ export function BankAccounts({ onTransferClick, onAccountSelect, selectedAccount
                       variant="ghost"
                       size="sm"
                       onClick={prevAccount}
-                      disabled={currentIndex === 0}
                       className="h-6 w-6 p-0"
                     >
                       <ChevronLeft className="h-3 w-3" />
@@ -370,7 +367,6 @@ export function BankAccounts({ onTransferClick, onAccountSelect, selectedAccount
                       variant="ghost"
                       size="sm"
                       onClick={nextAccount}
-                      disabled={currentIndex === accounts.length - 1}
                       className="h-6 w-6 p-0"
                     >
                       <ChevronRight className="h-3 w-3" />
