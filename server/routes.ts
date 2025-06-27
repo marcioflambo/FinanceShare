@@ -172,7 +172,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/expenses/:id", async (req, res) => {
     try {
       const expenseId = parseInt(req.params.id);
-      const expenseData = insertExpenseSchema.parse({ ...req.body, userId: DEMO_USER_ID });
+      const expenseData = insertExpenseSchema.parse({ 
+        ...req.body, 
+        userId: DEMO_USER_ID,
+        amount: String(req.body.amount),
+        date: new Date(req.body.date),
+        recurringType: req.body.isRecurring ? (req.body.installments ? "installment" : "advanced") : null,
+        recurringFrequency: req.body.isRecurring ? req.body.recurrenceType : null,
+        recurringInterval: req.body.isRecurring ? 1 : null,
+        installmentTotal: req.body.isRecurring && req.body.installments ? parseInt(req.body.installments) : null,
+        installmentCurrent: req.body.isRecurring && req.body.installments ? 1 : null,
+        recurringEndDate: null,
+        parentExpenseId: null
+      });
       
       const updatedExpense = await storage.updateExpense(expenseId, expenseData);
       

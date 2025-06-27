@@ -1,31 +1,67 @@
 import { useState, useEffect, useMemo } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { DescriptionInput } from "@/components/ui/description-input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarIcon, Edit2, Trash2, X, Plus } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Check, ChevronsUpDown, Plus, CalendarIcon, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { BankAccount, Category, Expense } from "@shared/schema";
+import type { Category, BankAccount, Expense } from "@shared/schema";
 
 const formSchema = z.object({
-  description: z.string().min(1, "Descrição é obrigatória"),
+  description: z.string().min(1, "Descrição é obrigatória"),  
   amount: z.string().min(1, "Valor é obrigatório"),
-  date: z.date(),
-  categoryId: z.number().min(1, "Categoria é obrigatória"),
+  categoryId: z.number().min(1, "Categoria é obrigatória").optional(),
   accountId: z.number().min(1, "Conta é obrigatória"),
-  customCategory: z.string().optional(),
+  toAccountId: z.number().min(1, "Conta destino é obrigatória").optional(),
+  transactionType: z.enum(["debit", "credit", "transfer"]).default("debit"),
+  date: z.date().default(() => new Date()),
+  isRecurring: z.boolean().default(false),
+  recurringFrequency: z.enum(["weekly", "monthly", "yearly"]).default("monthly"),
+  installmentCount: z.number().min(1).default(1),
+  isInstallment: z.boolean().default(false),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -37,19 +73,24 @@ interface EditExpenseModalProps {
 }
 
 export function EditExpenseModal({ open, onClose, expense }: EditExpenseModalProps) {
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [categorySearch, setCategorySearch] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [customCategory, setCustomCategory] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       description: "",
       amount: "",
-      date: new Date(),
       categoryId: 0,
       accountId: 0,
+      transactionType: "debit",
+      date: new Date(),
+      isRecurring: false,
+      recurringFrequency: "monthly",
+      installmentCount: 1,
+      isInstallment: false,
     },
   });
 
@@ -65,7 +106,11 @@ export function EditExpenseModal({ open, onClose, expense }: EditExpenseModalPro
     queryKey: ["/api/expenses"],
   });
 
-  // Calculate most used categories and descriptions
+  const transactionType = form.watch("transactionType");
+  const isRecurring = form.watch("isRecurring");
+  const isInstallment = form.watch("isInstallment");
+
+  // Get most used categories (top 3)
   const mostUsedCategories = useMemo(() => {
     const categoryCount = new Map<number, number>();
     expenses.forEach(expense => {
@@ -80,12 +125,14 @@ export function EditExpenseModal({ open, onClose, expense }: EditExpenseModalPro
       .filter(Boolean) as Category[];
   }, [expenses, categories]);
 
-  const filteredCategories = useMemo(() => {
-    if (!categoryFilter) return mostUsedCategories;
-    return categories.filter(category =>
-      category.name.toLowerCase().includes(categoryFilter.toLowerCase())
+  // Filter and sort categories based on usage
+  const { filteredCategories, topCategories } = useMemo(() => {
+    const filtered = categories.filter((category) =>
+      category.name.toLowerCase().includes(categorySearch.toLowerCase())
     );
-  }, [categories, categoryFilter, mostUsedCategories]);
+
+    return { filteredCategories: filtered, topCategories: mostUsedCategories };
+  }, [categories, categorySearch, mostUsedCategories]);
 
   // Update form when expense changes
   useEffect(() => {
@@ -96,163 +143,146 @@ export function EditExpenseModal({ open, onClose, expense }: EditExpenseModalPro
         date: new Date(expense.date),
         categoryId: expense.categoryId,
         accountId: expense.accountId,
+        transactionType: "debit",
+        isRecurring: expense.isRecurring || false,
+        recurringFrequency: (expense.recurringFrequency as "weekly" | "monthly" | "yearly") || "monthly",
+        installmentCount: expense.installmentTotal || 1,
+        isInstallment: expense.recurringType === "installment",
       });
     }
   }, [expense, form]);
 
-  const updateMutation = useMutation({
+  const updateExpenseMutation = useMutation({
     mutationFn: async (data: FormData) => {
       if (!expense) throw new Error("Nenhuma despesa selecionada");
       
       const payload = {
-        ...data,
-        amount: data.amount.toString(),
-        userId: 1,
+        description: data.description,
+        amount: parseFloat(data.amount),
+        categoryId: data.categoryId,
+        accountId: data.accountId,
+        date: data.date,
+        isRecurring: data.isRecurring,
+        recurringFrequency: data.recurringFrequency,
+        installmentCount: data.installmentCount,
+        isInstallment: data.isInstallment,
       };
 
-      return apiRequest(`/api/expenses/${expense.id}`, "PUT", payload);
+      return await apiRequest(`/api/expenses/${expense.id}`, "PUT", payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/bank-accounts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/statistics"] });
+      
       toast({
-        title: "Transação atualizada com sucesso!",
+        title: "Despesa atualizada!",
+        description: "A despesa foi atualizada com sucesso.",
       });
       form.reset();
       onClose();
     },
     onError: (error: Error) => {
       toast({
-        title: "Erro ao atualizar transação",
+        title: "Erro ao atualizar despesa",
         description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  const deleteMutation = useMutation({
+  const deleteExpenseMutation = useMutation({
     mutationFn: async () => {
       if (!expense) throw new Error("Nenhuma despesa selecionada");
-      return apiRequest(`/api/expenses/${expense.id}`, "DELETE");
+      return await apiRequest(`/api/expenses/${expense.id}`, "DELETE");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/bank-accounts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/statistics"] });
+      
       toast({
-        title: "Transação excluída com sucesso!",
+        title: "Despesa excluída!",
+        description: "A despesa foi excluída com sucesso.",
       });
       onClose();
     },
     onError: (error: Error) => {
       toast({
-        title: "Erro ao excluir transação",
+        title: "Erro ao excluir despesa",
         description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  const createCategoryMutation = useMutation({
-    mutationFn: async (categoryName: string) => {
-      const response = await apiRequest("/api/categories", "POST", {
-        name: categoryName,
-        icon: "fas fa-circle",
-        color: "#3B82F6",
-        userId: 1,
-      });
-      return response;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
-    },
-  });
-
-  const onSubmit = async (data: FormData) => {
-    let categoryId = data.categoryId;
-    
-    // If custom category is provided, create it first
-    if (customCategory && customCategory.trim()) {
-      try {
-        const newCategory: any = await createCategoryMutation.mutateAsync(customCategory.trim());
-        categoryId = newCategory.id;
-      } catch (error) {
-        toast({
-          title: "Erro ao criar categoria",
-          description: "Não foi possível criar a categoria personalizada",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
-    
-    updateMutation.mutate({
-      ...data,
-      categoryId,
-    });
+  const onSubmit = (data: FormData) => {
+    updateExpenseMutation.mutate(data);
   };
 
   const handleDelete = () => {
-    if (confirm("Tem certeza que deseja excluir esta transação?")) {
-      deleteMutation.mutate();
+    if (confirm("Tem certeza que deseja excluir esta despesa?")) {
+      deleteExpenseMutation.mutate();
     }
   };
 
-  const handleCategorySelect = (categoryId: number) => {
-    form.setValue("categoryId", categoryId);
-    setCustomCategory("");
-    setCategoryFilter("");
-  };
-
-  const handleCustomCategorySubmit = () => {
-    if (categoryFilter.trim()) {
-      setCustomCategory(categoryFilter.trim());
-      form.setValue("customCategory", categoryFilter.trim());
-      setCategoryFilter("");
+  const handleAddCategory = async (name: string) => {
+    try {
+      const newCategory = await apiRequest("/api/categories", "POST", { name }) as any;
+      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      form.setValue("categoryId", newCategory.id);
+      setCategoryOpen(false);
+      setCategorySearch("");
+    } catch (error) {
+      toast({
+        title: "Erro ao criar categoria",
+        description: "Não foi possível criar a nova categoria.",
+        variant: "destructive",
+      });
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Edit2 className="h-5 w-5" />
-            Editar Transação
-          </DialogTitle>
+          <DialogTitle>Editar Despesa</DialogTitle>
         </DialogHeader>
-
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="description"
+              name="transactionType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Descrição</FormLabel>
-                  <FormControl>
-                    <DescriptionInput 
-                      placeholder="Ex: Supermercado" 
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="amount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Valor</FormLabel>
-                  <FormControl>
-                    <CurrencyInput
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
+                  <FormLabel>Tipo de Transação</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o tipo" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="debit">
+                        <div className="flex items-center space-x-2">
+                          <i className="fas fa-minus-circle text-red-500"></i>
+                          <span>Débito (Despesa)</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="credit">
+                        <div className="flex items-center space-x-2">
+                          <i className="fas fa-plus-circle text-green-500"></i>
+                          <span>Crédito (Receita)</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="transfer">
+                        <div className="flex items-center space-x-2">
+                          <i className="fas fa-exchange-alt text-blue-500"></i>
+                          <span>Transferência</span>
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -261,86 +291,17 @@ export function EditExpenseModal({ open, onClose, expense }: EditExpenseModalPro
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="categoryId"
+                name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Categoria</FormLabel>
-                    <div className="space-y-2">
-                      {customCategory ? (
-                        <div className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-md border">
-                          <i className="fas fa-circle text-blue-500" />
-                          <span className="text-sm font-medium">{customCategory}</span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setCustomCategory("");
-                              form.setValue("customCategory", "");
-                            }}
-                            className="ml-auto h-6 w-6 p-0"
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="relative">
-                            <Input
-                              placeholder="Digite para buscar ou criar categoria..."
-                              value={categoryFilter}
-                              onChange={(e) => setCategoryFilter(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  e.preventDefault();
-                                  handleCustomCategorySubmit();
-                                }
-                              }}
-                            />
-                            {categoryFilter && (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setCategoryFilter("")}
-                                className="absolute right-1 top-1 h-6 w-6 p-0"
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            )}
-                          </div>
-                          
-                          {categoryFilter && !filteredCategories.some(cat => cat.name.toLowerCase() === categoryFilter.toLowerCase()) && (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={handleCustomCategorySubmit}
-                              className="w-full justify-start text-blue-600 border-blue-200 hover:bg-blue-50"
-                            >
-                              <Plus className="h-3 w-3 mr-2" />
-                              Criar "{categoryFilter}"
-                            </Button>
-                          )}
-                          
-                          <div className="grid grid-cols-1 gap-1 max-h-32 overflow-y-auto">
-                            {filteredCategories.map((category) => (
-                              <Button
-                                key={category.id}
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleCategorySelect(category.id)}
-                                className="justify-start h-8"
-                              >
-                                <i className={category.icon} style={{ color: category.color }} />
-                                <span className="ml-2">{category.name}</span>
-                              </Button>
-                            ))}
-                          </div>
-                        </>
-                      )}
-                    </div>
+                    <FormLabel>Descrição</FormLabel>
+                    <FormControl>
+                      <DescriptionInput 
+                        placeholder="Ex: Supermercado" 
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -348,24 +309,16 @@ export function EditExpenseModal({ open, onClose, expense }: EditExpenseModalPro
 
               <FormField
                 control={form.control}
-                name="accountId"
+                name="amount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Conta</FormLabel>
-                    <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value.toString()}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {accounts.map((account) => (
-                          <SelectItem key={account.id} value={account.id.toString()}>
-                            {account.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>Valor</FormLabel>
+                    <FormControl>
+                      <CurrencyInput
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -391,7 +344,7 @@ export function EditExpenseModal({ open, onClose, expense }: EditExpenseModalPro
                           {field.value ? (
                             format(field.value, "dd/MM/yyyy")
                           ) : (
-                            <span>Selecione uma data</span>
+                            <span>Selecionar data</span>
                           )}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
@@ -414,24 +367,289 @@ export function EditExpenseModal({ open, onClose, expense }: EditExpenseModalPro
               )}
             />
 
-            <div className="flex justify-between pt-4">
-              <Button 
-                type="button" 
-                variant="destructive" 
-                onClick={handleDelete}
-                disabled={deleteMutation.isPending}
-              >
-                {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
-              </Button>
-              
-              <div className="flex gap-2">
-                <Button type="button" variant="outline" onClick={onClose}>
-                  Cancelar
-                </Button>
-                <Button type="submit" disabled={updateMutation.isPending}>
-                  {updateMutation.isPending ? "Salvando..." : "Salvar"}
-                </Button>
+            {transactionType !== "transfer" && (
+              <FormField
+                control={form.control}
+                name="categoryId"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Categoria</FormLabel>
+                    <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={categoryOpen}
+                            className="w-full justify-between"
+                          >
+                            {field.value && field.value > 0
+                              ? categories.find((category) => category.id === field.value)?.name
+                              : "Selecionar categoria"}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                        <Command>
+                          <CommandInput 
+                            placeholder="Buscar categoria..." 
+                            value={categorySearch}
+                            onValueChange={setCategorySearch}
+                          />
+                          <CommandList>
+                            <CommandEmpty>
+                              <div className="space-y-2">
+                                <p>Nenhuma categoria encontrada.</p>
+                                {categorySearch.trim() && (
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleAddCategory(categorySearch.trim())}
+                                    className="w-full"
+                                  >
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Criar "{categorySearch.trim()}"
+                                  </Button>
+                                )}
+                              </div>
+                            </CommandEmpty>
+                            
+                            {topCategories.length > 0 && !categorySearch && (
+                              <CommandGroup heading="Mais usadas">
+                                {topCategories.map((category) => (
+                                  <CommandItem
+                                    key={category.id}
+                                    value={category.name}
+                                    onSelect={() => {
+                                      form.setValue("categoryId", category.id);
+                                      setCategoryOpen(false);
+                                      setCategorySearch("");
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        field.value === category.id ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    <i className={`${category.icon} mr-2`} style={{ color: category.color }}></i>
+                                    {category.name}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            )}
+                            
+                            <CommandGroup heading={categorySearch ? "Resultados" : "Todas as categorias"}>
+                              {filteredCategories.map((category) => (
+                                <CommandItem
+                                  key={category.id}
+                                  value={category.name}
+                                  onSelect={() => {
+                                    form.setValue("categoryId", category.id);
+                                    setCategoryOpen(false);
+                                    setCategorySearch("");
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      field.value === category.id ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  <i className={`${category.icon} mr-2`} style={{ color: category.color }}></i>
+                                  {category.name}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="accountId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {transactionType === "transfer" ? "Conta origem" : "Conta"}
+                    </FormLabel>
+                    <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecionar conta" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {accounts.map((account) => (
+                          <SelectItem key={account.id} value={account.id.toString()}>
+                            <div className="flex items-center space-x-2">
+                              <div
+                                className="w-3 h-3 rounded-full"
+                                style={{ backgroundColor: account.color }}
+                              />
+                              <span>{account.name}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {transactionType === "transfer" && (
+                <FormField
+                  control={form.control}
+                  name="toAccountId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Conta destino</FormLabel>
+                      <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecionar conta" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {accounts.map((account) => (
+                            <SelectItem key={account.id} value={account.id.toString()}>
+                              <div className="flex items-center space-x-2">
+                                <div
+                                  className="w-3 h-3 rounded-full"
+                                  style={{ backgroundColor: account.color }}
+                                />
+                                <span>{account.name}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+            </div>
+
+            {transactionType !== "transfer" && (
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="isRecurring"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>
+                          Transação recorrente
+                        </FormLabel>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                {isRecurring && (
+                  <div className="space-y-4 pl-6 border-l-2 border-gray-100">
+                    <FormField
+                      control={form.control}
+                      name="isInstallment"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>
+                              Parcelamento (valor será dividido)
+                            </FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="recurringFrequency"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Frequência</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecionar" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="weekly">Semanal</SelectItem>
+                                <SelectItem value="monthly">Mensal</SelectItem>
+                                <SelectItem value="yearly">Anual</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="installmentCount"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              {isInstallment ? "Parcelas" : "Repetições"}
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                min="1"
+                                max="60"
+                                {...field}
+                                onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
+            )}
+
+            <div className="flex space-x-3 pt-4">
+              <Button
+                type="submit"
+                className="flex-1"
+                disabled={updateExpenseMutation.isPending}
+              >
+                {updateExpenseMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={deleteExpenseMutation.isPending}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
           </form>
         </Form>
