@@ -268,7 +268,7 @@ export function EditExpenseModal({ open, onClose, expense }: EditExpenseModalPro
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Tipo de Transação</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o tipo" />
@@ -602,7 +602,7 @@ export function EditExpenseModal({ open, onClose, expense }: EditExpenseModalPro
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Frequência</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Selecionar" />
