@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
+import { DescriptionInput } from "@/components/ui/description-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -40,9 +42,10 @@ type FormData = z.infer<typeof formSchema>;
 interface AdvancedExpenseModalProps {
   open: boolean;
   onClose: () => void;
+  preselectedAccountId?: number;
 }
 
-export function AdvancedExpenseModal({ open, onClose }: AdvancedExpenseModalProps) {
+export function AdvancedExpenseModal({ open, onClose, preselectedAccountId }: AdvancedExpenseModalProps) {
   const [activeTab, setActiveTab] = useState("basic");
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -54,7 +57,7 @@ export function AdvancedExpenseModal({ open, onClose }: AdvancedExpenseModalProp
       amount: "",
       date: new Date(),
       categoryId: 0,
-      accountId: 0,
+      accountId: preselectedAccountId || 0,
       isRecurring: false,
       recurringType: "none",
       recurringFrequency: "monthly",
@@ -179,7 +182,11 @@ export function AdvancedExpenseModal({ open, onClose }: AdvancedExpenseModalProp
                       <FormItem>
                         <FormLabel>Descrição</FormLabel>
                         <FormControl>
-                          <Input placeholder="Ex: Supermercado" {...field} />
+                          <DescriptionInput 
+                            placeholder="Ex: Supermercado" 
+                            value={field.value}
+                            onChange={field.onChange}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -193,11 +200,9 @@ export function AdvancedExpenseModal({ open, onClose }: AdvancedExpenseModalProp
                       <FormItem>
                         <FormLabel>Valor</FormLabel>
                         <FormControl>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            placeholder="0,00"
-                            {...field}
+                          <CurrencyInput
+                            value={field.value}
+                            onChange={field.onChange}
                           />
                         </FormControl>
                         <FormMessage />

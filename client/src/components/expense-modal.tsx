@@ -38,6 +38,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
+import { DescriptionInput } from "@/components/ui/description-input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
@@ -180,7 +182,7 @@ export function ExpenseModal({ open, onClose, preselectedAccountId }: ExpenseMod
 
   const handleAddCategory = async (name: string) => {
     try {
-      const newCategory = await apiRequest("/api/categories", "POST", { name });
+      const newCategory = await apiRequest("/api/categories", "POST", { name }) as any;
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
       form.setValue("categoryId", newCategory.id);
       setCategoryOpen(false);
@@ -248,7 +250,11 @@ export function ExpenseModal({ open, onClose, preselectedAccountId }: ExpenseMod
                   <FormItem>
                     <FormLabel>Descrição</FormLabel>
                     <FormControl>
-                      <Input placeholder="Ex: Supermercado" {...field} />
+                      <DescriptionInput 
+                        placeholder="Ex: Supermercado" 
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -262,11 +268,9 @@ export function ExpenseModal({ open, onClose, preselectedAccountId }: ExpenseMod
                   <FormItem>
                     <FormLabel>Valor</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        placeholder="0,00"
-                        {...field}
+                      <CurrencyInput
+                        value={field.value}
+                        onChange={field.onChange}
                       />
                     </FormControl>
                     <FormMessage />
