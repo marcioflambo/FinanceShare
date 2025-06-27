@@ -158,7 +158,7 @@ export function EditExpenseModal({ open, onClose, expense }: EditExpenseModalPro
       
       const payload = {
         description: data.description,
-        amount: parseFloat(data.amount),
+        amount: data.amount,
         categoryId: data.categoryId,
         accountId: data.accountId,
         date: data.date,
@@ -244,10 +244,13 @@ export function EditExpenseModal({ open, onClose, expense }: EditExpenseModalPro
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" aria-describedby="edit-expense-description">
         <DialogHeader>
           <DialogTitle>Editar Despesa</DialogTitle>
         </DialogHeader>
+        <div id="edit-expense-description" className="sr-only">
+          Formulário para editar os dados de uma despesa existente
+        </div>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
