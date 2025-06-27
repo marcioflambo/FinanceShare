@@ -131,7 +131,16 @@ export function AllTransactions({ onBack, selectedAccountIds = [] }: AllTransact
   };
 
   const calculateMonthTotal = (transactions: any[]) => {
-    return transactions.reduce((total, t) => total + parseFloat(t.amount), 0);
+    return transactions.reduce((total, t) => {
+      const amount = parseFloat(t.amount);
+      if (t.transactionType === 'credit') {
+        return total + amount; // Crédito soma
+      } else if (t.transactionType === 'debit') {
+        return total - amount; // Débito subtrai
+      } else {
+        return total; // Transferência não afeta o total
+      }
+    }, 0);
   };
 
   const handleEditExpense = (expense: Expense) => {
@@ -249,8 +258,10 @@ export function AllTransactions({ onBack, selectedAccountIds = [] }: AllTransact
                   <CardTitle className="text-lg font-semibold capitalize">
                     {getMonthLabel(monthKey)}
                   </CardTitle>
-                  <span className="text-lg font-semibold text-red-600">
-                    -{formatCurrency(monthTotal)}
+                  <span className={`text-lg font-semibold ${
+                    monthTotal >= 0 ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {monthTotal >= 0 ? '+' : ''}{formatCurrency(Math.abs(monthTotal))}
                   </span>
                 </div>
               </CardHeader>
@@ -277,8 +288,19 @@ export function AllTransactions({ onBack, selectedAccountIds = [] }: AllTransact
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <span className="font-semibold text-red-600">
-                          -{formatCurrency(transaction.amount)}
+                        <span className={`font-semibold ${
+                          transaction.transactionType === 'credit' 
+                            ? 'text-green-600' 
+                            : transaction.transactionType === 'transfer'
+                            ? 'text-blue-600'
+                            : 'text-red-600'
+                        }`}>
+                          {transaction.transactionType === 'credit' 
+                            ? '+' 
+                            : transaction.transactionType === 'transfer'
+                            ? ''
+                            : '-'
+                          }{formatCurrency(transaction.amount)}
                         </span>
                         <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <Button

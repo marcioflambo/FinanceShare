@@ -130,8 +130,19 @@ export function RecentTransactions({ onViewAll, selectedAccountIds = [], onAccou
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <span className="font-semibold text-red-600 text-sm md:text-base">
-                    -{formatCurrency(transaction.amount)}
+                  <span className={`font-semibold text-sm md:text-base ${
+                    transaction.transactionType === 'credit' 
+                      ? 'text-green-600' 
+                      : transaction.transactionType === 'transfer'
+                      ? 'text-blue-600'
+                      : 'text-red-600'
+                  }`}>
+                    {transaction.transactionType === 'credit' 
+                      ? '+' 
+                      : transaction.transactionType === 'transfer'
+                      ? ''
+                      : '-'
+                    }{formatCurrency(transaction.amount)}
                   </span>
                   <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Button
