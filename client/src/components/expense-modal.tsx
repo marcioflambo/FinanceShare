@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -40,7 +40,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Check, ChevronsUpDown, Plus } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Check, ChevronsUpDown, Plus, CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -49,9 +51,10 @@ import type { Category, BankAccount } from "@shared/schema";
 const formSchema = z.object({
   description: z.string().min(1, "Descrição é obrigatória"),  
   amount: z.string().min(1, "Valor é obrigatório"),
-  categoryId: z.number().min(1, "Categoria é obrigatória"),
+  categoryId: z.number().min(1, "Categoria é obrigatória").optional(),
   accountId: z.number().min(1, "Conta é obrigatória"),
-  transactionType: z.enum(["debit", "credit"]).default("debit"),
+  toAccountId: z.number().min(1, "Conta destino é obrigatória").optional(),
+  transactionType: z.enum(["debit", "credit", "transfer"]).default("debit"),
   date: z.date().default(() => new Date()),
   isRecurring: z.boolean().default(false),
   recurringFrequency: z.enum(["weekly", "monthly", "yearly"]).default("monthly"),
@@ -115,31 +118,48 @@ export function ExpenseModal({ open, onClose, preselectedAccountId }: ExpenseMod
 
   const createExpenseMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      const payload = {
-        description: data.description,
-        amount: parseFloat(data.amount),
-        categoryId: data.categoryId,
-        accountId: data.accountId,
-        date: data.date,
-        isRecurring: data.isRecurring,
-        recurringFrequency: data.recurringFrequency,
-        installmentCount: data.installmentCount,
-        isInstallment: data.isInstallment,
-      };
-
-      // Create expense or income based on transaction type
-      if (data.transactionType === "credit") {
-        return await apiRequest("/api/income", "POST", payload);
+      if (data.transactionType === "transfer") {
+        const transferPayload = {
+          description: data.description,
+          amount: parseFloat(data.amount),
+          accountId: data.accountId,
+          toAccountId: data.toAccountId,
+          date: data.date,
+        };
+        return await apiRequest("/api/transfers", "POST", transferPayload);
       } else {
-        return await apiRequest("/api/expenses", "POST", payload);
+        const payload = {
+          description: data.description,
+          amount: parseFloat(data.amount),
+          categoryId: data.categoryId,
+          accountId: data.accountId,
+          date: data.date,
+          isRecurring: data.isRecurring,
+          recurringFrequency: data.recurringFrequency,
+          installmentCount: data.installmentCount,
+          isInstallment: data.isInstallment,
+        };
+
+        // Create expense or income based on transaction type
+        if (data.transactionType === "credit") {
+          return await apiRequest("/api/income", "POST", payload);
+        } else {
+          return await apiRequest("/api/expenses", "POST", payload);
+        }
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transfers"] });
       queryClient.invalidateQueries({ queryKey: ["/api/bank-accounts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/statistics"] });
+      
+      let title = "Despesa adicionada!";
+      if (transactionType === "credit") title = "Receita adicionada!";
+      else if (transactionType === "transfer") title = "Transferência realizada!";
+      
       toast({
-        title: transactionType === "credit" ? "Receita adicionada!" : "Despesa adicionada!",
+        title,
         description: "A transação foi registrada com sucesso.",
       });
       form.reset();
@@ -207,6 +227,12 @@ export function ExpenseModal({ open, onClose, preselectedAccountId }: ExpenseMod
                           <span>Crédito (Receita)</span>
                         </div>
                       </SelectItem>
+                      <SelectItem value="transfer">
+                        <div className="flex items-center space-x-2">
+                          <i className="fas fa-exchange-alt text-blue-500"></i>
+                          <span>Transferência</span>
+                        </div>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -251,58 +277,131 @@ export function ExpenseModal({ open, onClose, preselectedAccountId }: ExpenseMod
 
             <FormField
               control={form.control}
-              name="categoryId"
+              name="date"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Categoria</FormLabel>
-                  <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
+                  <FormLabel>Data</FormLabel>
+                  <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
                           variant="outline"
-                          role="combobox"
                           className={cn(
-                            "justify-between",
+                            "w-full pl-3 text-left font-normal",
                             !field.value && "text-muted-foreground"
                           )}
                         >
-                          {field.value
-                            ? categories.find((category) => category.id === field.value)?.name
-                            : "Selecionar categoria"}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          {field.value ? (
+                            format(field.value, "dd/MM/yyyy")
+                          ) : (
+                            <span>Selecionar data</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent className="w-full p-0">
-                      <Command>
-                        <CommandInput
-                          placeholder="Buscar categoria..."
-                          value={categorySearch}
-                          onValueChange={setCategorySearch}
-                        />
-                        <CommandList>
-                          <CommandEmpty>
-                            <div className="text-center py-2">
-                              <p className="text-sm text-muted-foreground mb-2">
-                                Categoria não encontrada
-                              </p>
-                              {categorySearch && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleAddCategory(categorySearch)}
-                                  className="text-xs"
-                                >
-                                  <Plus className="h-3 w-3 mr-1" />
-                                  Criar "{categorySearch}"
-                                </Button>
-                              )}
-                            </div>
-                          </CommandEmpty>
-                          
-                          {topCategories.length > 0 && !categorySearch && (
-                            <CommandGroup heading="Mais usadas">
-                              {topCategories.map((category) => (
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date: Date) =>
+                          date > new Date() || date < new Date("1900-01-01")
+                        }
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {transactionType !== "transfer" && (
+              <FormField
+                control={form.control}
+                name="categoryId"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Categoria</FormLabel>
+                    <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            className={cn(
+                              "justify-between",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value
+                              ? categories.find((category) => category.id === field.value)?.name
+                              : "Selecionar categoria"}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0">
+                        <Command>
+                          <CommandInput
+                            placeholder="Buscar categoria..."
+                            value={categorySearch}
+                            onValueChange={setCategorySearch}
+                          />
+                          <CommandList>
+                            <CommandEmpty>
+                              <div className="text-center py-2">
+                                <p className="text-sm text-muted-foreground mb-2">
+                                  Categoria não encontrada
+                                </p>
+                                {categorySearch && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleAddCategory(categorySearch)}
+                                    className="text-xs"
+                                  >
+                                    <Plus className="h-3 w-3 mr-1" />
+                                    Criar "{categorySearch}"
+                                  </Button>
+                                )}
+                              </div>
+                            </CommandEmpty>
+                            
+                            {topCategories.length > 0 && !categorySearch && (
+                              <CommandGroup heading="Mais usadas">
+                                {topCategories.map((category) => (
+                                  <CommandItem
+                                    value={category.name}
+                                    key={category.id}
+                                    onSelect={() => {
+                                      form.setValue("categoryId", category.id);
+                                      setCategoryOpen(false);
+                                    }}
+                                  >
+                                    <div className="flex items-center space-x-2">
+                                      <i
+                                        className={category.icon}
+                                        style={{ color: category.color }}
+                                      ></i>
+                                      <span>{category.name}</span>
+                                    </div>
+                                    <Check
+                                      className={cn(
+                                        "ml-auto h-4 w-4",
+                                        category.id === field.value
+                                          ? "opacity-100"
+                                          : "opacity-0"
+                                      )}
+                                    />
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            )}
+
+                            <CommandGroup heading={categorySearch ? "Resultados" : "Todas as categorias"}>
+                              {filteredCategories.map((category) => (
                                 <CommandItem
                                   value={category.name}
                                   key={category.id}
@@ -329,146 +428,185 @@ export function ExpenseModal({ open, onClose, preselectedAccountId }: ExpenseMod
                                 </CommandItem>
                               ))}
                             </CommandGroup>
-                          )}
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
-                          <CommandGroup heading={categorySearch ? "Resultados" : "Todas as categorias"}>
-                            {filteredCategories.map((category) => (
-                              <CommandItem
-                                value={category.name}
-                                key={category.id}
-                                onSelect={() => {
-                                  form.setValue("categoryId", category.id);
-                                  setCategoryOpen(false);
-                                }}
-                              >
-                                <div className="flex items-center space-x-2">
-                                  <i
-                                    className={category.icon}
-                                    style={{ color: category.color }}
-                                  ></i>
-                                  <span>{category.name}</span>
-                                </div>
-                                <Check
-                                  className={cn(
-                                    "ml-auto h-4 w-4",
-                                    category.id === field.value
-                                      ? "opacity-100"
-                                      : "opacity-0"
-                                  )}
-                                />
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="accountId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Conta</FormLabel>
-                  <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecionar conta" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {accounts.map((account) => (
-                        <SelectItem key={account.id} value={account.id.toString()}>
-                          <div className="flex items-center space-x-2">
-                            <i className="fas fa-university text-blue-500"></i>
-                            <span>{account.name}</span>
-                            {account.isActive === false && (
-                              <span className="text-xs text-gray-500">(Inativa)</span>
-                            )}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="space-y-3">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="recurring"
-                  checked={isRecurring}
-                  onCheckedChange={(checked: boolean) => form.setValue("isRecurring", checked)}
-                />
-                <label htmlFor="recurring" className="text-sm font-medium">
-                  Transação recorrente
-                </label>
-              </div>
-
-              {isRecurring && (
+            {transactionType === "transfer" ? (
+              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="recurringFrequency"
+                  name="accountId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Frequência</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormLabel>Conta de Origem</FormLabel>
+                      <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecionar frequência" />
+                            <SelectValue placeholder="Selecionar conta origem" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="weekly">Semanal</SelectItem>
-                          <SelectItem value="monthly">Mensal</SelectItem>
-                          <SelectItem value="yearly">Anual</SelectItem>
+                          {accounts.map((account) => (
+                            <SelectItem key={account.id} value={account.id.toString()}>
+                              <div className="flex items-center space-x-2">
+                                <i className="fas fa-university text-blue-500"></i>
+                                <span>{account.name}</span>
+                                {account.isActive === false && (
+                                  <span className="text-xs text-gray-500">(Inativa)</span>
+                                )}
+                              </div>
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              )}
 
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="installment"
-                  checked={isInstallment}
-                  onCheckedChange={(checked: boolean) => form.setValue("isInstallment", checked)}
-                />
-                <label htmlFor="installment" className="text-sm font-medium">
-                  Parcelamento
-                </label>
-              </div>
-
-              {isInstallment && (
                 <FormField
                   control={form.control}
-                  name="installmentCount"
+                  name="toAccountId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Número de parcelas</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="1"
-                          max="120"
-                          {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value))}
-                        />
-                      </FormControl>
+                      <FormLabel>Conta de Destino</FormLabel>
+                      <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecionar conta destino" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {accounts.filter(acc => acc.id !== form.watch("accountId")).map((account) => (
+                            <SelectItem key={account.id} value={account.id.toString()}>
+                              <div className="flex items-center space-x-2">
+                                <i className="fas fa-university text-green-500"></i>
+                                <span>{account.name}</span>
+                                {account.isActive === false && (
+                                  <span className="text-xs text-gray-500">(Inativa)</span>
+                                )}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              )}
-            </div>
+              </div>
+            ) : (
+              <FormField
+                control={form.control}
+                name="accountId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Conta</FormLabel>
+                    <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecionar conta" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {accounts.map((account) => (
+                          <SelectItem key={account.id} value={account.id.toString()}>
+                            <div className="flex items-center space-x-2">
+                              <i className="fas fa-university text-blue-500"></i>
+                              <span>{account.name}</span>
+                              {account.isActive === false && (
+                                <span className="text-xs text-gray-500">(Inativa)</span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {transactionType !== "transfer" && (
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="recurring"
+                    checked={isRecurring}
+                    onCheckedChange={(checked: boolean) => form.setValue("isRecurring", checked)}
+                  />
+                  <label htmlFor="recurring" className="text-sm font-medium">
+                    Transação recorrente
+                  </label>
+                </div>
+
+                {isRecurring && (
+                  <FormField
+                    control={form.control}
+                    name="recurringFrequency"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Frequência</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecionar frequência" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="weekly">Semanal</SelectItem>
+                            <SelectItem value="monthly">Mensal</SelectItem>
+                            <SelectItem value="yearly">Anual</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="installment"
+                    checked={isInstallment}
+                    onCheckedChange={(checked: boolean) => form.setValue("isInstallment", checked)}
+                  />
+                  <label htmlFor="installment" className="text-sm font-medium">
+                    Parcelamento
+                  </label>
+                </div>
+
+                {isInstallment && (
+                  <FormField
+                    control={form.control}
+                    name="installmentCount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Número de parcelas</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="1"
+                            max="120"
+                            {...field}
+                            onChange={(e) => field.onChange(parseInt(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              </div>
+            )}
 
             <div className="flex justify-end space-x-2 pt-4">
               <Button variant="outline" onClick={onClose} type="button">
