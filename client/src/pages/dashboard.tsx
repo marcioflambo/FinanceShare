@@ -10,11 +10,9 @@ import { BillSplits } from "@/components/bill-splits";
 import { BankAccounts } from "@/components/bank-accounts";
 import { GoalsOverview } from "@/components/goals-overview";
 
-import { ExpenseModal } from "@/components/expense-modal";
-import { AdvancedExpenseModal } from "@/components/advanced-expense-modal";
+import { UnifiedTransactionModal } from "@/components/unified-transaction-modal";
 import { BillSplitModal } from "@/components/bill-split-modal";
 import { GoalModal } from "@/components/goal-modal";
-import { TransferModal } from "@/components/transfer-modal";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,11 +21,9 @@ import { Lightbulb, Download, Users, Target } from "lucide-react";
 export type ActiveSection = 'dashboard' | 'expenses' | 'splits' | 'reports';
 
 export default function Dashboard() {
-  const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
-  const [isAdvancedExpenseModalOpen, setIsAdvancedExpenseModalOpen] = useState(false);
+  const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [isBillSplitModalOpen, setIsBillSplitModalOpen] = useState(false);
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
-  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<ActiveSection>('dashboard');
   const [showAllTransactions, setShowAllTransactions] = useState(false);
   const [selectedAccountIds, setSelectedAccountIds] = useState<number[]>([]);
@@ -136,27 +132,11 @@ export default function Dashboard() {
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Ações de Despesas</h3>
                   <div className="grid grid-cols-2 gap-3">
                     <Button 
-                      onClick={() => setIsExpenseModalOpen(true)}
-                      className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
-                    >
-                      <i className="fas fa-plus"></i>
-                      <span className="font-medium">Nova Despesa</span>
-                    </Button>
-                    <Button 
-                      onClick={() => setIsAdvancedExpenseModalOpen(true)}
-                      variant="outline"
-                      className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
-                    >
-                      <i className="fas fa-sync-alt"></i>
-                      <span className="font-medium">Recorrente</span>
-                    </Button>
-                    <Button 
-                      onClick={() => setIsTransferModalOpen(true)}
-                      variant="secondary"
+                      onClick={() => setIsTransactionModalOpen(true)}
                       className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform col-span-2"
                     >
-                      <i className="fas fa-exchange-alt"></i>
-                      <span className="font-medium">Transferir entre Contas</span>
+                      <i className="fas fa-plus"></i>
+                      <span className="font-medium">Adicionar Transação</span>
                     </Button>
                   </div>
                 </CardContent>
@@ -215,7 +195,7 @@ export default function Dashboard() {
 
                 <div className="w-80 space-y-4">
                   <BankAccounts 
-                    onTransferClick={() => setIsTransferModalOpen(true)}
+                    onTransferClick={() => setIsTransactionModalOpen(true)}
                     onAccountSelect={(accountId) => {
                       if (accountId) {
                         setSelectedAccountIds([accountId]);
@@ -231,27 +211,11 @@ export default function Dashboard() {
                       <h3 className="text-lg font-semibold text-gray-900 mb-4">Movimentações</h3>
                       <div className="grid grid-cols-1 gap-3">
                         <Button 
-                          onClick={() => setIsExpenseModalOpen(true)}
+                          onClick={() => setIsTransactionModalOpen(true)}
                           className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
                         >
                           <i className="fas fa-plus"></i>
                           <span className="font-medium">Adicionar Transação</span>
-                        </Button>
-                        <Button 
-                          onClick={() => setIsAdvancedExpenseModalOpen(true)}
-                          variant="outline"
-                          className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
-                        >
-                          <i className="fas fa-sync-alt"></i>
-                          <span className="font-medium">Recorrente</span>
-                        </Button>
-                        <Button 
-                          onClick={() => setIsTransferModalOpen(true)}
-                          variant="secondary"
-                          className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
-                        >
-                          <i className="fas fa-exchange-alt"></i>
-                          <span className="font-medium">Transferir</span>
                         </Button>
                       </div>
                     </CardContent>
@@ -280,15 +244,10 @@ export default function Dashboard() {
         </div>
       </main>
 
-      <ExpenseModal 
-        open={isExpenseModalOpen}
-        onClose={() => setIsExpenseModalOpen(false)}
-        preselectedAccountId={selectedAccountIds[0] || null}
-      />
-      
-      <AdvancedExpenseModal 
-        open={isAdvancedExpenseModalOpen}
-        onClose={() => setIsAdvancedExpenseModalOpen(false)}
+      <UnifiedTransactionModal 
+        open={isTransactionModalOpen}
+        onClose={() => setIsTransactionModalOpen(false)}
+        preselectedAccountId={selectedAccountIds[0] || undefined}
       />
       
       <BillSplitModal 
@@ -299,11 +258,6 @@ export default function Dashboard() {
       <GoalModal 
         open={isGoalModalOpen}
         onClose={() => setIsGoalModalOpen(false)}
-      />
-
-      <TransferModal 
-        open={isTransferModalOpen}
-        onClose={() => setIsTransferModalOpen(false)}
       />
     </div>
   );
