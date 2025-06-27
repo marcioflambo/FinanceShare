@@ -217,14 +217,9 @@ export function StatsCards({ selectedAccountIds = [] }: StatsCardsProps) {
               <p className="text-xs text-gray-400 truncate">{card.subtitle}</p>
             </div>
           </div>
-          <div className="flex items-end justify-between">
-            <p className="text-lg md:text-xl font-bold text-gray-900">
-              {formatCurrencyDisplay(card.value)}
-            </p>
-            <span className={`text-xs px-2 py-1 rounded-full ${card.changeColor}`}>
-              {card.change}
-            </span>
-          </div>
+          <p className="text-lg md:text-xl font-bold text-gray-900">
+            {formatCurrencyDisplay(card.value)}
+          </p>
         </Card>
       ))}
     </div>

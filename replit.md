@@ -289,6 +289,10 @@ Preferred communication style: Simple, everyday language.
 - June 27, 2025. **CONSISTENT BANK ACCOUNTS POSITIONING**: Ensured bank accounts appear at the top of all sections (dashboard, expenses, splits, reports) for consistent user experience
 - June 27, 2025. **ACCOUNT-FILTERED STATISTICS**: Updated statistics cards to show "A Receber" and "Gastos do Mês" data filtered by selected accounts instead of all accounts
 - June 27, 2025. **MOBILE SINGLE-ACCOUNT FILTERING**: Implemented mobile-specific behavior where statistics and transactions show data only from the first selected account, since multi-account selection doesn't work on mobile app
+- June 27, 2025. **CUSTOM CATEGORIES SYSTEM**: Implemented comprehensive custom categories in expense modal with free text input, real-time filtering, automatic category creation, and top 3 most-used categories display
+- June 27, 2025. **PRESELECTED ACCOUNT IN EXPENSE MODAL**: Added functionality to pre-select currently selected bank account when opening "Nova Despesa" modal for improved user experience
+- June 27, 2025. **CIRCULAR BANK ACCOUNT NAVIGATION**: Implemented circular navigation where last account (5 of 5) goes to first account and first account goes to last account, removing disabled button states
+- June 27, 2025. **ENHANCED STATISTICS CARDS DESIGN**: Redesigned statistics cards with descriptive information alongside icons, improved layout with title, description, and subtitle for better context and visual appeal
 
 ## Key Features
 
