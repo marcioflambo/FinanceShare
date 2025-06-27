@@ -3,14 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, getRelativeTime } from "@/lib/utils";
 import { useMemo } from "react";
+import { AccountSelector } from "./account-selector";
 import type { Expense, Category, BankAccount } from "@shared/schema";
 
 interface RecentTransactionsProps {
   onViewAll?: () => void;
   selectedAccountIds?: number[];
+  onAccountSelectionChange?: (accountIds: number[]) => void;
 }
 
-export function RecentTransactions({ onViewAll, selectedAccountIds = [] }: RecentTransactionsProps) {
+export function RecentTransactions({ onViewAll, selectedAccountIds = [], onAccountSelectionChange }: RecentTransactionsProps) {
   const { data: expenses = [] } = useQuery<Expense[]>({
     queryKey: ["/api/expenses"],
   });
@@ -55,23 +57,27 @@ export function RecentTransactions({ onViewAll, selectedAccountIds = [] }: Recen
   return (
     <Card className="shadow-sm border-gray-100">
       <CardHeader>
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col space-y-3">
+          <div className="flex justify-between items-center">
             <CardTitle className="text-lg font-semibold">Transações Recentes</CardTitle>
-            {selectedAccountIds.length > 0 && (
-              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                {selectedAccountIds.length === 1 ? "1 conta" : `${selectedAccountIds.length} contas`} selecionada{selectedAccountIds.length > 1 ? "s" : ""}
-              </span>
-            )}
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-primary hover:text-primary/80"
+              onClick={onViewAll}
+            >
+              Ver todas
+            </Button>
           </div>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="text-primary hover:text-primary/80"
-            onClick={onViewAll}
-          >
-            Ver todas
-          </Button>
+          
+          {onAccountSelectionChange && (
+            <div className="w-full">
+              <AccountSelector
+                selectedAccountIds={selectedAccountIds}
+                onSelectionChange={onAccountSelectionChange}
+              />
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent>

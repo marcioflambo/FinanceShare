@@ -177,7 +177,11 @@ export default function Dashboard() {
               <div className="flex gap-6 mb-4">
                 <div className="flex-1 space-y-4">
                   <StatsCards />
-                  <RecentTransactions onViewAll={() => setShowAllTransactions(true)} selectedAccountIds={selectedAccountIds} />
+                  <RecentTransactions 
+                    onViewAll={() => setShowAllTransactions(true)} 
+                    selectedAccountIds={selectedAccountIds}
+                    onAccountSelectionChange={setSelectedAccountIds}
+                  />
                 </div>
 
                 <div className="w-80 space-y-4">
