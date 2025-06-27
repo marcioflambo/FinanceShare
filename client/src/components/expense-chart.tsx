@@ -12,6 +12,7 @@ import { useMemo, useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { Expense, Category, BankAccount } from "@shared/schema";
+import { AdvancedCalendar } from "@/components/ui/advanced-calendar";
 
 interface ExpenseChartProps {
   selectedAccountIds?: number[];
@@ -213,62 +214,14 @@ export function ExpenseChart({ selectedAccountIds = [], onAccountSelectionChange
                   Selecione as datas de início e fim para filtrar as despesas por um período específico.
                 </p>
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Data de Início</label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className="w-full justify-start text-left font-normal"
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {customStartDate ? format(customStartDate, "dd/MM/yyyy", { locale: ptBR }) : "Selecionar data"}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={customStartDate}
-                            onSelect={setCustomStartDate}
-                            locale={ptBR}
-                            initialFocus
-                            captionLayout="dropdown-buttons"
-                            fromYear={2020}
-                            toYear={2030}
-                            showOutsideDays={false}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Data de Fim</label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className="w-full justify-start text-left font-normal"
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {customEndDate ? format(customEndDate, "dd/MM/yyyy", { locale: ptBR }) : "Selecionar data"}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={customEndDate}
-                            onSelect={setCustomEndDate}
-                            locale={ptBR}
-                            initialFocus
-                            captionLayout="dropdown-buttons"
-                            fromYear={2020}
-                            toYear={2030}
-                            showOutsideDays={false}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                  </div>
+                  <AdvancedCalendar
+                    startDate={customStartDate || undefined}
+                    endDate={customEndDate || undefined}
+                    onDateRangeChange={(start, end) => {
+                      setCustomStartDate(start);
+                      setCustomEndDate(end);
+                    }}
+                  />
                   <div className="flex justify-between pt-4">
                     <Button variant="outline" onClick={resetFilter}>
                       Limpar Filtros
