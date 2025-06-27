@@ -125,9 +125,9 @@ export default function Dashboard() {
         return (
           <>
             <div className="mb-6">
-              <StatsCards />
+              <BankAccounts />
               <div className="mt-4">
-                <BankAccounts />
+                <StatsCards />
               </div>
             </div>
             <div className="grid grid-cols-1 gap-6 mb-8">
