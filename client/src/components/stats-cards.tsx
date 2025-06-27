@@ -214,7 +214,6 @@ export function StatsCards({ selectedAccountIds = [] }: StatsCardsProps) {
             <div className="flex-1 min-w-0">
               <p className="text-xs md:text-sm font-medium text-gray-900 truncate">{card.title}</p>
               <p className="text-xs text-gray-500 truncate">{card.description}</p>
-              <p className="text-xs text-gray-400 truncate">{card.subtitle}</p>
             </div>
           </div>
           <p className="text-lg md:text-xl font-bold text-gray-900">
