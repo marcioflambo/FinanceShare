@@ -293,6 +293,7 @@ Preferred communication style: Simple, everyday language.
 - June 27, 2025. **PRESELECTED ACCOUNT IN EXPENSE MODAL**: Added functionality to pre-select currently selected bank account when opening "Nova Despesa" modal for improved user experience
 - June 27, 2025. **CIRCULAR BANK ACCOUNT NAVIGATION**: Implemented circular navigation where last account (5 of 5) goes to first account and first account goes to last account, removing disabled button states
 - June 27, 2025. **ENHANCED STATISTICS CARDS DESIGN**: Redesigned statistics cards with descriptive information alongside icons, improved layout with title, description, and subtitle for better context and visual appeal
+- June 27, 2025. **ENHANCED TRANSACTION INPUT**: Implemented currency formatting with R$ prefix and automatic decimal formatting for amount field, plus intelligent description suggestions from user's expense history without labels
 
 ## Key Features
 

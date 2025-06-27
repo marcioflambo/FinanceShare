@@ -113,19 +113,13 @@ export const DescriptionInput = forwardRef<HTMLInputElement, DescriptionInputPro
           <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-y-auto">
             {showingTopSuggestions && (
               <>
-                <div className="px-3 py-2 text-xs font-medium text-muted-foreground border-b">
-                  Mais utilizadas
-                </div>
                 {topSuggestions.map((suggestion, index) => (
                   <button
                     key={`top-${index}`}
-                    className="w-full px-3 py-2 text-left hover:bg-accent hover:text-accent-foreground flex items-center justify-between"
+                    className="w-full px-3 py-1.5 text-sm text-left hover:bg-accent hover:text-accent-foreground"
                     onClick={() => handleSuggestionClick(suggestion)}
                   >
-                    <span>{suggestion}</span>
-                    <Badge variant="secondary" className="text-xs">
-                      Frequente
-                    </Badge>
+                    {suggestion}
                   </button>
                 ))}
               </>
@@ -133,13 +127,10 @@ export const DescriptionInput = forwardRef<HTMLInputElement, DescriptionInputPro
             
             {!showingTopSuggestions && filteredSuggestions.length > 0 && (
               <>
-                <div className="px-3 py-2 text-xs font-medium text-muted-foreground border-b">
-                  Sugestões
-                </div>
                 {filteredSuggestions.map((suggestion, index) => (
                   <button
                     key={`filtered-${index}`}
-                    className="w-full px-3 py-2 text-left hover:bg-accent hover:text-accent-foreground"
+                    className="w-full px-3 py-1.5 text-sm text-left hover:bg-accent hover:text-accent-foreground"
                     onClick={() => handleSuggestionClick(suggestion)}
                   >
                     {suggestion}
@@ -149,7 +140,7 @@ export const DescriptionInput = forwardRef<HTMLInputElement, DescriptionInputPro
             )}
             
             {value.trim() && filteredSuggestions.length === 0 && (
-              <div className="px-3 py-2 text-sm text-muted-foreground">
+              <div className="px-3 py-1.5 text-sm text-muted-foreground">
                 Nenhuma sugestão encontrada. Digite uma nova descrição.
               </div>
             )}
