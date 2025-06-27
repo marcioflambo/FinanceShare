@@ -21,10 +21,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/categories", async (req, res) => {
     try {
-      const categoryData = insertCategorySchema.parse({ ...req.body, userId: DEMO_USER_ID });
+      const categoryData = insertCategorySchema.parse({ 
+        name: req.body.name,
+        icon: req.body.icon || "fas fa-tag",
+        color: req.body.color || "#6366f1",
+        userId: DEMO_USER_ID 
+      });
       const category = await storage.createCategory(categoryData);
       res.json(category);
     } catch (error) {
+      console.error('Erro ao criar categoria:', error);
       if (error instanceof z.ZodError) {
         res.status(400).json({ message: "Dados inválidos", errors: error.errors });
       } else {

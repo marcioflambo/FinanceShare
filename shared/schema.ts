@@ -272,6 +272,9 @@ export const insertCategorySchema = createInsertSchema(categories).pick({
   icon: true,
   color: true,
   userId: true,
+}).partial({
+  icon: true,
+  color: true,
 });
 
 export const insertBankAccountSchema = createInsertSchema(bankAccounts).pick({
