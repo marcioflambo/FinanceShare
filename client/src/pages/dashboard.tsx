@@ -71,48 +71,54 @@ export default function Dashboard() {
       case 'splits':
         return (
           <div className="space-y-6">
-            <BillSplits />
-            <Card className="shadow-sm border-gray-100">
-              <CardContent className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Ações de Divisão</h3>
-                <div className="grid grid-cols-1 gap-3">
-                  <Button 
-                    onClick={() => setIsBillSplitModalOpen(true)}
-                    className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
-                  >
-                    <Users className="w-4 h-4" />
-                    <span className="font-medium">Nova Divisão de Conta</span>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="grid grid-cols-1 gap-6">
+              <BankAccounts />
+              <BillSplits />
+              <Card className="shadow-sm border-gray-100">
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Ações de Divisão</h3>
+                  <div className="grid grid-cols-1 gap-3">
+                    <Button 
+                      onClick={() => setIsBillSplitModalOpen(true)}
+                      className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
+                    >
+                      <Users className="w-4 h-4" />
+                      <span className="font-medium">Nova Divisão de Conta</span>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         );
       case 'reports':
         return (
           <div className="space-y-6">
-            <GoalsOverview onCreateGoal={() => setIsGoalModalOpen(true)} />
-            <Card className="shadow-sm border-gray-100">
-              <CardContent className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Ações de Relatórios</h3>
-                <div className="grid grid-cols-1 gap-3">
-                  <Button 
-                    onClick={() => setIsGoalModalOpen(true)}
-                    className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
-                  >
-                    <Target className="w-4 h-4" />
-                    <span className="font-medium">Nova Meta Financeira</span>
-                  </Button>
-                  <Button 
-                    variant="outline"
-                    className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
-                  >
-                    <Download className="w-4 h-4" />
-                    <span className="font-medium">Exportar Relatório</span>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="grid grid-cols-1 gap-6">
+              <BankAccounts />
+              <GoalsOverview onCreateGoal={() => setIsGoalModalOpen(true)} />
+              <Card className="shadow-sm border-gray-100">
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Ações de Relatórios</h3>
+                  <div className="grid grid-cols-1 gap-3">
+                    <Button 
+                      onClick={() => setIsGoalModalOpen(true)}
+                      className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
+                    >
+                      <Target className="w-4 h-4" />
+                      <span className="font-medium">Nova Meta Financeira</span>
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span className="font-medium">Exportar Relatório</span>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         );
       default: // dashboard
