@@ -63,8 +63,8 @@ export default function Dashboard() {
         return (
           <div className="space-y-6">
             <div className="grid grid-cols-1 gap-6">
-              <RecentTransactions onViewAll={() => setShowAllTransactions(true)} selectedAccountIds={selectedAccountIds} />
               <BankAccounts />
+              <RecentTransactions onViewAll={() => setShowAllTransactions(true)} selectedAccountIds={selectedAccountIds} />
               <Card className="shadow-sm border-gray-100">
                 <CardContent className="p-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Ações de Despesas</h3>
@@ -154,25 +154,7 @@ export default function Dashboard() {
                 <BankAccounts />
               </div>
             </div>
-            <div className="grid grid-cols-1 gap-6 mb-8">
-              <Card className="shadow-sm border-gray-100">
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Resumo Rápido</h3>
-                  <div className="grid grid-cols-2 gap-4 text-center">
-                    <div className="p-3 bg-blue-50 rounded-lg">
-                      <i className="fas fa-receipt text-blue-600 text-xl mb-2"></i>
-                      <p className="text-sm text-gray-600">Despesas</p>
-                      <p className="font-semibold text-blue-600">Ver todas</p>
-                    </div>
-                    <div className="p-3 bg-green-50 rounded-lg">
-                      <i className="fas fa-users text-green-600 text-xl mb-2"></i>
-                      <p className="text-sm text-gray-600">Divisões</p>
-                      <p className="font-semibold text-green-600">Gerenciar</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+
             {aiTip && (
               <Card className="shadow-sm border-amber-200 bg-gradient-to-br from-amber-50 to-amber-25">
                 <CardContent className="p-6">
