@@ -26,6 +26,8 @@ export interface IStorage {
   createExpense(expense: InsertExpense): Promise<Expense>;
   getExpensesByDateRange(userId: number, startDate: Date, endDate: Date): Promise<Expense[]>;
   getExpensesByCategory(userId: number, categoryId: number): Promise<Expense[]>;
+  updateExpense(id: number, expense: InsertExpense): Promise<Expense | undefined>;
+  deleteExpense(id: number): Promise<void>;
 
   // Bill Splits
   getBillSplits(userId: number): Promise<BillSplit[]>;
@@ -420,6 +422,35 @@ export class MemStorage implements IStorage {
     );
   }
 
+  async updateExpense(id: number, insertExpense: InsertExpense): Promise<Expense | undefined> {
+    const existingExpense = this.expenses.get(id);
+    if (!existingExpense) {
+      return undefined;
+    }
+
+    const updatedExpense: Expense = {
+      ...existingExpense,
+      ...insertExpense,
+      id: existingExpense.id,
+      createdAt: existingExpense.createdAt,
+      isRecurring: insertExpense.isRecurring ?? false,
+      recurringType: insertExpense.recurringType ?? null,
+      recurringFrequency: insertExpense.recurringFrequency ?? null,
+      recurringInterval: insertExpense.recurringInterval ?? null,
+      installmentTotal: insertExpense.installmentTotal ?? null,
+      installmentCurrent: insertExpense.installmentCurrent ?? null,
+      recurringEndDate: insertExpense.recurringEndDate ?? null,
+      parentExpenseId: insertExpense.parentExpenseId ?? null,
+    };
+
+    this.expenses.set(id, updatedExpense);
+    return updatedExpense;
+  }
+
+  async deleteExpense(id: number): Promise<void> {
+    this.expenses.delete(id);
+  }
+
   // Bill Splits
   async getBillSplits(userId: number): Promise<BillSplit[]> {
     return Array.from(this.billSplits.values()).filter(split => split.createdBy === userId);
@@ -777,6 +808,37 @@ export class DatabaseStorage implements IStorage {
           eq(expenses.categoryId, categoryId)
         )
       );
+  }
+
+  async updateExpense(id: number, insertExpense: InsertExpense): Promise<Expense | undefined> {
+    const expenseData = {
+      ...insertExpense,
+      isRecurring: insertExpense.isRecurring || false,
+      recurringType: insertExpense.recurringType || null,
+      recurringFrequency: insertExpense.recurringFrequency || null,
+      recurringInterval: insertExpense.recurringInterval || null,
+      installmentTotal: insertExpense.installmentTotal || null,
+      installmentCurrent: insertExpense.installmentCurrent || null,
+      recurringEndDate: insertExpense.recurringEndDate || null,
+      parentExpenseId: insertExpense.parentExpenseId || null,
+    };
+
+    await db
+      .update(expenses)
+      .set(expenseData)
+      .where(eq(expenses.id, id));
+
+    const [expense] = await db
+      .select()
+      .from(expenses)
+      .where(eq(expenses.id, id))
+      .limit(1);
+
+    return expense || undefined;
+  }
+
+  async deleteExpense(id: number): Promise<void> {
+    await db.delete(expenses).where(eq(expenses.id, id));
   }
 
   // Bill Splits

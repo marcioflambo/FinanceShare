@@ -168,6 +168,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update expense
+  app.put("/api/expenses/:id", async (req, res) => {
+    try {
+      const expenseId = parseInt(req.params.id);
+      const expenseData = insertExpenseSchema.parse({ ...req.body, userId: DEMO_USER_ID });
+      
+      const updatedExpense = await storage.updateExpense(expenseId, expenseData);
+      
+      if (!updatedExpense) {
+        return res.status(404).json({ message: "Despesa não encontrada" });
+      }
+      
+      res.json(updatedExpense);
+    } catch (error: any) {
+      console.error('Erro ao atualizar despesa:', error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Dados inválidos", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Erro ao atualizar despesa", details: error?.message || String(error) });
+      }
+    }
+  });
+
+  // Delete expense
+  app.delete("/api/expenses/:id", async (req, res) => {
+    try {
+      const expenseId = parseInt(req.params.id);
+      await storage.deleteExpense(expenseId);
+      res.json({ message: "Despesa excluída com sucesso" });
+    } catch (error: any) {
+      console.error('Erro ao excluir despesa:', error);
+      res.status(500).json({ message: "Erro ao excluir despesa", details: error?.message || String(error) });
+    }
+  });
+
   // Bill Splits
   app.get("/api/bill-splits", async (req, res) => {
     try {

@@ -7,7 +7,8 @@ import { formatCurrency } from "@/lib/utils";
 import { useMemo, useState } from "react";
 import { format, isThisYear, isToday, isYesterday } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowLeft, Search, Calendar } from "lucide-react";
+import { ArrowLeft, Search, Calendar, Edit2, Trash2 } from "lucide-react";
+import { EditExpenseModal } from "@/components/edit-expense-modal";
 import type { Expense, Category, BankAccount } from "@shared/schema";
 
 interface AllTransactionsProps {
@@ -18,6 +19,8 @@ interface AllTransactionsProps {
 export function AllTransactions({ onBack, selectedAccountIds = [] }: AllTransactionsProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedMonthYear, setSelectedMonthYear] = useState<string>("all");
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const { data: expenses = [] } = useQuery<Expense[]>({
     queryKey: ["/api/expenses"],
@@ -129,6 +132,16 @@ export function AllTransactions({ onBack, selectedAccountIds = [] }: AllTransact
 
   const calculateMonthTotal = (transactions: any[]) => {
     return transactions.reduce((total, t) => total + parseFloat(t.amount), 0);
+  };
+
+  const handleEditExpense = (expense: Expense) => {
+    setEditingExpense(expense);
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setEditingExpense(null);
   };
 
   return (
@@ -244,7 +257,7 @@ export function AllTransactions({ onBack, selectedAccountIds = [] }: AllTransact
               <CardContent>
                 <div className="space-y-4">
                   {transactions.map((transaction) => (
-                    <div key={transaction.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100">
+                    <div key={transaction.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 group">
                       <div className="flex items-center space-x-3">
                         <div 
                           className="w-10 h-10 rounded-lg flex items-center justify-center text-lg"
@@ -263,9 +276,21 @@ export function AllTransactions({ onBack, selectedAccountIds = [] }: AllTransact
                           </p>
                         </div>
                       </div>
-                      <span className="font-semibold text-red-600">
-                        -{formatCurrency(transaction.amount)}
-                      </span>
+                      <div className="flex items-center space-x-2">
+                        <span className="font-semibold text-red-600">
+                          -{formatCurrency(transaction.amount)}
+                        </span>
+                        <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditExpense(transaction)}
+                            className="h-8 w-8 p-0 hover:bg-blue-50"
+                          >
+                            <Edit2 className="h-3 w-3 text-blue-600" />
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -274,6 +299,12 @@ export function AllTransactions({ onBack, selectedAccountIds = [] }: AllTransact
           );
         })
       )}
+
+      <EditExpenseModal
+        open={isEditModalOpen}
+        onClose={handleCloseEditModal}
+        expense={editingExpense}
+      />
     </div>
   );
 }

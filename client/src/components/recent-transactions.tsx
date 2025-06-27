@@ -2,9 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, getRelativeTime } from "@/lib/utils";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { AccountSelector } from "./account-selector";
+import { EditExpenseModal } from "./edit-expense-modal";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Edit2 } from "lucide-react";
 import type { Expense, Category, BankAccount } from "@shared/schema";
 
 interface RecentTransactionsProps {
@@ -15,6 +17,8 @@ interface RecentTransactionsProps {
 
 export function RecentTransactions({ onViewAll, selectedAccountIds = [], onAccountSelectionChange }: RecentTransactionsProps) {
   const isMobile = useIsMobile();
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const { data: expenses = [] } = useQuery<Expense[]>({
     queryKey: ["/api/expenses"],
   });
@@ -61,6 +65,16 @@ export function RecentTransactions({ onViewAll, selectedAccountIds = [], onAccou
       });
   }, [expenses, categories, accounts, selectedAccountIds]);
 
+  const handleEditExpense = (expense: Expense) => {
+    setEditingExpense(expense);
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setEditingExpense(null);
+  };
+
   return (
     <Card className="shadow-sm border-gray-100">
       <CardHeader>
@@ -96,7 +110,7 @@ export function RecentTransactions({ onViewAll, selectedAccountIds = [], onAccou
             </div>
           ) : (
             recentTransactions.map((transaction) => (
-              <div key={transaction.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100">
+              <div key={transaction.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 group">
                 <div className="flex items-center space-x-3">
                   <div 
                     className="w-10 h-10 rounded-lg flex items-center justify-center"
@@ -115,14 +129,32 @@ export function RecentTransactions({ onViewAll, selectedAccountIds = [], onAccou
                     </p>
                   </div>
                 </div>
-                <span className="font-semibold text-red-600 text-sm md:text-base">
-                  -{formatCurrency(transaction.amount)}
-                </span>
+                <div className="flex items-center space-x-2">
+                  <span className="font-semibold text-red-600 text-sm md:text-base">
+                    -{formatCurrency(transaction.amount)}
+                  </span>
+                  <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEditExpense(transaction)}
+                      className="h-8 w-8 p-0 hover:bg-blue-50"
+                    >
+                      <Edit2 className="h-3 w-3 text-blue-600" />
+                    </Button>
+                  </div>
+                </div>
               </div>
             ))
           )}
         </div>
       </CardContent>
+      
+      <EditExpenseModal
+        open={isEditModalOpen}
+        onClose={handleCloseEditModal}
+        expense={editingExpense}
+      />
     </Card>
   );
 }
