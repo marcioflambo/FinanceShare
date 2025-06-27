@@ -172,13 +172,13 @@ export function StatsCards({ selectedAccountIds = [] }: StatsCardsProps) {
       subtitle: filteredAccountsCount > 1 ? `${filteredAccountsCount} contas` : "Conta atual",
     },
     {
-      title: "Gastos do Mês",
+      title: "Despesas",
       value: monthlyExpensesForAccounts,
       icon: <TrendingDown className="w-4 h-4 text-red-500" />,
       iconBg: "bg-red-50",
       change: getExpenseLabel(),
       changeColor: "text-red-600 bg-red-100",
-      description: "Despesas de",
+      description: "Gastos do mês",
       subtitle: new Date().toLocaleDateString('pt-BR', { month: 'long' }),
     },
     {
@@ -192,13 +192,13 @@ export function StatsCards({ selectedAccountIds = [] }: StatsCardsProps) {
       subtitle: "Contas divididas",
     },
     {
-      title: "Economia",
+      title: "Poupanças",
       value: savingsSum,
       icon: <PiggyBank className="w-4 h-4 text-green-600" />,
       iconBg: "bg-green-50",
       change: getSavingsLabel(),
       changeColor: "text-green-600 bg-green-100",
-      description: "Poupanças",
+      description: "Economia",
       subtitle: savingsAccounts.length > 0 ? `${savingsAccounts.length} conta${savingsAccounts.length > 1 ? 's' : ''}` : "Sem poupanças",
     },
   ];
