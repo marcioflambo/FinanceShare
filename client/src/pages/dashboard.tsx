@@ -65,6 +65,36 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 gap-6">
               <RecentTransactions onViewAll={() => setShowAllTransactions(true)} selectedAccountIds={selectedAccountIds} />
               <BankAccounts />
+              <Card className="shadow-sm border-gray-100">
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Ações de Despesas</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button 
+                      onClick={() => setIsExpenseModalOpen(true)}
+                      className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
+                    >
+                      <i className="fas fa-plus"></i>
+                      <span className="font-medium">Nova Despesa</span>
+                    </Button>
+                    <Button 
+                      onClick={() => setIsAdvancedExpenseModalOpen(true)}
+                      variant="outline"
+                      className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
+                    >
+                      <i className="fas fa-sync-alt"></i>
+                      <span className="font-medium">Recorrente</span>
+                    </Button>
+                    <Button 
+                      onClick={() => setIsTransferModalOpen(true)}
+                      variant="secondary"
+                      className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform col-span-2"
+                    >
+                      <i className="fas fa-exchange-alt"></i>
+                      <span className="font-medium">Transferir entre Contas</span>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         );
@@ -72,12 +102,47 @@ export default function Dashboard() {
         return (
           <div className="space-y-6">
             <BillSplits />
+            <Card className="shadow-sm border-gray-100">
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Ações de Divisão</h3>
+                <div className="grid grid-cols-1 gap-3">
+                  <Button 
+                    onClick={() => setIsBillSplitModalOpen(true)}
+                    className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
+                  >
+                    <Users className="w-4 h-4" />
+                    <span className="font-medium">Nova Divisão de Conta</span>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         );
       case 'reports':
         return (
           <div className="space-y-6">
             <GoalsOverview onCreateGoal={() => setIsGoalModalOpen(true)} />
+            <Card className="shadow-sm border-gray-100">
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Ações de Relatórios</h3>
+                <div className="grid grid-cols-1 gap-3">
+                  <Button 
+                    onClick={() => setIsGoalModalOpen(true)}
+                    className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
+                  >
+                    <Target className="w-4 h-4" />
+                    <span className="font-medium">Nova Meta Financeira</span>
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span className="font-medium">Exportar Relatório</span>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         );
       default: // dashboard
@@ -92,47 +157,21 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 gap-6 mb-8">
               <Card className="shadow-sm border-gray-100">
                 <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Ações Rápidas</h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Button 
-                      onClick={() => setIsExpenseModalOpen(true)}
-                      className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
-                    >
-                      <i className="fas fa-plus"></i>
-                      <span className="font-medium">Despesa</span>
-                    </Button>
-                    <Button 
-                      onClick={() => setIsBillSplitModalOpen(true)}
-                      variant="secondary"
-                      className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
-                    >
-                      <Users className="w-4 h-4" />
-                      <span className="font-medium">Dividir</span>
-                    </Button>
-                    <Button 
-                      onClick={() => setIsAdvancedExpenseModalOpen(true)}
-                      variant="outline"
-                      className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
-                    >
-                      <i className="fas fa-sync-alt"></i>
-                      <span className="font-medium">Recorrente</span>
-                    </Button>
-                    <Button 
-                      onClick={() => setIsGoalModalOpen(true)}
-                      variant="outline"
-                      className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
-                    >
-                      <Target className="w-4 h-4" />
-                      <span className="font-medium">Meta</span>
-                    </Button>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Resumo Rápido</h3>
+                  <div className="grid grid-cols-2 gap-4 text-center">
+                    <div className="p-3 bg-blue-50 rounded-lg">
+                      <i className="fas fa-receipt text-blue-600 text-xl mb-2"></i>
+                      <p className="text-sm text-gray-600">Despesas</p>
+                      <p className="font-semibold text-blue-600">Ver todas</p>
+                    </div>
+                    <div className="p-3 bg-green-50 rounded-lg">
+                      <i className="fas fa-users text-green-600 text-xl mb-2"></i>
+                      <p className="text-sm text-gray-600">Divisões</p>
+                      <p className="font-semibold text-green-600">Gerenciar</p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
-            </div>
-            <div className="grid grid-cols-1 gap-6 mb-8">
-              <RecentTransactions onViewAll={() => setShowAllTransactions(true)} selectedAccountIds={selectedAccountIds} />
-              <BillSplits />
-              <GoalsOverview onCreateGoal={() => setIsGoalModalOpen(true)} />
             </div>
             {aiTip && (
               <Card className="shadow-sm border-amber-200 bg-gradient-to-br from-amber-50 to-amber-25">
@@ -199,45 +238,36 @@ export default function Dashboard() {
 
                   <Card className="shadow-sm border-gray-100 w-80">
                     <CardContent className="p-4">
-                      <h3 className="text-base font-semibold text-gray-900 mb-3">Ações Rápidas</h3>
+                      <h3 className="text-base font-semibold text-gray-900 mb-3">Navegação Rápida</h3>
                       <div className="space-y-2">
                         <Button 
-                          onClick={() => setIsExpenseModalOpen(true)}
+                          onClick={() => setActiveSection('expenses')}
                           size="sm"
+                          variant="outline"
                           className="w-full flex items-center space-x-2 hover:scale-105 transition-transform"
                         >
-                          <i className="fas fa-plus text-sm"></i>
-                          <span className="text-sm font-medium">Adicionar Despesa</span>
+                          <i className="fas fa-receipt text-sm"></i>
+                          <span className="text-sm font-medium">Gerenciar Despesas</span>
                         </Button>
                         
                         <Button 
-                          onClick={() => setIsAdvancedExpenseModalOpen(true)}
+                          onClick={() => setActiveSection('splits')}
                           variant="outline"
                           size="sm"
                           className="w-full flex items-center space-x-2 hover:scale-105 transition-transform"
                         >
-                          <i className="fas fa-sync-alt text-sm"></i>
-                          <span className="text-sm font-medium">Despesa Recorrente</span>
-                        </Button>
-                        
-                        <Button 
-                          onClick={() => setIsBillSplitModalOpen(true)}
-                          variant="secondary"
-                          size="sm"
-                          className="w-full flex items-center space-x-2 hover:scale-105 transition-transform"
-                        >
                           <Users className="w-3 h-3" />
-                          <span className="text-sm font-medium">Dividir Conta</span>
+                          <span className="text-sm font-medium">Divisão de Contas</span>
                         </Button>
                         
                         <Button 
-                          onClick={() => setIsGoalModalOpen(true)}
+                          onClick={() => setActiveSection('reports')}
                           variant="outline"
                           size="sm"
                           className="w-full flex items-center space-x-2 hover:scale-105 transition-transform"
                         >
                           <Target className="w-3 h-3" />
-                          <span className="text-sm font-medium">Nova Meta</span>
+                          <span className="text-sm font-medium">Metas e Relatórios</span>
                         </Button>
                       </div>
                     </CardContent>
@@ -262,9 +292,29 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                <GoalsOverview onCreateGoal={() => setIsGoalModalOpen(true)} />
-                <BillSplits />
+              <div className="mt-6">
+                <Card className="shadow-sm border-gray-100">
+                  <CardContent className="p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Visão Geral</h3>
+                    <div className="grid grid-cols-3 gap-6 text-center">
+                      <div className="p-4 bg-blue-50 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors" onClick={() => setActiveSection('expenses')}>
+                        <i className="fas fa-receipt text-blue-600 text-2xl mb-2"></i>
+                        <p className="text-sm font-medium text-gray-900">Despesas</p>
+                        <p className="text-xs text-gray-600">Gerencie suas transações</p>
+                      </div>
+                      <div className="p-4 bg-green-50 rounded-lg cursor-pointer hover:bg-green-100 transition-colors" onClick={() => setActiveSection('splits')}>
+                        <i className="fas fa-users text-green-600 text-2xl mb-2"></i>
+                        <p className="text-sm font-medium text-gray-900">Divisões</p>
+                        <p className="text-xs text-gray-600">Divida contas com colegas</p>
+                      </div>
+                      <div className="p-4 bg-purple-50 rounded-lg cursor-pointer hover:bg-purple-100 transition-colors" onClick={() => setActiveSection('reports')}>
+                        <i className="fas fa-chart-line text-purple-600 text-2xl mb-2"></i>
+                        <p className="text-sm font-medium text-gray-900">Relatórios</p>
+                        <p className="text-xs text-gray-600">Metas e análises</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </>
           )}
