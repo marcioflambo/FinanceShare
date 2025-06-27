@@ -30,7 +30,7 @@ export function BankAccountOrganizeModal({ open, onClose, accounts }: BankAccoun
   const saveMutation = useMutation({
     mutationFn: async (accountsOrder: BankAccount[]) => {
       const accountIds = accountsOrder.map(account => account.id);
-      const response = await apiRequest("PATCH", "/api/bank-accounts/order", {
+      const response = await apiRequest("/api/bank-accounts/order", "PATCH", {
         accountIds
       });
       return response.json();

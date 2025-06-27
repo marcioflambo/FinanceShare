@@ -98,7 +98,7 @@ export function BankAccounts({ onTransferClick, onAccountSelect, selectedAccount
 
   const deleteMutation = useMutation({
     mutationFn: async (accountId: number) => {
-      const response = await apiRequest("DELETE", `/api/bank-accounts/${accountId}`);
+      const response = await apiRequest(`/api/bank-accounts/${accountId}`, "DELETE");
       return response.json();
     },
     onSuccess: () => {

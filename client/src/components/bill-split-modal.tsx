@@ -71,7 +71,7 @@ export function BillSplitModal({ open, onClose }: BillSplitModalProps) {
 
   const createBillSplitMutation = useMutation({
     mutationFn: async (data: { formData: FormData; participants: Participant[] }) => {
-      await apiRequest("POST", "/api/bill-splits", {
+      await apiRequest("/api/bill-splits", "POST", {
         title: data.formData.title,
         totalAmount: parseFloat(data.formData.totalAmount),
         description: data.formData.description,

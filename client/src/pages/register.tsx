@@ -31,17 +31,15 @@ export default function Register() {
 
   const registerMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      const response = await apiRequest("/api/auth/register", {
-        method: "POST",
-        body: JSON.stringify({
-          name: data.name,
-          email: data.email,
-          password: data.password,
-        }),
+      const response = await apiRequest("/api/auth/register", "POST", {
+        name: data.name,
+        email: data.email,
+        password: data.password,
       });
       return response;
     },
-    onSuccess: (user) => {
+    onSuccess: async (response) => {
+      const user = await response.json();
       toast({
         title: "Conta criada com sucesso!",
         description: `Bem-vindo(a), ${user.name}!`,

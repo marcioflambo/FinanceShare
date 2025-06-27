@@ -26,7 +26,7 @@ export function BillSplits() {
 
   const updatePaymentMutation = useMutation({
     mutationFn: async ({ participantId, isPaid }: { participantId: number; isPaid: boolean }) => {
-      await apiRequest("PATCH", `/api/bill-splits/${participantId}/payment`, { isPaid });
+      await apiRequest(`/api/bill-splits/${participantId}/payment`, "PATCH", { isPaid });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/bill-splits"] });
@@ -51,11 +51,11 @@ export function BillSplits() {
     return roommate ? roommate.name.split(" ")[0] : "Desconhecido";
   };
 
-  const getStatusColor = (isPaid: boolean) => {
+  const getStatusColor = (isPaid: boolean | null) => {
     return isPaid ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800";
   };
 
-  const getStatusText = (isPaid: boolean) => {
+  const getStatusText = (isPaid: boolean | null) => {
     return isPaid ? "Pago" : "Pendente";
   };
 

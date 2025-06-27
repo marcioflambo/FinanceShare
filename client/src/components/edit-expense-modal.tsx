@@ -169,7 +169,7 @@ export function EditExpenseModal({ open, onClose, expense }: EditExpenseModalPro
         isInstallment: data.isInstallment,
       };
 
-      const response = await apiRequest("PUT", `/api/expenses/${expense.id}`, payload);
+      const response = await apiRequest(`/api/expenses/${expense.id}`, "PUT", payload);
       return await response.json();
     },
     onSuccess: async () => {
@@ -204,7 +204,7 @@ export function EditExpenseModal({ open, onClose, expense }: EditExpenseModalPro
   const deleteExpenseMutation = useMutation({
     mutationFn: async () => {
       if (!expense) throw new Error("Nenhuma despesa selecionada");
-      return await apiRequest("DELETE", `/api/expenses/${expense.id}`);
+      return await apiRequest(`/api/expenses/${expense.id}`, "DELETE");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/expenses"] });
@@ -238,7 +238,7 @@ export function EditExpenseModal({ open, onClose, expense }: EditExpenseModalPro
 
   const handleAddCategory = async (name: string) => {
     try {
-      const newCategory = await apiRequest("POST", "/api/categories", { name }) as any;
+      const newCategory = await apiRequest("/api/categories", "POST", { name }) as any;
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
       form.setValue("categoryId", newCategory.id);
       setCategoryOpen(false);

@@ -106,10 +106,10 @@ export function BankAccountModal({ open, onClose, editingAccount }: BankAccountM
       };
       
       if (isEditing && editingAccount) {
-        const response = await apiRequest("PUT", `/api/bank-accounts/${editingAccount.id}`, payload);
+        const response = await apiRequest(`/api/bank-accounts/${editingAccount.id}`, "PUT", payload);
         return response.json();
       } else {
-        const response = await apiRequest("POST", "/api/bank-accounts", payload);
+        const response = await apiRequest("/api/bank-accounts", "POST", payload);
         return response.json();
       }
     },

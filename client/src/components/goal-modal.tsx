@@ -82,7 +82,7 @@ export function GoalModal({ open, onClose }: GoalModalProps) {
 
   const createGoalMutation = useMutation({
     mutationFn: async (data: FormData & { accounts: number[] }) => {
-      await apiRequest("POST", "/api/goals", {
+      await apiRequest("/api/goals", "POST", {
         name: data.name,
         description: data.description,
         targetAmount: parseFloat(data.targetAmount),
