@@ -136,18 +136,15 @@ export function ExpenseModal({ open, onClose, preselectedAccountId }: ExpenseMod
           categoryId: data.categoryId,
           accountId: data.accountId,
           date: data.date,
+          transactionType: data.transactionType,
           isRecurring: data.isRecurring,
           recurringFrequency: data.recurringFrequency,
           installmentCount: data.installmentCount,
           isInstallment: data.isInstallment,
         };
 
-        // Create expense or income based on transaction type
-        if (data.transactionType === "credit") {
-          return await apiRequest("/api/income", "POST", payload);
-        } else {
-          return await apiRequest("/api/expenses", "POST", payload);
-        }
+        // All transactions (expenses and income) go through the same endpoint
+        return await apiRequest("/api/expenses", "POST", payload);
       }
     },
     onSuccess: () => {

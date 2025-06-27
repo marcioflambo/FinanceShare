@@ -89,7 +89,7 @@ export class DatabaseStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const result = await db.insert(users).values(insertUser);
-    const [user] = await db.select().from(users).where(eq(users.id, result.insertId));
+    const [user] = await db.select().from(users).where(eq(users.id, result[0].insertId));
     return user;
   }
 
@@ -109,7 +109,7 @@ export class DatabaseStorage implements IStorage {
 
   async createCategory(insertCategory: InsertCategory): Promise<Category> {
     const result = await db.insert(categories).values(insertCategory);
-    const [category] = await db.select().from(categories).where(eq(categories.id, result.insertId));
+    const [category] = await db.select().from(categories).where(eq(categories.id, result[0].insertId));
     return category;
   }
 
@@ -130,10 +130,10 @@ export class DatabaseStorage implements IStorage {
 
   async createBankAccount(insertAccount: InsertBankAccount): Promise<BankAccount> {
     const result = await db.insert(bankAccounts).values(insertAccount);
-    const [account] = await db.select().from(bankAccounts).where(eq(bankAccounts.id, result.insertId));
+    const [account] = await db.select().from(bankAccounts).where(eq(bankAccounts.id, result[0].insertId));
     
     // Inicializar saldo calculado
-    await this.initializeAccountBalance(insertAccount.userId!, result.insertId);
+    await this.initializeAccountBalance(insertAccount.userId!, result[0].insertId);
     
     return account;
   }
@@ -172,7 +172,8 @@ export class DatabaseStorage implements IStorage {
 
   async createExpense(insertExpense: InsertExpense): Promise<Expense> {
     const result = await db.insert(expenses).values(insertExpense);
-    const [expense] = await db.select().from(expenses).where(eq(expenses.id, result.insertId));
+    const insertId = result[0].insertId;
+    const [expense] = await db.select().from(expenses).where(eq(expenses.id, insertId));
     
     // Recalcular saldo da conta após criar despesa
     if (insertExpense.accountId && insertExpense.userId) {
@@ -234,7 +235,7 @@ export class DatabaseStorage implements IStorage {
 
   async createBillSplit(insertBillSplit: InsertBillSplit): Promise<BillSplit> {
     const result = await db.insert(billSplits).values(insertBillSplit);
-    const [billSplit] = await db.select().from(billSplits).where(eq(billSplits.id, result.insertId));
+    const [billSplit] = await db.select().from(billSplits).where(eq(billSplits.id, result[0].insertId));
     return billSplit;
   }
 
@@ -249,7 +250,7 @@ export class DatabaseStorage implements IStorage {
 
   async createBillSplitParticipant(insertParticipant: InsertBillSplitParticipant): Promise<BillSplitParticipant> {
     const result = await db.insert(billSplitParticipants).values(insertParticipant);
-    const [participant] = await db.select().from(billSplitParticipants).where(eq(billSplitParticipants.id, result.insertId));
+    const [participant] = await db.select().from(billSplitParticipants).where(eq(billSplitParticipants.id, result[0].insertId));
     return participant;
   }
 
@@ -264,7 +265,7 @@ export class DatabaseStorage implements IStorage {
 
   async createRoommate(insertRoommate: InsertRoommate): Promise<Roommate> {
     const result = await db.insert(roommates).values(insertRoommate);
-    const [roommate] = await db.select().from(roommates).where(eq(roommates.id, result.insertId));
+    const [roommate] = await db.select().from(roommates).where(eq(roommates.id, result[0].insertId));
     return roommate;
   }
 
@@ -275,7 +276,7 @@ export class DatabaseStorage implements IStorage {
 
   async createGoal(insertGoal: InsertGoal): Promise<Goal> {
     const result = await db.insert(goals).values(insertGoal);
-    const [goal] = await db.select().from(goals).where(eq(goals.id, result.insertId));
+    const [goal] = await db.select().from(goals).where(eq(goals.id, result[0].insertId));
     return goal;
   }
 
@@ -299,7 +300,7 @@ export class DatabaseStorage implements IStorage {
 
   async addAccountToGoal(insertGoalAccount: InsertGoalAccount): Promise<GoalAccount> {
     const result = await db.insert(goalAccounts).values(insertGoalAccount);
-    const [goalAccount] = await db.select().from(goalAccounts).where(eq(goalAccounts.id, result.insertId));
+    const [goalAccount] = await db.select().from(goalAccounts).where(eq(goalAccounts.id, result[0].insertId));
     return goalAccount;
   }
 
@@ -336,7 +337,7 @@ export class DatabaseStorage implements IStorage {
     await this.recalculateAccountBalance(insertTransfer.userId, insertTransfer.fromAccountId);
     await this.recalculateAccountBalance(insertTransfer.userId, insertTransfer.toAccountId);
     
-    const [transfer] = await db.select().from(transfers).where(eq(transfers.id, result.insertId));
+    const [transfer] = await db.select().from(transfers).where(eq(transfers.id, result[0].insertId));
     return transfer;
   }
 
