@@ -576,6 +576,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/transfers/:id", async (req, res) => {
+    try {
+      const transferId = parseInt(req.params.id);
+      await storage.deleteTransfer(transferId);
+      res.json({ message: "Transferência excluída com sucesso" });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao excluir transferência" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -226,13 +226,55 @@ export function EditExpenseModal({ open, onClose, expense }: EditExpenseModalPro
     },
   });
 
+  const deleteTransferMutation = useMutation({
+    mutationFn: async () => {
+      if (!expense?.parentExpenseId) throw new Error("Transferência não encontrada");
+      return await apiRequest(`/api/transfers/${expense.parentExpenseId}`, "DELETE");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transfers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/bank-accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/statistics"] });
+      
+      toast({
+        title: "Transferência excluída!",
+        description: "A transferência completa foi excluída com sucesso.",
+      });
+      onClose();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao excluir transferência",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const onSubmit = (data: FormData) => {
     updateExpenseMutation.mutate(data);
   };
 
   const handleDelete = () => {
-    if (confirm("Tem certeza que deseja excluir esta despesa?")) {
-      deleteExpenseMutation.mutate();
+    // Verificar se é uma transação de transferência
+    const isTransferTransaction = expense?.transactionType === 'transfer_in' || expense?.transactionType === 'transfer_out';
+    
+    if (isTransferTransaction) {
+      // Para transferências, sempre excluir toda a transferência para manter consistência
+      if (confirm(
+        "Esta é uma transação de transferência entre contas.\n\n" +
+        "AVISO: Ao excluir, AMBAS as transações da transferência serão removidas " +
+        "(entrada na conta destino e saída na conta origem) para manter a consistência dos saldos.\n\n" +
+        "Deseja continuar?"
+      )) {
+        deleteTransferMutation.mutate();
+      }
+    } else {
+      // Transação normal
+      if (confirm("Tem certeza que deseja excluir esta despesa?")) {
+        deleteExpenseMutation.mutate();
+      }
     }
   };
 

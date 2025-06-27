@@ -66,6 +66,7 @@ export interface IStorage {
   getTransfers(userId: number): Promise<Transfer[]>;
   createTransfer(transfer: InsertTransfer): Promise<Transfer>;
   getTransferById(id: number): Promise<Transfer | undefined>;
+  deleteTransfer(id: number): Promise<void>;
   
   // Account Balances (controle de saldos calculados)
   getAccountBalance(userId: number, accountId: number): Promise<AccountBalance | undefined>;
@@ -387,6 +388,39 @@ export class DatabaseStorage implements IStorage {
   async getTransferById(id: number): Promise<Transfer | undefined> {
     const [transfer] = await db.select().from(transfers).where(eq(transfers.id, id));
     return transfer || undefined;
+  }
+
+  async deleteTransfer(id: number): Promise<void> {
+    // Primeiro, obter informações da transferência
+    const transfer = await this.getTransferById(id);
+    if (!transfer) {
+      throw new Error("Transferência não encontrada");
+    }
+
+    // Deletar as transações relacionadas (que têm parentExpenseId = transferId)
+    await db.delete(expenses).where(eq(expenses.parentExpenseId, id));
+
+    // Reverter os saldos das contas
+    const amount = parseFloat(transfer.amount);
+    
+    // Reverter débito na conta origem (adicionar o valor de volta)
+    await db
+      .update(bankAccounts)
+      .set({ balance: sql`balance + ${amount}` })
+      .where(eq(bankAccounts.id, transfer.fromAccountId));
+    
+    // Reverter crédito na conta destino (subtrair o valor)
+    await db
+      .update(bankAccounts)
+      .set({ balance: sql`balance - ${amount}` })
+      .where(eq(bankAccounts.id, transfer.toAccountId));
+
+    // Recalcular saldos calculados
+    await this.recalculateAccountBalance(transfer.userId, transfer.fromAccountId);
+    await this.recalculateAccountBalance(transfer.userId, transfer.toAccountId);
+
+    // Finalmente, deletar a transferência
+    await db.delete(transfers).where(eq(transfers.id, id));
   }
 
   // Account Balances Methods
