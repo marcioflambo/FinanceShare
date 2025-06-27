@@ -133,10 +133,26 @@ export default function Dashboard() {
                   <div className="grid grid-cols-2 gap-3">
                     <Button 
                       onClick={() => setIsTransactionModalOpen(true)}
+                      className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
+                    >
+                      <i className="fas fa-plus text-sm"></i>
+                      <span className="text-sm font-medium">Nova Despesa</span>
+                    </Button>
+                    <Button 
+                      onClick={() => setIsTransactionModalOpen(true)}
+                      variant="outline"
+                      className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
+                    >
+                      <i className="fas fa-sync-alt text-sm"></i>
+                      <span className="text-sm font-medium">Recorrente</span>
+                    </Button>
+                    <Button 
+                      onClick={() => setIsTransactionModalOpen(true)}
+                      variant="secondary"
                       className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform col-span-2"
                     >
-                      <i className="fas fa-plus"></i>
-                      <span className="font-medium">Adicionar Transação</span>
+                      <i className="fas fa-exchange-alt text-sm"></i>
+                      <span className="text-sm font-medium">Transferir</span>
                     </Button>
                   </div>
                 </CardContent>
@@ -209,13 +225,29 @@ export default function Dashboard() {
                   <Card className="shadow-sm border-gray-100 w-80">
                     <CardContent className="p-6">
                       <h3 className="text-lg font-semibold text-gray-900 mb-4">Movimentações</h3>
-                      <div className="grid grid-cols-1 gap-3">
+                      <div className="grid grid-cols-1 gap-2">
                         <Button 
                           onClick={() => setIsTransactionModalOpen(true)}
                           className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
                         >
-                          <i className="fas fa-plus"></i>
-                          <span className="font-medium">Adicionar Transação</span>
+                          <i className="fas fa-plus text-sm"></i>
+                          <span className="text-sm font-medium">Nova Despesa</span>
+                        </Button>
+                        <Button 
+                          onClick={() => setIsTransactionModalOpen(true)}
+                          variant="outline"
+                          className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
+                        >
+                          <i className="fas fa-sync-alt text-sm"></i>
+                          <span className="text-sm font-medium">Recorrente</span>
+                        </Button>
+                        <Button 
+                          onClick={() => setIsTransactionModalOpen(true)}
+                          variant="secondary"
+                          className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
+                        >
+                          <i className="fas fa-exchange-alt text-sm"></i>
+                          <span className="text-sm font-medium">Transferir</span>
                         </Button>
                       </div>
                     </CardContent>
