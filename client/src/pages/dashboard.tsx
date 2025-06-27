@@ -283,6 +283,7 @@ export default function Dashboard() {
       <ExpenseModal 
         open={isExpenseModalOpen}
         onClose={() => setIsExpenseModalOpen(false)}
+        preselectedAccountId={selectedAccountIds[0] || null}
       />
       
       <AdvancedExpenseModal 

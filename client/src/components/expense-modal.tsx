@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -65,9 +65,10 @@ type FormData = z.infer<typeof formSchema>;
 interface ExpenseModalProps {
   open: boolean;
   onClose: () => void;
+  preselectedAccountId?: number | null;
 }
 
-export function ExpenseModal({ open, onClose }: ExpenseModalProps) {
+export function ExpenseModal({ open, onClose, preselectedAccountId }: ExpenseModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -95,6 +96,13 @@ export function ExpenseModal({ open, onClose }: ExpenseModalProps) {
       installments: "",
     },
   });
+
+  // Pre-select account when modal opens or preselectedAccountId changes
+  useEffect(() => {
+    if (open && preselectedAccountId) {
+      form.setValue('accountId', preselectedAccountId.toString());
+    }
+  }, [open, preselectedAccountId, form]);
 
   const isRecurring = form.watch("isRecurring");
 
