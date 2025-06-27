@@ -162,6 +162,7 @@ export function EditExpenseModal({ open, onClose, expense }: EditExpenseModalPro
         categoryId: data.categoryId,
         accountId: data.accountId,
         date: data.date,
+        transactionType: data.transactionType,
         isRecurring: data.isRecurring,
         recurringFrequency: data.recurringFrequency,
         installmentCount: data.installmentCount,
