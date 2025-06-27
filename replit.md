@@ -283,6 +283,7 @@ Preferred communication style: Simple, everyday language.
 - June 27, 2025. **LAYOUT OPTIMIZATION**: Improved dashboard layout proportions - moved Recent Transactions to prominent position, reduced sidebar width (4-column grid), and optimized component sizes for better visual harmony
 - June 27, 2025. **SIDEBAR WIDTH ALIGNMENT**: Fixed sidebar components to match exact bank accounts width (320px) using flex layout for perfect visual alignment
 - June 27, 2025. **ACCOUNT SELECTOR IMPLEMENTATION**: Created harmonious multi-account selector for Recent Transactions with dropdown interface, multi-selection capabilities, color-coded badges, and responsive design for both web and mobile
+- June 27, 2025. **INACTIVE ACCOUNT SELECTION**: Enhanced account selector to include inactive accounts with organized sections, visual hierarchy, and clear status indicators
 
 ## Key Features
 

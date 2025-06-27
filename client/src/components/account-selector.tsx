@@ -25,6 +25,8 @@ export function AccountSelector({ selectedAccountIds, onSelectionChange }: Accou
   });
 
   const activeAccounts = accounts.filter(account => account.isActive !== false);
+  const inactiveAccounts = accounts.filter(account => account.isActive === false);
+  const allAccounts = [...activeAccounts, ...inactiveAccounts];
   const selectedAccounts = accounts.filter(account => selectedAccountIds.includes(account.id));
 
   const getAccountIcon = (type: string) => {
@@ -51,10 +53,10 @@ export function AccountSelector({ selectedAccountIds, onSelectionChange }: Accou
   };
 
   const handleSelectAll = () => {
-    if (selectedAccountIds.length === activeAccounts.length) {
+    if (selectedAccountIds.length === allAccounts.length) {
       onSelectionChange([]);
     } else {
-      onSelectionChange(activeAccounts.map(account => account.id));
+      onSelectionChange(allAccounts.map(account => account.id));
     }
   };
 
@@ -90,31 +92,64 @@ export function AccountSelector({ selectedAccountIds, onSelectionChange }: Accou
           <DropdownMenuItem onClick={handleSelectAll}>
             <div className="flex items-center space-x-2">
               <div className="w-4 h-4 flex items-center justify-center">
-                {selectedAccountIds.length === activeAccounts.length && (
+                {selectedAccountIds.length === allAccounts.length && (
                   <Check className="w-3 h-3" />
                 )}
               </div>
               <span className="text-sm">
-                {selectedAccountIds.length === activeAccounts.length ? "Desmarcar todas" : "Selecionar todas"}
+                {selectedAccountIds.length === allAccounts.length ? "Desmarcar todas" : "Selecionar todas"}
               </span>
             </div>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          {activeAccounts.map((account) => (
-            <DropdownMenuCheckboxItem
-              key={account.id}
-              checked={selectedAccountIds.includes(account.id)}
-              onCheckedChange={() => handleAccountToggle(account.id)}
-              className="cursor-pointer"
-            >
-              <div className="flex items-center space-x-2">
-                {getAccountIcon(account.type)}
-                <span className="text-sm font-medium" style={{ color: account.color }}>
-                  {account.name}
-                </span>
+          
+          {activeAccounts.length > 0 && (
+            <>
+              <div className="px-2 py-1 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                Contas Ativas
               </div>
-            </DropdownMenuCheckboxItem>
-          ))}
+              {activeAccounts.map((account) => (
+                <DropdownMenuCheckboxItem
+                  key={account.id}
+                  checked={selectedAccountIds.includes(account.id)}
+                  onCheckedChange={() => handleAccountToggle(account.id)}
+                  className="cursor-pointer"
+                >
+                  <div className="flex items-center space-x-2">
+                    {getAccountIcon(account.type)}
+                    <span className="text-sm font-medium" style={{ color: account.color }}>
+                      {account.name}
+                    </span>
+                  </div>
+                </DropdownMenuCheckboxItem>
+              ))}
+            </>
+          )}
+          
+          {inactiveAccounts.length > 0 && (
+            <>
+              <DropdownMenuSeparator />
+              <div className="px-2 py-1 text-xs font-medium text-gray-400 uppercase tracking-wide">
+                Contas Inativas
+              </div>
+              {inactiveAccounts.map((account) => (
+                <DropdownMenuCheckboxItem
+                  key={account.id}
+                  checked={selectedAccountIds.includes(account.id)}
+                  onCheckedChange={() => handleAccountToggle(account.id)}
+                  className="cursor-pointer opacity-75"
+                >
+                  <div className="flex items-center space-x-2">
+                    {getAccountIcon(account.type)}
+                    <span className="text-sm font-medium text-gray-500" style={{ color: account.color }}>
+                      {account.name}
+                    </span>
+                    <span className="text-xs text-gray-400">(inativa)</span>
+                  </div>
+                </DropdownMenuCheckboxItem>
+              ))}
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 
