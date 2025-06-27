@@ -208,7 +208,7 @@ export default function Dashboard() {
 
                   <Card className="shadow-sm border-gray-100 w-80">
                     <CardContent className="p-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Movimentações</h3>
+                      <h3 className="text-base font-semibold text-gray-900 mb-4">Movimentações</h3>
                       <div className="grid grid-cols-1 gap-3">
                         <Button 
                           onClick={() => setIsTransactionModalOpen(true)}
@@ -226,7 +226,7 @@ export default function Dashboard() {
                       <CardContent className="p-4">
                         <div className="flex items-center space-x-2 mb-2">
                           <Lightbulb className="w-4 h-4 text-amber-600" />
-                          <h3 className="text-base font-semibold text-gray-900">Dica de IA</h3>
+                          <h3 className="text-sm font-semibold text-gray-900">Dica de IA</h3>
                         </div>
                         <p className="text-xs text-gray-700 mb-2 leading-relaxed">
                           {aiTip.tip}

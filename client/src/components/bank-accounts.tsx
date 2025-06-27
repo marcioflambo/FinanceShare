@@ -261,7 +261,7 @@ export function BankAccounts({ onTransferClick, onAccountSelect, selectedAccount
                 {getAccountIcon(accounts[validCurrentIndex]?.type)}
                 <div>
                   <span 
-                    className="text-sm font-medium block"
+                    className="text-xs font-medium block"
                     style={{ color: accounts[validCurrentIndex]?.color }}
                   >
                     {accounts[validCurrentIndex]?.name}
