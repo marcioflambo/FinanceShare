@@ -227,21 +227,19 @@ export default function Dashboard() {
                   <Card className="shadow-sm border-gray-100 w-80">
                     <CardContent className="p-6">
                       <h3 className="text-lg font-semibold text-gray-900 mb-4">Movimentações</h3>
-                      <div className="grid grid-cols-1 gap-3">
+                      <div className="grid grid-cols-1 gap-2">
                         <Button 
                           onClick={() => {
                             setSelectedTransactionType('debit');
                             setIsTransactionModalOpen(true);
                           }}
                           variant={selectedTransactionType === 'debit' ? 'default' : 'outline'}
-                          className={`flex items-center justify-start space-x-3 h-12 px-4 hover:scale-105 transition-all duration-200 ${
-                            selectedTransactionType === 'debit' 
-                              ? 'bg-red-600 hover:bg-red-700 text-white border-red-600 shadow-md' 
-                              : 'hover:bg-red-50 hover:border-red-300 hover:text-red-700'
+                          className={`flex items-center justify-center space-x-2 hover:scale-105 transition-transform ${
+                            selectedTransactionType === 'debit' ? 'bg-red-600 hover:bg-red-700 text-white' : ''
                           }`}
                         >
-                          <i className="fas fa-minus w-4 text-center"></i>
-                          <span className="font-medium">Despesa</span>
+                          <i className="fas fa-minus text-sm"></i>
+                          <span className="text-sm font-medium">Despesa</span>
                         </Button>
                         <Button 
                           onClick={() => {
@@ -249,14 +247,12 @@ export default function Dashboard() {
                             setIsTransactionModalOpen(true);
                           }}
                           variant={selectedTransactionType === 'credit' ? 'default' : 'outline'}
-                          className={`flex items-center justify-start space-x-3 h-12 px-4 hover:scale-105 transition-all duration-200 ${
-                            selectedTransactionType === 'credit' 
-                              ? 'bg-green-600 hover:bg-green-700 text-white border-green-600 shadow-md' 
-                              : 'hover:bg-green-50 hover:border-green-300 hover:text-green-700'
+                          className={`flex items-center justify-center space-x-2 hover:scale-105 transition-transform ${
+                            selectedTransactionType === 'credit' ? 'bg-green-600 hover:bg-green-700 text-white' : ''
                           }`}
                         >
-                          <i className="fas fa-plus w-4 text-center"></i>
-                          <span className="font-medium">Receita</span>
+                          <i className="fas fa-plus text-sm"></i>
+                          <span className="text-sm font-medium">Receita</span>
                         </Button>
                         <Button 
                           onClick={() => {
@@ -264,14 +260,12 @@ export default function Dashboard() {
                             setIsTransactionModalOpen(true);
                           }}
                           variant={selectedTransactionType === 'recurring' ? 'default' : 'outline'}
-                          className={`flex items-center justify-start space-x-3 h-12 px-4 hover:scale-105 transition-all duration-200 ${
-                            selectedTransactionType === 'recurring' 
-                              ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600 shadow-md' 
-                              : 'hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700'
+                          className={`flex items-center justify-center space-x-2 hover:scale-105 transition-transform ${
+                            selectedTransactionType === 'recurring' ? 'bg-blue-600 hover:bg-blue-700 text-white' : ''
                           }`}
                         >
-                          <i className="fas fa-sync-alt w-4 text-center"></i>
-                          <span className="font-medium">Recorrente</span>
+                          <i className="fas fa-sync-alt text-sm"></i>
+                          <span className="text-sm font-medium">Recorrente</span>
                         </Button>
                         <Button 
                           onClick={() => {
@@ -279,14 +273,12 @@ export default function Dashboard() {
                             setIsTransactionModalOpen(true);
                           }}
                           variant={selectedTransactionType === 'transfer' ? 'default' : 'outline'}
-                          className={`flex items-center justify-start space-x-3 h-12 px-4 hover:scale-105 transition-all duration-200 ${
-                            selectedTransactionType === 'transfer' 
-                              ? 'bg-purple-600 hover:bg-purple-700 text-white border-purple-600 shadow-md' 
-                              : 'hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700'
+                          className={`flex items-center justify-center space-x-2 hover:scale-105 transition-transform ${
+                            selectedTransactionType === 'transfer' ? 'bg-purple-600 hover:bg-purple-700 text-white' : ''
                           }`}
                         >
-                          <i className="fas fa-exchange-alt w-4 text-center"></i>
-                          <span className="font-medium">Transferir</span>
+                          <i className="fas fa-exchange-alt text-sm"></i>
+                          <span className="text-sm font-medium">Transferir</span>
                         </Button>
                       </div>
                     </CardContent>
