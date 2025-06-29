@@ -305,6 +305,8 @@ Preferred communication style: Simple, everyday language.
 - June 27, 2025. **API FIXES COMPLETED**: Fixed apiRequest parameter order issues affecting all CRUD operations, corrected category creation schema validation to make icon and color optional fields, resolved TypeScript errors in authentication components
 - June 27, 2025. **REPLIT MIGRATION COMPLETED**: Successfully migrated FinanceShare from Replit Agent to standard Replit environment - fixed expense API validation by converting numeric amounts to strings for decimal database fields, verified all CRUD operations (create, read, update, delete) working correctly with MySQL database
 - June 27, 2025. **TRANSFER DELETION SYSTEM IMPLEMENTED**: Created intelligent transfer deletion system that removes both related transactions when deleting a transfer transaction - prevents orphaned transactions and maintains account balance consistency with automatic reversal calculations
+- June 28, 2025. **RECURRING TRANSFERS IMPLEMENTED**: Added complete recurring transfers functionality - users can now create transfers with recurrence options (fixed period, installments, indefinite), includes database migration with new fields (is_recurring, recurring_type, recurring_frequency, recurring_interval, installment_total, recurring_end_date) and UI integration with checkbox activation
+- June 28, 2025. **TRANSACTION TYPE SELECTION FIXED**: Corrected edit expense modal to properly pre-select transaction type (credit/debit/transfer) based on actual expense data instead of defaulting to debit, ensuring accurate editing experience
 
 ## Key Features
 

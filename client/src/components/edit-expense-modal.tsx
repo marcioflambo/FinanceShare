@@ -143,7 +143,7 @@ export function EditExpenseModal({ open, onClose, expense }: EditExpenseModalPro
         date: new Date(expense.date),
         categoryId: expense.categoryId,
         accountId: expense.accountId,
-        transactionType: "debit",
+        transactionType: (expense.transactionType as "debit" | "credit" | "transfer") || "debit",
         isRecurring: expense.isRecurring || false,
         recurringFrequency: (expense.recurringFrequency as "weekly" | "monthly" | "yearly") || "monthly",
         installmentCount: expense.installmentTotal || 1,

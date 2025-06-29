@@ -123,10 +123,18 @@ export function ExpenseModal({ open, onClose, preselectedAccountId }: ExpenseMod
       if (data.transactionType === "transfer") {
         const transferPayload = {
           description: data.description,
-          amount: parseFloat(data.amount),
-          accountId: data.accountId,
+          amount: parseFloat(data.amount).toFixed(2),
+          fromAccountId: data.accountId,
           toAccountId: data.toAccountId,
           date: data.date,
+          userId: 1, // Hardcoded for demo
+          isRecurring: data.isRecurring,
+          recurringType: data.isRecurring ? "fixed_period" : null,
+          recurringFrequency: data.isRecurring ? 1 : null,
+          recurringInterval: data.isRecurring ? data.recurringFrequency : null,
+          installmentTotal: null,
+          installmentCurrent: null,
+          recurringEndDate: null,
         };
         return await apiRequest("/api/transfers", "POST", transferPayload);
       } else {
@@ -536,18 +544,17 @@ export function ExpenseModal({ open, onClose, preselectedAccountId }: ExpenseMod
               />
             )}
 
-            {transactionType !== "transfer" && (
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="recurring"
-                    checked={isRecurring}
-                    onCheckedChange={(checked: boolean) => form.setValue("isRecurring", checked)}
-                  />
-                  <label htmlFor="recurring" className="text-sm font-medium">
-                    Transação recorrente
-                  </label>
-                </div>
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="recurring"
+                  checked={isRecurring}
+                  onCheckedChange={(checked: boolean) => form.setValue("isRecurring", checked)}
+                />
+                <label htmlFor="recurring" className="text-sm font-medium">
+                  {transactionType === "transfer" ? "Transferência recorrente" : "Transação recorrente"}
+                </label>
+              </div>
 
                 {isRecurring && (
                   <FormField
@@ -574,18 +581,20 @@ export function ExpenseModal({ open, onClose, preselectedAccountId }: ExpenseMod
                   />
                 )}
 
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="installment"
-                    checked={isInstallment}
-                    onCheckedChange={(checked: boolean) => form.setValue("isInstallment", checked)}
-                  />
-                  <label htmlFor="installment" className="text-sm font-medium">
-                    Parcelamento
-                  </label>
-                </div>
+                {transactionType !== "transfer" && (
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="installment"
+                      checked={isInstallment}
+                      onCheckedChange={(checked: boolean) => form.setValue("isInstallment", checked)}
+                    />
+                    <label htmlFor="installment" className="text-sm font-medium">
+                      Parcelamento
+                    </label>
+                  </div>
+                )}
 
-                {isInstallment && (
+                {isInstallment && transactionType !== "transfer" && (
                   <FormField
                     control={form.control}
                     name="installmentCount"
@@ -607,7 +616,6 @@ export function ExpenseModal({ open, onClose, preselectedAccountId }: ExpenseMod
                   />
                 )}
               </div>
-            )}
 
             <div className="flex justify-end space-x-2 pt-4">
               <Button variant="outline" onClick={onClose} type="button">
