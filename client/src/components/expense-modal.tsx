@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -70,9 +70,10 @@ interface ExpenseModalProps {
   open: boolean;
   onClose: () => void;
   preselectedAccountId?: number;
+  preselectedTransactionType?: "debit" | "credit" | "transfer";
 }
 
-export function ExpenseModal({ open, onClose, preselectedAccountId }: ExpenseModalProps) {
+export function ExpenseModal({ open, onClose, preselectedAccountId, preselectedTransactionType = "debit" }: ExpenseModalProps) {
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [categorySearch, setCategorySearch] = useState("");
   const { toast } = useToast();
@@ -85,7 +86,7 @@ export function ExpenseModal({ open, onClose, preselectedAccountId }: ExpenseMod
       amount: "",
       categoryId: 0,
       accountId: preselectedAccountId || 0,
-      transactionType: "debit",
+      transactionType: preselectedTransactionType,
       date: new Date(),
       isRecurring: false,
       recurringFrequency: "monthly",
@@ -123,7 +124,7 @@ export function ExpenseModal({ open, onClose, preselectedAccountId }: ExpenseMod
       if (data.transactionType === "transfer") {
         const transferPayload = {
           description: data.description,
-          amount: parseFloat(data.amount).toFixed(2),
+          amount: data.amount,
           fromAccountId: data.accountId,
           toAccountId: data.toAccountId,
           date: data.date,
@@ -180,6 +181,8 @@ export function ExpenseModal({ open, onClose, preselectedAccountId }: ExpenseMod
       });
     },
   });
+
+
 
   const onSubmit = (data: FormData) => {
     createExpenseMutation.mutate(data);

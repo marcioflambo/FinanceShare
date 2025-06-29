@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Lightbulb, Download, Users, Target } from "lucide-react";
 
 export type ActiveSection = 'dashboard' | 'expenses' | 'splits' | 'reports';
+export type TransactionType = 'debit' | 'credit' | 'transfer' | 'recurring';
 
 export default function Dashboard() {
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
@@ -27,6 +28,7 @@ export default function Dashboard() {
   const [activeSection, setActiveSection] = useState<ActiveSection>('dashboard');
   const [showAllTransactions, setShowAllTransactions] = useState(false);
   const [selectedAccountIds, setSelectedAccountIds] = useState<number[]>([]);
+  const [selectedTransactionType, setSelectedTransactionType] = useState<TransactionType>('debit');
 
   const { data: aiTip } = useQuery<{ tip: string }>({
     queryKey: ["/api/ai-tips"],
@@ -227,24 +229,53 @@ export default function Dashboard() {
                       <h3 className="text-lg font-semibold text-gray-900 mb-4">Movimentações</h3>
                       <div className="grid grid-cols-1 gap-2">
                         <Button 
-                          onClick={() => setIsTransactionModalOpen(true)}
-                          className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
+                          onClick={() => {
+                            setSelectedTransactionType('debit');
+                            setIsTransactionModalOpen(true);
+                          }}
+                          variant={selectedTransactionType === 'debit' ? 'default' : 'outline'}
+                          className={`flex items-center justify-center space-x-2 hover:scale-105 transition-transform ${
+                            selectedTransactionType === 'debit' ? 'bg-red-600 hover:bg-red-700 text-white' : ''
+                          }`}
                         >
-                          <i className="fas fa-plus text-sm"></i>
-                          <span className="text-sm font-medium">Nova Despesa</span>
+                          <i className="fas fa-minus text-sm"></i>
+                          <span className="text-sm font-medium">Despesa</span>
                         </Button>
                         <Button 
-                          onClick={() => setIsTransactionModalOpen(true)}
-                          variant="outline"
-                          className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
+                          onClick={() => {
+                            setSelectedTransactionType('credit');
+                            setIsTransactionModalOpen(true);
+                          }}
+                          variant={selectedTransactionType === 'credit' ? 'default' : 'outline'}
+                          className={`flex items-center justify-center space-x-2 hover:scale-105 transition-transform ${
+                            selectedTransactionType === 'credit' ? 'bg-green-600 hover:bg-green-700 text-white' : ''
+                          }`}
+                        >
+                          <i className="fas fa-plus text-sm"></i>
+                          <span className="text-sm font-medium">Receita</span>
+                        </Button>
+                        <Button 
+                          onClick={() => {
+                            setSelectedTransactionType('recurring');
+                            setIsTransactionModalOpen(true);
+                          }}
+                          variant={selectedTransactionType === 'recurring' ? 'default' : 'outline'}
+                          className={`flex items-center justify-center space-x-2 hover:scale-105 transition-transform ${
+                            selectedTransactionType === 'recurring' ? 'bg-blue-600 hover:bg-blue-700 text-white' : ''
+                          }`}
                         >
                           <i className="fas fa-sync-alt text-sm"></i>
                           <span className="text-sm font-medium">Recorrente</span>
                         </Button>
                         <Button 
-                          onClick={() => setIsTransactionModalOpen(true)}
-                          variant="secondary"
-                          className="flex items-center justify-center space-x-2 hover:scale-105 transition-transform"
+                          onClick={() => {
+                            setSelectedTransactionType('transfer');
+                            setIsTransactionModalOpen(true);
+                          }}
+                          variant={selectedTransactionType === 'transfer' ? 'default' : 'outline'}
+                          className={`flex items-center justify-center space-x-2 hover:scale-105 transition-transform ${
+                            selectedTransactionType === 'transfer' ? 'bg-purple-600 hover:bg-purple-700 text-white' : ''
+                          }`}
                         >
                           <i className="fas fa-exchange-alt text-sm"></i>
                           <span className="text-sm font-medium">Transferir</span>
@@ -280,6 +311,7 @@ export default function Dashboard() {
         open={isTransactionModalOpen}
         onClose={() => setIsTransactionModalOpen(false)}
         preselectedAccountId={selectedAccountIds[0] || undefined}
+        preselectedTransactionType={selectedTransactionType === 'recurring' ? 'debit' : selectedTransactionType}
       />
       
       <BillSplitModal 
