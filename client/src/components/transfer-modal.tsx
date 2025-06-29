@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -23,6 +24,12 @@ const formSchema = z.object({
   fromAccountId: z.string().min(1, "Conta de origem é obrigatória"),
   toAccountId: z.string().min(1, "Conta de destino é obrigatória"),
   date: z.string().min(1, "Data é obrigatória"),
+  isRecurring: z.boolean().default(false),
+  recurringType: z.string().optional(),
+  recurringFrequency: z.string().optional(),
+  recurringInterval: z.string().optional(),
+  installmentTotal: z.string().optional(),
+  recurringEndDate: z.string().optional(),
 }).refine(data => data.fromAccountId !== data.toAccountId, {
   message: "Contas de origem e destino devem ser diferentes",
   path: ["toAccountId"],
@@ -54,6 +61,12 @@ export function TransferModal({ open, onClose }: TransferModalProps) {
       fromAccountId: "",
       toAccountId: "",
       date: new Date().toISOString().split('T')[0],
+      isRecurring: false,
+      recurringType: "",
+      recurringFrequency: "1",
+      recurringInterval: "",
+      installmentTotal: "",
+      recurringEndDate: "",
     },
   });
 
@@ -66,6 +79,12 @@ export function TransferModal({ open, onClose }: TransferModalProps) {
         toAccountId: parseInt(data.toAccountId),
         date: new Date(data.date),
         userId: 1, // Hardcoded for demo
+        isRecurring: data.isRecurring,
+        recurringType: data.isRecurring ? data.recurringType : null,
+        recurringFrequency: data.isRecurring && data.recurringFrequency ? parseInt(data.recurringFrequency) : null,
+        recurringInterval: data.isRecurring ? data.recurringInterval : null,
+        installmentTotal: data.isRecurring && data.recurringType === "installments" && data.installmentTotal ? parseInt(data.installmentTotal) : null,
+        recurringEndDate: data.isRecurring && data.recurringType === "fixed_period" && data.recurringEndDate ? new Date(data.recurringEndDate) : null,
       });
       return response;
     },
@@ -224,6 +243,138 @@ export function TransferModal({ open, onClose }: TransferModalProps) {
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="isRecurring"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>
+                      Transferência recorrente
+                    </FormLabel>
+                    <p className="text-sm text-muted-foreground">
+                      Repetir esta transferência automaticamente
+                    </p>
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            {form.watch("isRecurring") && (
+              <div className="space-y-4 border-l-4 border-blue-200 pl-4 bg-blue-50 p-4 rounded-r-lg">
+                <FormField
+                  control={form.control}
+                  name="recurringType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo de Recorrência</FormLabel>
+                      <FormControl>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecionar tipo" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="fixed_period">Por período fixo</SelectItem>
+                            <SelectItem value="installments">Parcelado</SelectItem>
+                            <SelectItem value="indefinite">Indefinido</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="recurringFrequency"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>A cada</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            min="1" 
+                            placeholder="1" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="recurringInterval"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Período</FormLabel>
+                        <FormControl>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecionar" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="days">Dias</SelectItem>
+                              <SelectItem value="weeks">Semanas</SelectItem>
+                              <SelectItem value="months">Meses</SelectItem>
+                              <SelectItem value="years">Anos</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {form.watch("recurringType") === "fixed_period" && (
+                  <FormField
+                    control={form.control}
+                    name="recurringEndDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Data de fim</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                {form.watch("recurringType") === "installments" && (
+                  <FormField
+                    control={form.control}
+                    name="installmentTotal"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Total de parcelas</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            min="2" 
+                            placeholder="12" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              </div>
+            )}
 
             {selectedFromAccount && transferAmount > 0 && (
               <div className="bg-gray-50 p-3 rounded-lg">

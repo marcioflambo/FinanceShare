@@ -119,6 +119,14 @@ export const transfers = mysqlTable("transfers", {
   fromAccountId: int("from_account_id").notNull(),
   toAccountId: int("to_account_id").notNull(),
   userId: int("user_id").notNull(),
+  isRecurring: boolean("is_recurring").default(false),
+  recurringType: varchar("recurring_type", { length: 20 }),
+  recurringFrequency: int("recurring_frequency").default(1),
+  recurringInterval: varchar("recurring_interval", { length: 20 }),
+  installmentTotal: int("installment_total"),
+  installmentCurrent: int("installment_current"),
+  recurringEndDate: timestamp("recurring_end_date"),
+  parentTransferId: int("parent_transfer_id"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -349,6 +357,14 @@ export const insertTransferSchema = createInsertSchema(transfers).pick({
   fromAccountId: true,
   toAccountId: true,
   userId: true,
+  isRecurring: true,
+  recurringType: true,
+  recurringFrequency: true,
+  recurringInterval: true,
+  installmentTotal: true,
+  installmentCurrent: true,
+  recurringEndDate: true,
+  parentTransferId: true,
 });
 
 export const insertAccountBalanceSchema = createInsertSchema(accountBalances).pick({

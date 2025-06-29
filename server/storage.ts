@@ -331,13 +331,13 @@ export class DatabaseStorage implements IStorage {
       accountId: insertTransfer.fromAccountId,
       userId: insertTransfer.userId,
       transactionType: "transfer_out" as const,
-      isRecurring: false,
-      recurringType: null,
-      recurringFrequency: null,
-      recurringInterval: null,
-      installmentTotal: null,
-      installmentCurrent: null,
-      recurringEndDate: null,
+      isRecurring: insertTransfer.isRecurring || false,
+      recurringType: insertTransfer.recurringType || null,
+      recurringFrequency: insertTransfer.recurringFrequency || null,
+      recurringInterval: insertTransfer.recurringInterval || null,
+      installmentTotal: insertTransfer.installmentTotal || null,
+      installmentCurrent: insertTransfer.isRecurring && insertTransfer.recurringType === "installments" ? 1 : null,
+      recurringEndDate: insertTransfer.recurringEndDate || null,
       parentExpenseId: transferId // Vincula à transferência
     };
     
@@ -350,13 +350,13 @@ export class DatabaseStorage implements IStorage {
       accountId: insertTransfer.toAccountId,
       userId: insertTransfer.userId,
       transactionType: "transfer_in" as const,
-      isRecurring: false,
-      recurringType: null,
-      recurringFrequency: null,
-      recurringInterval: null,
-      installmentTotal: null,
-      installmentCurrent: null,
-      recurringEndDate: null,
+      isRecurring: insertTransfer.isRecurring || false,
+      recurringType: insertTransfer.recurringType || null,
+      recurringFrequency: insertTransfer.recurringFrequency || null,
+      recurringInterval: insertTransfer.recurringInterval || null,
+      installmentTotal: insertTransfer.installmentTotal || null,
+      installmentCurrent: insertTransfer.isRecurring && insertTransfer.recurringType === "installments" ? 1 : null,
+      recurringEndDate: insertTransfer.recurringEndDate || null,
       parentExpenseId: transferId // Vincula à transferência
     };
     
