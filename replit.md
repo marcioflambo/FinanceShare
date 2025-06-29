@@ -307,6 +307,9 @@ Preferred communication style: Simple, everyday language.
 - June 27, 2025. **TRANSFER DELETION SYSTEM IMPLEMENTED**: Created intelligent transfer deletion system that removes both related transactions when deleting a transfer transaction - prevents orphaned transactions and maintains account balance consistency with automatic reversal calculations
 - June 28, 2025. **RECURRING TRANSFERS IMPLEMENTED**: Added complete recurring transfers functionality - users can now create transfers with recurrence options (fixed period, installments, indefinite), includes database migration with new fields (is_recurring, recurring_type, recurring_frequency, recurring_interval, installment_total, recurring_end_date) and UI integration with checkbox activation
 - June 28, 2025. **TRANSACTION TYPE SELECTION FIXED**: Corrected edit expense modal to properly pre-select transaction type (credit/debit/transfer) based on actual expense data instead of defaulting to debit, ensuring accurate editing experience
+- June 29, 2025. **VISUAL TRANSACTION BUTTONS ENHANCED**: Redesigned movement buttons with color-coded selection states (red for expense, green for income, blue for recurring, purple for transfer), improved alignment with left-justified text and consistent spacing
+- June 29, 2025. **TRANSFER RECURRING FIELDS ACTIVATED**: Enabled recurring transaction fields in edit modal for transfers, allowing users to modify existing transfers to become recurring with proper frequency and installment options
+- June 29, 2025. **INCOME BUTTON ADDED**: Added "Receita" button to movement actions for credit transactions, completing the transaction type options with proper visual states and pre-selection functionality
 
 ## Key Features
 

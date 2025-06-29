@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -123,9 +123,9 @@ export function EditExpenseModal({ open, onClose, expense }: EditExpenseModalPro
       .slice(0, 3)
       .map(([categoryId]) => categories.find(cat => cat.id === categoryId))
       .filter(Boolean) as Category[];
-  }, [categories, expenses]);
+  }, [expenses, categories]);
 
-  // Filter categories based on search
+  // Filter and sort categories based on usage
   const { filteredCategories, topCategories } = useMemo(() => {
     const filtered = categories.filter((category) =>
       category.name.toLowerCase().includes(categorySearch.toLowerCase())
@@ -135,6 +135,23 @@ export function EditExpenseModal({ open, onClose, expense }: EditExpenseModalPro
   }, [categories, categorySearch, mostUsedCategories]);
 
   // Update form when expense changes
+  useEffect(() => {
+    if (expense) {
+      form.reset({
+        description: expense.description,
+        amount: expense.amount,
+        date: new Date(expense.date),
+        categoryId: expense.categoryId,
+        accountId: expense.accountId,
+        transactionType: (expense.transactionType as "debit" | "credit" | "transfer") || "debit",
+        isRecurring: expense.isRecurring || false,
+        recurringFrequency: (expense.recurringFrequency as "weekly" | "monthly" | "yearly") || "monthly",
+        installmentCount: expense.installmentTotal || 1,
+        isInstallment: expense.recurringType === "installment",
+      });
+    }
+  }, [expense, form]);
+
   const updateExpenseMutation = useMutation({
     mutationFn: async (data: FormData) => {
       if (!expense) throw new Error("Nenhuma despesa selecionada");
@@ -156,20 +173,29 @@ export function EditExpenseModal({ open, onClose, expense }: EditExpenseModalPro
       return await response.json();
     },
     onSuccess: async () => {
+      // Invalidate all related queries
       await queryClient.invalidateQueries({ queryKey: ["/api/expenses"] });
       await queryClient.invalidateQueries({ queryKey: ["/api/bank-accounts"] });
       await queryClient.invalidateQueries({ queryKey: ["/api/statistics"] });
       
+      // Force refetch to ensure UI updates
+      await queryClient.refetchQueries({ queryKey: ["/api/expenses"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/statistics"] });
+      
+      // Clear any cached data
+      queryClient.removeQueries({ queryKey: ["/api/expenses"] });
+      
       toast({
-        title: "Sucesso",
-        description: "Despesa atualizada com sucesso!",
+        title: "Despesa atualizada!",
+        description: "A despesa foi atualizada com sucesso.",
       });
+      form.reset();
       onClose();
     },
     onError: (error: Error) => {
       toast({
-        title: "Erro",
-        description: error.message || "Erro ao atualizar a despesa.",
+        title: "Erro ao atualizar despesa",
+        description: error.message,
         variant: "destructive",
       });
     },
@@ -180,21 +206,47 @@ export function EditExpenseModal({ open, onClose, expense }: EditExpenseModalPro
       if (!expense) throw new Error("Nenhuma despesa selecionada");
       return await apiRequest(`/api/expenses/${expense.id}`, "DELETE");
     },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["/api/expenses"] });
-      await queryClient.invalidateQueries({ queryKey: ["/api/bank-accounts"] });
-      await queryClient.invalidateQueries({ queryKey: ["/api/statistics"] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/bank-accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/statistics"] });
       
       toast({
-        title: "Sucesso",
-        description: "Despesa excluída com sucesso!",
+        title: "Despesa excluída!",
+        description: "A despesa foi excluída com sucesso.",
       });
       onClose();
     },
     onError: (error: Error) => {
       toast({
-        title: "Erro",
-        description: error.message || "Erro ao excluir a despesa.",
+        title: "Erro ao excluir despesa",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteTransferMutation = useMutation({
+    mutationFn: async () => {
+      if (!expense?.parentExpenseId) throw new Error("Transferência não encontrada");
+      return await apiRequest(`/api/transfers/${expense.parentExpenseId}`, "DELETE");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transfers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/bank-accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/statistics"] });
+      
+      toast({
+        title: "Transferência excluída!",
+        description: "A transferência completa foi excluída com sucesso.",
+      });
+      onClose();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao excluir transferência",
+        description: error.message,
         variant: "destructive",
       });
     },
@@ -205,30 +257,26 @@ export function EditExpenseModal({ open, onClose, expense }: EditExpenseModalPro
   };
 
   const handleDelete = () => {
-    if (confirm("Tem certeza que deseja excluir esta despesa?")) {
-      deleteExpenseMutation.mutate();
+    // Verificar se é uma transação de transferência
+    const isTransferTransaction = expense?.transactionType === 'transfer_in' || expense?.transactionType === 'transfer_out';
+    
+    if (isTransferTransaction) {
+      // Para transferências, sempre excluir toda a transferência para manter consistência
+      if (confirm(
+        "Esta é uma transação de transferência entre contas.\n\n" +
+        "AVISO: Ao excluir, AMBAS as transações da transferência serão removidas " +
+        "(entrada na conta destino e saída na conta origem) para manter a consistência dos saldos.\n\n" +
+        "Deseja continuar?"
+      )) {
+        deleteTransferMutation.mutate();
+      }
+    } else {
+      // Transação normal
+      if (confirm("Tem certeza que deseja excluir esta despesa?")) {
+        deleteExpenseMutation.mutate();
+      }
     }
   };
-
-  // Reset form when expense changes
-  if (expense && open) {
-    const resetData = {
-      description: expense.description,
-      amount: expense.amount,
-      date: new Date(expense.date),
-      categoryId: expense.categoryId,
-      accountId: expense.accountId,
-      transactionType: (expense.transactionType as "debit" | "credit" | "transfer") || "debit",
-      isRecurring: expense.isRecurring || false,
-      recurringFrequency: (expense.recurringFrequency as "weekly" | "monthly" | "yearly") || "monthly",
-      installmentCount: expense.installmentTotal || 1,
-      isInstallment: expense.recurringType === "installment",
-    };
-    
-    if (JSON.stringify(form.getValues()) !== JSON.stringify(resetData)) {
-      form.reset(resetData);
-    }
-  }
 
   const handleAddCategory = async (name: string) => {
     try {
@@ -248,10 +296,13 @@ export function EditExpenseModal({ open, onClose, expense }: EditExpenseModalPro
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" aria-describedby="edit-expense-description">
         <DialogHeader>
-          <DialogTitle>Editar Transação</DialogTitle>
+          <DialogTitle>Editar Despesa</DialogTitle>
         </DialogHeader>
+        <div id="edit-expense-description" className="sr-only">
+          Formulário para editar os dados de uma despesa existente
+        </div>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -263,13 +314,28 @@ export function EditExpenseModal({ open, onClose, expense }: EditExpenseModalPro
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecionar tipo" />
+                        <SelectValue placeholder="Selecione o tipo" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="debit">Despesa</SelectItem>
-                      <SelectItem value="credit">Receita</SelectItem>
-                      <SelectItem value="transfer">Transferência</SelectItem>
+                      <SelectItem value="debit">
+                        <div className="flex items-center space-x-2">
+                          <i className="fas fa-minus-circle text-red-500"></i>
+                          <span>Débito (Despesa)</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="credit">
+                        <div className="flex items-center space-x-2">
+                          <i className="fas fa-plus-circle text-green-500"></i>
+                          <span>Crédito (Receita)</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="transfer">
+                        <div className="flex items-center space-x-2">
+                          <i className="fas fa-exchange-alt text-blue-500"></i>
+                          <span>Transferência</span>
+                        </div>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -277,76 +343,42 @@ export function EditExpenseModal({ open, onClose, expense }: EditExpenseModalPro
               )}
             />
 
-            <DescriptionInput
-              form={form}
-              expenses={expenses}
-              name="description"
-              label="Descrição"
-              placeholder="Ex: Mercado, Gasolina..."
-            />
-
-            <CurrencyInput
-              form={form}
-              name="amount"
-              label="Valor"
-            />
-
-            <FormField
-              control={form.control}
-              name="accountId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Conta de {transactionType === "transfer" ? "Origem" : "Débito"}</FormLabel>
-                  <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecionar conta" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {accounts.map((account) => (
-                        <SelectItem key={account.id} value={account.id.toString()}>
-                          {account.name} - {account.type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {transactionType === "transfer" && (
+            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="toAccountId"
+                name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Conta de Destino</FormLabel>
-                    <Select 
-                      onValueChange={(value) => field.onChange(parseInt(value))} 
-                      value={field.value?.toString()}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecionar conta destino" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {accounts
-                          .filter(account => account.id !== form.watch("accountId"))
-                          .map((account) => (
-                            <SelectItem key={account.id} value={account.id.toString()}>
-                              {account.name} - {account.type}
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>Descrição</FormLabel>
+                    <FormControl>
+                      <DescriptionInput 
+                        placeholder="Ex: Supermercado" 
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            )}
+
+              <FormField
+                control={form.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Valor</FormLabel>
+                    <FormControl>
+                      <CurrencyInput
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <FormField
               control={form.control}
@@ -358,7 +390,7 @@ export function EditExpenseModal({ open, onClose, expense }: EditExpenseModalPro
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
-                          variant={"outline"}
+                          variant="outline"
                           className={cn(
                             "w-full pl-3 text-left font-normal",
                             !field.value && "text-muted-foreground"
@@ -416,61 +448,59 @@ export function EditExpenseModal({ open, onClose, expense }: EditExpenseModalPro
                       <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                         <Command>
                           <CommandInput 
-                            placeholder="Buscar ou criar categoria..." 
+                            placeholder="Buscar categoria..." 
                             value={categorySearch}
                             onValueChange={setCategorySearch}
                           />
                           <CommandList>
                             <CommandEmpty>
-                              <div className="flex flex-col items-center gap-2 p-4">
-                                <span className="text-sm text-gray-500">Categoria não encontrada</span>
-                                {categorySearch && (
+                              <div className="space-y-2">
+                                <p>Nenhuma categoria encontrada.</p>
+                                {categorySearch.trim() && (
                                   <Button
                                     size="sm"
-                                    onClick={() => handleAddCategory(categorySearch)}
-                                    className="flex items-center gap-2"
+                                    onClick={() => handleAddCategory(categorySearch.trim())}
+                                    className="w-full"
                                   >
-                                    <Plus className="h-3 w-3" />
-                                    Criar "{categorySearch}"
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Criar "{categorySearch.trim()}"
                                   </Button>
                                 )}
                               </div>
                             </CommandEmpty>
                             
                             {topCategories.length > 0 && !categorySearch && (
-                              <>
-                                <CommandGroup heading="Mais usadas">
-                                  {topCategories.map((category) => (
-                                    <CommandItem
-                                      key={`top-${category.id}`}
-                                      value={category.name}
-                                      onSelect={() => {
-                                        field.onChange(category.id);
-                                        setCategoryOpen(false);
-                                        setCategorySearch("");
-                                      }}
-                                    >
-                                      <Check
-                                        className={cn(
-                                          "mr-2 h-4 w-4",
-                                          category.id === field.value ? "opacity-100" : "opacity-0"
-                                        )}
-                                      />
-                                      <i className={`${category.icon} mr-2`} style={{ color: category.color }}></i>
-                                      {category.name}
-                                    </CommandItem>
-                                  ))}
-                                </CommandGroup>
-                              </>
+                              <CommandGroup heading="Mais usadas">
+                                {topCategories.map((category) => (
+                                  <CommandItem
+                                    key={category.id}
+                                    value={category.name}
+                                    onSelect={() => {
+                                      form.setValue("categoryId", category.id);
+                                      setCategoryOpen(false);
+                                      setCategorySearch("");
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        field.value === category.id ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    <i className={`${category.icon} mr-2`} style={{ color: category.color }}></i>
+                                    {category.name}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
                             )}
                             
-                            <CommandGroup heading={topCategories.length > 0 && !categorySearch ? "Todas as categorias" : "Categorias"}>
+                            <CommandGroup heading={categorySearch ? "Resultados" : "Todas as categorias"}>
                               {filteredCategories.map((category) => (
                                 <CommandItem
                                   key={category.id}
                                   value={category.name}
                                   onSelect={() => {
-                                    field.onChange(category.id);
+                                    form.setValue("categoryId", category.id);
                                     setCategoryOpen(false);
                                     setCategorySearch("");
                                   }}
@@ -478,7 +508,7 @@ export function EditExpenseModal({ open, onClose, expense }: EditExpenseModalPro
                                   <Check
                                     className={cn(
                                       "mr-2 h-4 w-4",
-                                      category.id === field.value ? "opacity-100" : "opacity-0"
+                                      field.value === category.id ? "opacity-100" : "opacity-0"
                                     )}
                                   />
                                   <i className={`${category.icon} mr-2`} style={{ color: category.color }}></i>
@@ -495,6 +525,74 @@ export function EditExpenseModal({ open, onClose, expense }: EditExpenseModalPro
                 )}
               />
             )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="accountId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {transactionType === "transfer" ? "Conta origem" : "Conta"}
+                    </FormLabel>
+                    <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecionar conta" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {accounts.map((account) => (
+                          <SelectItem key={account.id} value={account.id.toString()}>
+                            <div className="flex items-center space-x-2">
+                              <div
+                                className="w-3 h-3 rounded-full"
+                                style={{ backgroundColor: account.color }}
+                              />
+                              <span>{account.name}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {transactionType === "transfer" && (
+                <FormField
+                  control={form.control}
+                  name="toAccountId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Conta destino</FormLabel>
+                      <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecionar conta" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {accounts.map((account) => (
+                            <SelectItem key={account.id} value={account.id.toString()}>
+                              <div className="flex items-center space-x-2">
+                                <div
+                                  className="w-3 h-3 rounded-full"
+                                  style={{ backgroundColor: account.color }}
+                                />
+                                <span>{account.name}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+            </div>
 
             <div className="space-y-4">
               <FormField
@@ -519,61 +617,63 @@ export function EditExpenseModal({ open, onClose, expense }: EditExpenseModalPro
 
               {isRecurring && (
                 <div className="space-y-4 pl-6 border-l-2 border-gray-100">
-                  <FormField
-                    control={form.control}
-                    name="isInstallment"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel>
-                            Parcelamento (valor será dividido)
-                          </FormLabel>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
-                      name="recurringFrequency"
+                      name="isInstallment"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Frequência</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecionar" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="weekly">Semanal</SelectItem>
-                              <SelectItem value="monthly">Mensal</SelectItem>
-                              <SelectItem value="yearly">Anual</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>
+                              Parcelamento (valor será dividido)
+                            </FormLabel>
+                          </div>
                         </FormItem>
                       )}
                     />
 
-                    {isInstallment && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="recurringFrequency"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Frequência</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecionar" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="weekly">Semanal</SelectItem>
+                                <SelectItem value="monthly">Mensal</SelectItem>
+                                <SelectItem value="yearly">Anual</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
                       <FormField
                         control={form.control}
                         name="installmentCount"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Número de Parcelas</FormLabel>
+                            <FormLabel>
+                              {isInstallment ? "Parcelas" : "Repetições"}
+                            </FormLabel>
                             <FormControl>
                               <Input
                                 type="number"
                                 min="1"
+                                max="60"
                                 {...field}
                                 onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
                               />
@@ -582,10 +682,10 @@ export function EditExpenseModal({ open, onClose, expense }: EditExpenseModalPro
                           </FormItem>
                         )}
                       />
-                    )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
             <div className="flex space-x-3 pt-4">
